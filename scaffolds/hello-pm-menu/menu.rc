@@ -1,0 +1,49 @@
+#include <os2.h>
+#include "menu.h"
+
+/* ~ marks the mnemonic (Windows .RC uses &). */
+MENU ID_MAINWIN
+BEGIN
+    SUBMENU "~File", IDM_FILE
+    BEGIN
+        MENUITEM "Set ~Number...", IDM_SETNUMBER
+        MENUITEM SEPARATOR
+        MENUITEM "E~xit",          IDM_EXIT
+    END
+    SUBMENU "~Edit", IDM_EDIT
+    BEGIN
+        MENUITEM "~Copy\tCtrl+Ins",  IDM_COPY
+        MENUITEM "~Paste\tShift+Ins", IDM_PASTE
+    END
+END
+
+/* Accelerators. Both the Windows-style Ctrl+C/V and the traditional OS/2 CUA keys -
+   users expect both. The frame dispatches these before the focus window sees the key.
+   Requires FCF_ACCELTABLE and an id matching the window id. */
+ACCELTABLE ID_MAINWIN
+BEGIN
+    "c",       IDM_COPY,  CHAR, CONTROL
+    "v",       IDM_PASTE, CHAR, CONTROL
+    VK_INSERT, IDM_COPY,  VIRTUALKEY, CONTROL
+    VK_INSERT, IDM_PASTE, VIRTUALKEY, SHIFT
+END
+
+/* A dialog: DLGTEMPLATE names the resource, the inner DIALOG carries the geometry.
+   The empty slot before the frame flags is REQUIRED (it is the window style).
+   Coordinates are dialog units with a BOTTOM-LEFT origin - the buttons at y=10 are
+   near the bottom of a 62-unit-tall dialog. */
+DLGTEMPLATE IDD_NUMBER
+BEGIN
+    DIALOG "Set Number", IDD_NUMBER, 30, 30, 180, 62, , FCF_TITLEBAR | FCF_SYSMENU
+    BEGIN
+        LTEXT         "Number:", -1,                8, 42, 60, 10
+        ENTRYFIELD    "", IDC_NUMBER,              75, 42, 85, 10, ES_MARGIN
+        DEFPUSHBUTTON "OK",     DID_OK,            30, 10, 50, 14
+        PUSHBUTTON    "Cancel", DID_CANCEL,        95, 10, 50, 14
+    END
+END
+
+STRINGTABLE
+BEGIN
+    IDS_TITLE  "hello-pm-menu - menu, dialog, accelerators"
+END

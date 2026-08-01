@@ -1,0 +1,73 @@
+MIT License
+
+Copyright (c) 2026 phaelonimaire
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+This grant is subject to, and limited by, the SCOPE OF THIS GRANT note below,
+which forms part of these terms.
+
+
+---
+
+SCOPE OF THIS GRANT
+
+The license above covers the original authorship in this repository: the prose
+of the reference and guides, its selection, arrangement and organization, the
+provenance-tagging scheme, and the source code of the tools and scaffolds.
+
+It asserts no claim over, and grants no rights in:
+
+  * Facts about OS/2. API names, constants, structure layouts and offsets,
+    error codes, ordinals and calling conventions are facts about a published
+    interface. They are not the copyright of this project, and no exclusivity
+    over them is claimed or implied.
+
+  * Third-party expression. Short quoted passages and brief illustrative
+    excerpts from IBM documentation and other sources appear throughout for
+    identification, attribution and commentary, each marked at the point of
+    use. They remain the property of their respective owners and are not
+    licensed by this project.
+
+  * Third-party software. No IBM, Arca Noae or other third-party software,
+    headers, or toolchain is REDISTRIBUTED here — see sources.md for where to
+    obtain those under their own terms. (Quoted documentation excerpts, as
+    described immediately above, are the one exception and are not a
+    redistribution of any of that software.)
+
+BUILD-TIME DEPENDENCY — fpGUI (docview), GPLv2
+
+tools/inf2txt is source-only for a reason. Our driver (inf2txt.pas) is MIT, but
+tools/inf2txt/build.sh links it against fpGUI's docview units, and fpGUI
+licenses per directory: its `framework` is modified-LGPL, but `docview` is
+GPLv2, with no static-linking exception. A binary built by that script is
+therefore a GPLv2 combined work. Building it for your own use is unrestricted;
+redistributing the binary requires GPLv2 and corresponding source. No such
+binary is distributed by this project. fpGUI is (c) the fpGUI Toolkit authors,
+github.com/graemeg/fpGUI.
+
+TRADEMARKS
+
+OS/2, Presentation Manager, Workplace Shell, Warp, SOM, REXX, MMPM/2, DIVE,
+GRADD, Developer Connection and others are trademarks of International Business
+Machines Corporation. ArcaOS is a trademark of Arca Noae, LLC. Claude is a
+trademark of Anthropic, PBC. Other marks belong to their respective owners.
+They are used here only to identify the systems and tools this documentation
+describes. This project is independent, and is not affiliated with, sponsored
+by, or endorsed by IBM, Arca Noae, Anthropic, or any other rights holder.

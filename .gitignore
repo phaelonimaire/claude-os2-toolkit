@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+# build artifacts if anyone compiles a scaffold in place
+scaffolds/**/*.exe
+scaffolds/**/*.res
+scaffolds/**/*.obj
+scaffolds/**/*.o
+*.map
+# ne_profile.py writes its JSON report into the CWD
+ne_profile_result.json
+
+# built by tools/inf2txt/build.sh — rebuild locally, do not commit
+tools/inf2txt/inf2txt
+tools/inf2txt/fpGUI/
+tools/inf2txt/.build/
+tools/inf2txt/*.rsj
+
+# local agent/editor state — never publish
+.claude/

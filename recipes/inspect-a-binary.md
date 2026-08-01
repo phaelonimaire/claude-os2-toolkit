@@ -1,0 +1,64 @@
+# Inspecting an OS/2 binary (LX / NE)
+
+After building — or to understand an existing DLL/EXE — inspect it before shipping it to the VM.
+These tools read the module tables directly; no OS/2 needed.
+
+```sh
+# 32-bit LX modules (.EXE / .DLL)
+python3 ../tools/lx_export.py MODULE.dll     # object table, exports, imports, forwarders
+python3 ../tools/lx_disasm.py MODULE.dll <object>:<offset>   # disassemble at a location
+python3 ../tools/lx_entry_parms.py MODULE.dll                # entry-table / parameter view
+
+# 16-bit NE modules
+python3 ../tools/ne_profile.py MODULE.dll    # format ID + NE segment/reloc/import profile
+                                             # (--list FILE to profile many at once;
+                                             #  also writes ne_profile_result.json to CWD)
+
+# symbol maps (.sym -> text), when you have them
+python3 ../tools/sym2map.py MODULE.sym
+```
+
+Common uses:
+- **Confirm your `.def` worked** — does the module export the names/ordinals you intended, and import
+  the DLLs/ordinals you expect? (A mismatch is the usual `SYS2070`/`SYS1804` cause.)
+- **Diagnose a crash** — `C:\POPUPLOG.OS2` gives `MODULE object:offset`; `lx_disasm.py` shows the
+  faulting instruction there. Pass the pair verbatim (decimal object, hex offset); `--sym` is
+  optional and only adds symbol labels.
+- **Read a shipped DLL's surface** — before you link against it, see what it actually exports.
+
+- **Find out which module really owns an API** — the module you link is often not the one that
+  implements the function (`PMWIN` is ~738 forwarders into `PMMERGE`). `--exports`/`--imports` on
+  both sides settles it in two commands. See `../os2ref/module-dll.md` §"Where the PM APIs
+  actually live".
+
+## Getting the binary off the OS/2 box first
+
+Inspecting a *shipped* module means copying it to the host, and that step has its own traps — the
+OS/2 TCP/IP 4.51 stack does not reliably complete large transfers (so `scp` can truncate quietly),
+and OS/2 pipes corrupt binary data by LF→CRLF translation. **`setup-test-vm.md` §"Moving files in
+and out" has the working method**, including how to install the Guest Additions and map a share;
+read it before improvising. Short form: prefer a VirtualBox shared folder (host dir mounted as e.g.
+`F:`) and `cksum` both sides to prove the copy, rather than trusting any transfer.
+
+## Reading disassembly honestly [OBS-RE]
+
+Three ways to draw a confident wrong conclusion from `lx_disasm.py` output:
+
+- **`call` targets are not resolved to symbols, and many are not real targets.** An
+  `E8 00000000` (`call <next instruction>`, rel32 = 0) is an **unrelocated fixup** — the loader
+  patches it at load time. Its apparent target is meaningless; do not tabulate it as a callee.
+- **Do not map an address to "the nearest preceding symbol".** Across a large image with a partial
+  symbol table this manufactures plausible nonsense — in one real case it attributed 31 calls in a
+  file dialog to `ctrpQueryWidgetIndexFromHWND`, a widget-container helper. If you cannot resolve
+  a target through the fixup records, report it as unresolved.
+- **A function prologue is good evidence; infer from it, but say so.** Reading argument slots
+  (`[ebp+8]`, `[ebp+0xc]`, `[ebp+0x10]`) and what the function stores into them is legitimate and
+  often decisive — e.g. a write of `2` into `[param3+0x0c]` identifies `param3` as a `PFILEDLG`
+  and the store as `lReturn = DID_CANCEL`. Mark it `[OBS-RE]`, and prefer the source or header if
+  one exists (`os2ref/`, an IBM `.INF`, or a published GPL tree) — **docs before disassembly**.
+
+Cross-check anything structural against the export table before building on it; when a `.SYM`
+disagrees with the entry table, the entry table wins.
+
+Format details are in `../os2ref/executable-formats.md`; the import/export/forwarder model is in
+`../os2ref/module-dll.md`.
