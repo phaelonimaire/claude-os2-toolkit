@@ -47,6 +47,15 @@ instead.
 **Calibration.** You may write *"`WinLoadString` returns the string length; 0 means error"* and cite
 `pm2.txt "WinLoadString Return Value - lLength"`. You may not reproduce IBM's paragraph that says so.
 
+**A list of names in functional order is a fact, not expression.** A linker's search order, an
+ordinal table, a set of flag values — there is no authorial choice in them, and there is no honest
+way to "reword" `_dll.lib, .lib, _s.lib` into something else. Reproduce the list; cite where you read
+it. What you must not lift is the prose around it. And **prefer the primary source**: if the
+behaviour lives in code, cite the code (`src/emx/src/emxomf/emxomfld.c:924`, `[SRC]`) — repo-relative,
+per §4 — rather than the release note that
+once described it — notes go stale, code is what the reader can re-check, and "I found this in a doc
+on my disk" is not a citation anyone else can follow.
+
 **Avoid the word "verbatim"** when describing a transcription of names and values. It is accurate
 about your process and misleading about what shipped. Prefer *"names and values transcribed from
 `bseerr.h`"*.
