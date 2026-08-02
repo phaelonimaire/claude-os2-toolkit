@@ -232,6 +232,17 @@ toolchain warns, and the risk is highest exactly when a port reorganises a menu.
 `tools/rc-mnemonics/check-mnemonics.py <file>.rc` after every menu edit — it exits non-zero on a
 duplicate, so it can gate the build. Converting one Notepad2 menu produced six at once.
 
+#### And `\n` is literal in a static too, but not in a message box [OBS-RE]
+
+The same "the bytes are the text" rule applies to line breaks. A `WC_STATIC` draws `\n` as a
+**glyph** and runs the text on in one line — so a multi-line string that looks right in a Win32
+dialog comes out as one long line peppered with rubbish. **`WinMessageBox` does honour `\n`**, and
+word-wraps as well, so the same string laid out correctly there.
+
+Practical consequence when porting: a multi-line notice belongs in `WinMessageBox`, or in a
+`WC_MLE` if it has to live in a dialog you built. Do not hand-align columns with spaces either —
+the message box wraps to its own width and the alignment is lost.
+
 ### 2.12 The dialog *procedure* ports; the notification *routing* moves
 
 `WM_COMMAND` in PM carries menu and push-button commands only. Everything a control tells its owner
