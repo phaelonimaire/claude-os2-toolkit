@@ -565,7 +565,7 @@ mouse while a drag is in progress.
 
 | Symbol | Prototype (`pmwin.h`) | Purpose |
 |---|---|---|
-| `WinSetCapture` | `BOOL WinSetCapture(HWND hwndDesktop, HWND hwnd)` [`pmwin.h:1305-1306`] | Route **all** mouse messages to `hwnd`. `NULLHANDLE` releases the capture; `HWND_THREADCAPTURE` (`(HWND)5`, [`pmwin.h:235`]) routes to the thread's queue instead — see the second warning. |
+| `WinSetCapture` | `BOOL WinSetCapture(HWND hwndDesktop, HWND hwnd)` [`pmwin.h:1305-1306`] | Route **all** mouse messages to `hwnd`. `NULLHANDLE` releases the capture; `HWND_THREADCAPTURE` (`(HWND)5`, [`pmwin.h:236`]) routes to the thread's queue instead — see the second warning. |
 | `WinQueryCapture` | `HWND WinQueryCapture(HWND hwndDesktop)` [`pmwin.h:1309`] | The window currently holding the capture. |
 | `WinSetPointer` | `BOOL WinSetPointer(HWND hwndDesktop, HPOINTER hptrNew)` [`pmwin.h:3773-3774`] | Set the pointer shape. |
 | `WinQueryPointer` | `HPOINTER WinQueryPointer(HWND hwndDesktop)` [`pmwin.h:3842`] | The current pointer. |
@@ -587,7 +587,7 @@ capture state is per-desktop, not per-window.
 > mouse input, even when the pointer moves outside the window".]
 
 > **Capturing to the *queue* rather than a window makes messages undispatchable.** Passing
-> `HWND_THREADCAPTURE` [`pmwin.h:235`] routes mouse input to the calling thread's queue instead of
+> `HWND_THREADCAPTURE` [`pmwin.h:236`] routes mouse input to the calling thread's queue instead of
 > to a window, and then each `QMSG` arrives with `hwnd` set to `NULL`. `WinDispatchMsg` has no
 > window to hand those to, so they never reach any window procedure — the message loop itself must
 > handle them. Take this route while keeping an ordinary loop and mouse input vanishes silently.

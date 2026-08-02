@@ -429,26 +429,41 @@ live object [DOC-IBM `pmwp.h:52`].
 | `WinQueryObject` | `HOBJECT WinQueryObject(PSZ pszObjectID)` [`:150-152`] | Resolve an object-ID string (e.g. `"<WP_DESKTOP>"`) to a handle. |
 | `WinDestroyObject` / `WinSaveObject` / `WinOpenObject` | see `pmwp.h:147/155/158` | Destroy / persist / open a view of an object. |
 
-### `WinOpenObject`'s view constants — and the header that is not there [OBS-RE]
+### `WinOpenObject`'s view constants — and the header that is not there [DOC-IBM]
 
-`WinOpenObject(hObject, ulView, fFlag)` opens one *view* of an object. The view constants
-(`OPEN_DEFAULT`, `OPEN_CONTENTS`, `OPEN_SETTINGS`, `OPEN_DETAILS`, `OPEN_TREE`, `OPEN_HELP`,
-`OPEN_RUNNING`, `OPEN_PROMPTDLG`, `OPEN_PALETTE`, `OPEN_USER`) are documented by **name and meaning**
-in `wps2.txt` under `wpOpen` — but their **values** live in the Toolkit header `wpobject.h`, which
-kLIBC's `os2emx.h` does not ship. Grepping the installed headers finds nothing and reads as "no such
-constant", which is the [OBS-RE] trap this corpus keeps warning about.
+`WinOpenObject(hObject, ulView, fFlag)` opens one *view* of an object. The view constants are
+documented by **name and meaning** in `wps2.txt` under `wpOpen` — but their **values** live only in
+the Toolkit headers, which kLIBC's `os2emx.h` does not ship. Grepping the installed headers finds
+nothing and reads as "no such constant", which is the trap this corpus keeps warning about.
 
-Two values established here rather than guessed:
+They are also **split across two headers**, which is the second half of that same trap: locating
+`wpobject.h` and grepping only it still finds no `OPEN_TREE` or `OPEN_DETAILS`, and the absence
+again reads as "no such constant". They are folder views, and they live in `wpfolder.h`.
 
-| Constant | Value | How established |
+| Constant | Value | Source |
 |---|---|---|
-| `OPEN_DEFAULT` | `0` | Toolkit `wpobject.h:200` |
-| `OPEN_SETTINGS` | `2` | **Measured** — a probe called `WinOpenObject` with successive view numbers; `2` is the one that raised the object's *Settings* notebook, titled "*name* - Properties" |
+| `OPEN_UNKNOWN` | `-1` | `wpobject.h:318` |
+| `OPEN_DEFAULT` | `0` | `wpobject.h:319` |
+| `OPEN_CONTENTS` | `1` | `wpobject.h:320` |
+| `OPEN_SETTINGS` | `2` | `wpobject.h:321` — also **measured** [OBS-RE]: a probe called `WinOpenObject` with successive view numbers, and `2` is the one that raised the object's *Settings* notebook, titled "*name* - Properties" |
+| `OPEN_HELP` | `3` | `wpobject.h:322` |
+| `OPEN_RUNNING` | `4` | `wpobject.h:323` |
+| `OPEN_PROMPTDLG` | `5` | `wpobject.h:324` |
+| `OPEN_PALETTE` | `121` | `wpobject.h:325` |
+| `OPEN_USER` | `0x6500` | `wpobject.h:327` — the base for class-defined views, not a view itself |
+| `OPEN_TREE` | `101` | **`wpfolder.h:100`** — folder view, not in `wpobject.h` |
+| `OPEN_DETAILS` | `102` | **`wpfolder.h:101`** — folder view, not in `wpobject.h` |
 
-If you need one of the others and have no Toolkit to hand, the same probe settles it in a minute:
-resolve a file with `WinQueryObject`, call `WinOpenObject` with a candidate number, and screenshot
-what appears. `WinOpenObject` returns `TRUE` for every number tried, so the return value tells you
-nothing — only the window that opens does.
+`CLOSED_ICON` (`122`, `wpobject.h:326`) sits inside the same block but is not a view — do not pass
+it to `WinOpenObject`.
+
+Line numbers are from the **OS/2 Toolkit 4.5** `H/` directory. Other releases shift them — in IBM
+C Set++'s `WPOBJECT.H` the same block starts at line 199 — so match on the symbol, not the line.
+
+With no Toolkit to hand at all, a probe settles a single value in a minute: resolve a file with
+`WinQueryObject`, call `WinOpenObject` with a candidate number, and screenshot what appears.
+`WinOpenObject` returns `TRUE` for every number tried, so the return value tells you nothing — only
+the window that opens does. [OBS-RE]
 
 **Porting note.** The settings notebook is the OS/2 answer to a Win32 shell **property sheet**
 (`SHObjectProperties`): same information, same role, reached by asking the shell for the object and
