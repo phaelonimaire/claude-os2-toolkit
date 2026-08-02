@@ -258,9 +258,19 @@ is not a statement about formats. (The build directory being searched first also
   a `.dll` can be linked — naming one explicitly works either way `[SRC]` same file, `:959,965,1723`.
 
 So the real diagnosis is almost always a **name**, not a format. `ls /@unixroot/usr/lib | grep -i
-<name>` — in the readline case nothing named `curses*` was on the `LIB` path at all; the ncurses
-packages provide `ncurses` and `tinfo`. Fix it by naming the libraries that exist (`-lncurses
--ltinfo`, and see **d** below),
+<name>` — and read the answer carefully, because "present" is not the same as "linkable". In the
+readline case there was nothing named `curses*` that the default search would take. Two separate
+reasons, and both are worth checking on your own box:
+
+- **ncurses may not be installed at all.** It is *not* part of the base tree. On the machine here
+  `rpm -q --qf '%{INSTALLTIME:date}'` dates the base packages to 2015 and `ncurses`,
+  `ncurses-base` and `ncurses-libs` to **late 2025** — pulled in later, years after `readline`
+  itself. Do not assume it, or its header/import-library half: `rpm -qa | grep -i ncurses`.
+- **Even with it installed, `-lcurses` still fails** — `ncurses-libs` ships `libcurses.dll`, and
+  `.dll` is not in the default suffix list (see the table; it needs `-Zdll-search`). What `-l`
+  wants is the import library from **`ncurses-devel`**, which is a separate package.
+
+Fix it by naming the libraries that exist (`-lncurses -ltinfo`, and see **d** below),
 and only override the make variable outright when the makefile hard-codes something you cannot reach
 — e.g. readline's link libs come from `SHLIB_LIBS`:
 
@@ -282,7 +292,10 @@ commit touching those lines in this tree, so do not assume the release note was 
 `tgetent`/`tgetstr`/`tgetflag`/`tgetnum`/`tputs`/`tgoto`/`PC`/`BC`/`UP` undefined. Link **both**.
 (A cryptic `sed -i -e 's/tinfo//'` in a spec file is usually a hint that this bit the packager too.)
 
-Install the devel packages first: `yum -y install ncurses-devel libcx-devel`.
+Install the devel packages first: `yum -y install ncurses-devel libcx-devel`. Note this pulls ncurses
+into a tree that may not have had it — which is fine for building, but means the resulting binary now
+has a dependency the target box may not carry. Check what the `.spec` actually requires rather than
+inheriting whatever your build machine accumulated.
 
 ## 4. Load the patched DLL for one process only
 
