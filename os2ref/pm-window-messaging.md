@@ -565,14 +565,14 @@ mouse while a drag is in progress.
 
 | Symbol | Prototype (`pmwin.h`) | Purpose |
 |---|---|---|
-| `WinSetCapture` | `BOOL WinSetCapture(HWND hwndDesktop, HWND hwnd)` [`pmwin.h:1305-1306`] | Route **all** mouse messages to `hwnd`. `hwnd` = `NULLHANDLE` releases the capture. |
+| `WinSetCapture` | `BOOL WinSetCapture(HWND hwndDesktop, HWND hwnd)` [`pmwin.h:1305-1306`] | Route **all** mouse messages to `hwnd`. `NULLHANDLE` releases the capture; `HWND_THREADCAPTURE` (`(HWND)5`, [`pmwin.h:235`]) routes to the thread's queue instead — see the second warning. |
 | `WinQueryCapture` | `HWND WinQueryCapture(HWND hwndDesktop)` [`pmwin.h:1309`] | The window currently holding the capture. |
 | `WinSetPointer` | `BOOL WinSetPointer(HWND hwndDesktop, HPOINTER hptrNew)` [`pmwin.h:3773-3774`] | Set the pointer shape. |
 | `WinQueryPointer` | `HPOINTER WinQueryPointer(HWND hwndDesktop)` [`pmwin.h:3842`] | The current pointer. |
 | `WinQueryPointerPos` | `BOOL WinQueryPointerPos(HWND hwndDesktop, PPOINTL pptl)` [`pmwin.h:3843-3844`] | Pointer position, in **desktop** coordinates. |
 | `WinLoadPointer` | `HPOINTER WinLoadPointer(HWND hwndDesktop, HMODULE hmod, ULONG idres)` [`pmwin.h:3829-3831`] | Load a pointer from a resource. |
 | `WinShowPointer` | `BOOL WinShowPointer(HWND hwndDesktop, BOOL fShow)` [`pmwin.h:3778-3779`] | Show/hide the pointer. |
-| `WinTrackRect` | `BOOL WinTrackRect(HWND hwnd, HPS hps, PTRACKINFO pti)` [`pmwin.h:3568-3570`] | Run a modal rubber-band move/resize loop; returns `TRUE` if the user accepted. |
+| `WinTrackRect` | `BOOL WinTrackRect(HWND hwnd, HPS hps, PTRACKINFO pti)` [`pmwin.h:3568-3570`] | Run a modal rubber-band move/resize loop. `TRUE` = the user accepted; `FALSE` is ambiguous — see below. |
 
 The first argument is a desktop handle: pass `HWND_DESKTOP`. These take one because pointer and
 capture state is per-desktop, not per-window.
@@ -586,11 +586,12 @@ capture state is per-desktop, not per-window.
 > button-up. [DOC-IBM `pm4.txt` — "Capturing mouse input is useful if a window needs to receive all
 > mouse input, even when the pointer moves outside the window".]
 
-> **Capturing to the *queue* rather than a window makes messages undispatchable.** `WinSetCapture`
-> can route mouse input to the calling thread's queue instead, and then each `QMSG` arrives with
-> `hwnd` set to `NULL`. `WinDispatchMsg` has no window to hand them to, so they never reach any
-> window procedure — the message loop itself must handle them. If you take this route and keep an
-> ordinary loop, mouse input vanishes silently. [DOC-IBM `pm4.txt`.]
+> **Capturing to the *queue* rather than a window makes messages undispatchable.** Passing
+> `HWND_THREADCAPTURE` [`pmwin.h:235`] routes mouse input to the calling thread's queue instead of
+> to a window, and then each `QMSG` arrives with `hwnd` set to `NULL`. `WinDispatchMsg` has no
+> window to hand those to, so they never reach any window procedure — the message loop itself must
+> handle them. Take this route while keeping an ordinary loop and mouse input vanishes silently.
+> [DOC-IBM `pm4.txt:23380`.]
 
 > **If you handle `WM_MOUSEMOVE` and do not pass it on, the pointer shape stops being maintained.**
 > Setting the pointer is *default* processing: `WinDefWindowProc` calls `WinSetPointer` on every
@@ -600,6 +601,14 @@ capture state is per-desktop, not per-window.
 > is stuck as an I-beam / hourglass over my window". This is also why the hourglass idiom must
 > re-assert the shape from `WM_MOUSEMOVE` for the duration of a long operation, not just once
 > before it. [DOC-IBM `pm3.txt` "WM_MOUSEMOVE — Default Processing"; `pmv2base.txt`.]
+
+> **`WinTrackRect` returning `FALSE` does not mean the user cancelled.** IBM gives the same return
+> two meanings: tracking was cancelled, **or** the pointing device was already captured when the
+> call was made. Treating `FALSE` as "user declined" therefore silently swallows a programming
+> error — typically your own `WinSetCapture` from the button-down handler that started the drag.
+> There is also a precondition worth knowing: the function notes which button was down when it
+> began, and only completes when **that same button** is released. [DOC-IBM `pm2.txt:42065`,
+> `pm2.txt:42079`.] Only one tracking rectangle may be in use at a time [`pm2.txt:42030`].
 
 `WinTrackRect` drives the whole rubber-band interaction itself — it does not return until the user
 commits or cancels. `TRACKINFO` [`pmwin.h:3551-3565`] supplies the border and grid sizes, the
@@ -710,20 +719,31 @@ invalid region; the actual drawing is done with the Gpi functions on that `HPS` 
 | `WinOpenWindowDC` | `HDC APIENTRY WinOpenWindowDC(HWND hwnd)` | Open the window's device context. |
 | `WinInvalidateRect` / `WinInvalidateRegion` | — | Mark a region invalid, causing a later `WM_PAINT`. Its third argument decides whether *descendants* are invalidated too — see the note below. |
 | `WinValidateRect` | `BOOL APIENTRY WinValidateRect(HWND hwnd, PRECTL prcl, BOOL fIncludeChildren)` [`pmwin.h:854-856`] | The inverse: remove a rectangle from the update region, cancelling the pending paint for it. |
-| `WinQueryUpdateRect` | `BOOL APIENTRY WinQueryUpdateRect(HWND hwnd, PRECTL prcl)` [`pmwin.h:876-877`] | The pending invalid rectangle, **without** beginning a paint. `WinQueryUpdateRegion` [`pmwin.h:879`] gives the region form. |
-| `WinScrollWindow` | `LONG APIENTRY WinScrollWindow(HWND hwnd, LONG dx, LONG dy, PRECTL prclScroll, PRECTL prclClip, HRGN hrgnUpdate, PRECTL prclUpdate, ULONG fs)` [`pmwin.h:364-371`] | Blit a rectangle of the window by (`dx`,`dy`) instead of repainting it. |
+| `WinQueryUpdateRect` | `BOOL APIENTRY WinQueryUpdateRect(HWND hwnd, PRECTL prcl)` [`pmwin.h:876-877`] | The pending invalid rectangle, **without** beginning a paint. `WinQueryUpdateRegion` [`pmwin.h:879-880`] gives the region form. |
+| `WinScrollWindow` | `LONG APIENTRY WinScrollWindow(HWND hwnd, LONG dx, LONG dy, PRECTL prclScroll, PRECTL prclClip, HRGN hrgnUpdate, PRECTL prclUpdate, ULONG rgfsw)` [`pmwin.h:364-371`] | Blit a rectangle of the window by (`dx`,`dy`) instead of repainting it. |
 | `WinFillRect` | `BOOL APIENTRY WinFillRect(HPS hps, PRECTL prcl, LONG lColor)` | Fill a rectangle with a color. Fills the **left and bottom** edges but **not** the right and top (see boundary rule below). |
 
 `WinScrollWindow` is how a scrolling view avoids redrawing everything: it moves the pixels that are
-still valid and leaves only the newly exposed strip to paint. Pass `SW_INVALIDATERGN` in `fs` to
+still valid and leaves only the newly exposed strip to paint. Pass `SW_INVALIDATERGN` in `rgfsw` to
 have that exposed area added to the update region automatically, which produces the `WM_PAINT` for
 it; without that flag you are responsible for invalidating it yourself, and the strip keeps stale
 pixels. The two flags are `SW_SCROLLCHILDREN` (`0x0001`) and `SW_INVALIDATERGN` (`0x0002`)
 [`pmwin.h:386-387`] — child windows are **not** scrolled unless you ask. `prclScroll` = `NULL`
-scrolls the whole window. Note the sign convention follows PM's
-Y-up coordinates, so scrolling the *content* up one line is a **negative** `dy`. [DOC-IBM
-`pmv2base.txt` — "If you set the `SW_INVALIDATERGN` flag for this function, the areas you uncover by
-scrolling are added to the window's update region automatically".]
+scrolls the whole window. [DOC-IBM `pmv2base.txt:12431` — "If you set the `SW_INVALIDATERGN` flag
+for this function, the areas you uncover by scrolling are added to the window's update region
+automatically".]
+
+> **The sign of `dy`: IBM's two books read opposite ways — follow the worked example, and verify on
+> target.** `pmv2base.txt:12433-12442` scrolls a text editor's content *up* by one line with a
+> **negative** `dy` (`-(iVScrollInc)`), describing the newly uncovered area as being at the
+> **bottom** of the window — which is self-consistent, since content moving up exposes a strip at
+> the bottom. But the parameter description at `pm2.txt:32168` reads "`lDy` — Amount of vertical
+> scroll **upward** (in device units)", which taken alone implies the opposite sign.
+>
+> Do not try to settle it by reasoning from PM's Y-up coordinate convention — that argument does not
+> decide the question, and getting it backwards inverts the scroll. Use the worked example (negative
+> `dy` moves content up, exposing at the bottom) and confirm against your own window before building
+> on it. [DOC-IBM, both cited — the conflict is between IBM's own books.]
 
 > **Invalidating a window that is fully covered by a child repaints nothing visible.** The common
 > layout — a client window whose entire area is one child control — means every pixel the user sees
