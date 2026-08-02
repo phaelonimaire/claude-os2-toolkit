@@ -272,6 +272,58 @@ typedef struct _MENUITEM {   /* mi */
 } MENUITEM;
 ```
 
+### 5.1 A pop-up menu built at run time — the two traps [OBS-RE]
+
+A context menu whose items depend on state has to be built dynamically: create a menu window, fill it
+with `MM_INSERTITEM`, then `WinPopupMenu`. Both traps below leave every API call reporting success —
+`WinPopupMenu` returns `TRUE`, `WinGetLastError` is `0`, and the menu window is real, correctly sized
+and `WS_VISIBLE` — while nothing appears on screen. There is no diagnostic to find.
+
+**1. Do not destroy the menu after `WinPopupMenu` returns.** It "returns as soon as the pop-up menu
+has been invoked, **which might be before the user has completed interacting with** it" [DOC-IBM
+`pm2.txt`, *WinPopupMenu — Return Value*]. It is not modal and does not wait for a selection, so
+tearing the menu down on the next line removes it instantly. Destroy the *previous* menu when you
+build the next one instead.
+
+**2. Do not raise it from inside a `WM_COMMAND` handler.** A pop-up shown while PM is still unwinding
+accelerator or menu-bar processing is dismissed again as that unwinds. This is the one that survives
+every plausible fix, because the call itself succeeds. **Post yourself a private message and show the
+menu when that arrives**, so it comes up from a clean dispatch:
+
+```c
+case IDM_CONTEXTMENU:                      /* accelerator or menu item */
+    WinPostMsg(hwndTarget, WM_MYCONTEXTMENU, 0, 0);
+    break;
+
+case WM_MYCONTEXTMENU:                     /* clean dispatch - the menu survives */
+    hwndMenu = WinCreateWindow(HWND_DESKTOP, WC_MENU, "", MS_VERTICALFLIP,
+                               0, 0, 0, 0, HWND_DESKTOP, HWND_TOP, 0, NULL, NULL);
+    /* ... MM_INSERTITEM per item ... */
+    WinPopupMenu(hwnd, hwnd, hwndMenu, x, y, 0,
+                 PU_HCONSTRAIN | PU_VCONSTRAIN | PU_MOUSEBUTTON1 | PU_KEYBOARD);
+    break;
+```
+
+Reaching this from a mouse click needs no such care — `WM_BUTTON2DOWN` *is* a clean dispatch, and
+button 2 is the OS/2 context button (there is no `WM_CONTEXTMENU`).
+
+Two further points measured while chasing the above, both worth not re-testing:
+
+- IBM states the menu "must have been created, by use of either the `WinCreateMenu` or `WinLoadMenu`
+  functions" [DOC-IBM `pm2.txt`, *WinPopupMenu — Parameters*]. In practice a `WC_MENU` window created
+  with `WinCreateWindow` and filled with `MM_INSERTITEM` works, which is what a dynamic menu needs;
+  a resource menu loaded with `WinLoadMenu` behaved identically, including failing in the same way
+  before trap 2 was fixed.
+- The `hwndParent` argument may be either `HWND_DESKTOP` (with the position mapped by
+  `WinMapWindowPoints`) or the owning window itself (with window-relative coordinates). Both display
+  correctly; `PU_HCONSTRAIN`/`PU_VCONSTRAIN` constrain to the desktop either way.
+
+Remember PM's origin is the **lower-left** corner, so the coordinates you pass are the menu's bottom
+edge and it grows *upward* from the point — the opposite of the Win32 habit of dropping down from it.
+
+An empty label is not a PM convention but Scintilla's, meaning "separator"; PM wants
+`MIS_SEPARATOR` in `afStyle`, and `MIA_DISABLED` in `afAttribute` for a greyed item.
+
 ---
 
 ## 6. `WC_STATIC` — static display items [DOC-IBM]
