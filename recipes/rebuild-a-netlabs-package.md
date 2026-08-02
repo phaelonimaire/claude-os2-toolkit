@@ -314,16 +314,35 @@ inheriting whatever your build machine accumulated.
 Never overwrite the system copy while testing. OS/2 supports per-process library paths:
 
 ```sh
-SET LIBPATHSTRICT=T          # required: without it BEGINLIBPATH won't shadow a system DLL
+SET LIBPATHSTRICT=T          # see below: without it a *resident* system copy still wins
 SET BEGINLIBPATH=C:\mylibs
 ```
 
-**`BEGINLIBPATH` is not an ordinary environment variable** — it is applied via `DosSetExtLIBPATH`,
-so `env VAR=... prog` is silently ignored. Set it with `SET` inside a `.cmd` file (or call the API).
+**`BEGINLIBPATH` is not an ordinary environment variable** — it is applied via `DosSetExtLIBPATH`, so
+`env VAR=... prog` is silently ignored. Measured: under `env BEGINLIBPATH=C:/marker prog`, `getenv()`
+returns `C:/marker` while `DosQueryExtLIBPATH()` still reports the real path. Set it with `SET` inside
+a `.cmd` file (or call the API).
+
+**What `LIBPATHSTRICT` actually buys you, and why forgetting it fails only sometimes.** It is *not*
+what makes `BEGINLIBPATH` outrank `LIBPATH` — that happens anyway. It is what defeats a copy **already
+resident in the shared arena**. Measured with two DLLs of the same name, one on `LIBPATH` and one in a
+private directory:
+
+| situation | which copy loaded |
+|---|---|
+| no `BEGINLIBPATH` | the `LIBPATH` one |
+| `BEGINLIBPATH` alone, **nothing else holding the DLL** | the private one — shadowing works |
+| `BEGINLIBPATH` alone, **another process holding it** | **the `LIBPATH` one** — resident copy wins |
+| `LIBPATHSTRICT=T` + `BEGINLIBPATH`, holder running | the private one |
+
+So the omission is **intermittent by construction**: it works on a quiet box and silently stops
+working the moment anything else has that DLL open — which is precisely when you are mid-debug with
+another instance running. Set it always.
 
 **Verify which copy actually loaded.** OS/2 keys loaded DLLs **by name in the shared arena**, so a
 copy already resident in another process can win over your private one and you will test the wrong
-binary. A ten-line probe settles it:
+binary — the third row above is that happening. A ten-line probe settles it, and it is what produced
+that table:
 
 ```c
 #define INCL_DOSMODULEMGR
@@ -352,8 +371,11 @@ Rules that follow, both learned the hard way:
 - **Kill every holder before deploying**, then verify the size/timestamp changed.
 - **Never filter build output down to a keyword.** `... | grep -iE "DEPLOYED|error:"` turned a failed
   deploy into *silence*, which reads as success. Print an unfiltered tail.
-- If a process ignores `kill` (kLIBC programs commonly do — OS/2's `DosKillProcess` is
-  **cooperative**), you need a ring-0 killer; see `setup-test-vm.md`.
+- If a process ignores `kill`, you need a ring-0 killer; see `setup-test-vm.md`. Do not assume it
+  will: a plain kLIBC program blocked in `sleep()` dies on an ordinary SIGTERM here. The stubborn
+  cases are the ones worth naming, and which they are is `[unverified]` — a PM message loop or a
+  thread blocked in a device call are the usual suspects. Try `kill`, then `kill -9`, and reach for
+  the ring-0 tool only when both leave the process in `ps`.
 
 ## 6. Upstreaming the fix
 
