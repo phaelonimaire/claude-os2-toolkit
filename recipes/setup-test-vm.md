@@ -182,6 +182,24 @@ Things that cost time if you learn them the hard way:
   pointer's position over the window, so absolute addressing works. Install `VBoxMouse.sys` or set
   `--mouse=usbtablet` if you want to rely on exact pixels, but **verify before you conclude you are
   blocked** — the cost of checking is one `mousemove … none` and one screenshot.
+- **Check you are still driving the display your VM is on.** `xdotool` addresses a *display*, and
+  `xdotool search --name ...` finds whatever window is on it — not necessarily yours. If a second
+  `Xvfb` claims the same display number, or your own X server dies and is replaced, every command
+  keeps succeeding and `xdotool getmouselocation` keeps reporting the pointer at exactly the
+  coordinate you asked for, while the guest never moves. That is the same symptom as a dead guest
+  mouse and it is not one. Confirm the display is yours before concluding anything about the guest:
+
+  ```sh
+  pgrep -a Xvfb                                  # whose server is on :99, and at what geometry?
+  DISPLAY=:99 xdotool search --name VirtualBox   # is there even a VM window there?
+  VBoxManage showvminfo "<vm>" --machinereadable | grep VMState
+  ```
+
+  A VM whose frontend loses its X server is left in state **`aborted`** — the equivalent of pulling
+  the plug, so expect a `CHKDSK` on the next boot. `Qt WARNING: The X11 connection broke` in the
+  frontend's output is the tell. **This matters most when more than one automated session shares a
+  machine**: pick a display number per session rather than defaulting everyone to `:99`.
+
 - **Suspect your arithmetic before you suspect the harness.** The one time clicks in this session
   landed somewhere unintended, the cause was subtracting the window origin from a coordinate already
   in guest space — the pointer went exactly where it was told, which the screenshot showed plainly.
