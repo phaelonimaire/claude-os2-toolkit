@@ -1,7 +1,7 @@
 # Build hello-pm-menu
 
 A PM application with a **menu**, a **modal dialog**, an **accelerator table** and a
-**string table** — i.e. the first program shape that needs a resource script. Full flag
+**string table** - i.e. the first program shape that needs a resource script. Full flag
 detail: `../../recipes/build-pm-app.md`; the resource formats: `../../os2ref/resources-and-dialogs.md`.
 
 **GCC/kLIBC (on the OS/2 VM):**
@@ -27,7 +27,7 @@ wrc menu.res menu.exe
 ```
 
 Run it on an OS/2 target (`../../recipes/setup-test-vm.md`): a window with File and Edit
-menus. **File / Set Number…** opens the dialog; **Ctrl+Ins** and **Shift+Ins** (and
+menus. **File / Set Number...** opens the dialog; **Ctrl+Ins** and **Shift+Ins** (and
 Ctrl+C / Ctrl+V) drive the accelerators.
 
 ## What this scaffold exists to get right
@@ -37,7 +37,7 @@ Each is commented at its site in the source.
 
 1. **`WM_INITDLG` returns the opposite of `WM_INITDIALOG`.** PM's return is a *focus-set
    indicator*: `TRUE` means "I already set the focus", `FALSE` means "PM, set the
-   default". A ported `return TRUE;` leaves no control focused — the dialog renders
+   default". A ported `return TRUE;` leaves no control focused - the dialog renders
    perfectly and ignores the keyboard. Tell: the dialog's title bar stays in the
    *inactive* colour while its owner's stays active.
 
@@ -46,13 +46,13 @@ Each is commented at its site in the source.
    ever sees a menu mnemonic. `return MRFROMLONG(FALSE)` short-circuits it and the menu
    bar goes inert.
 
-3. **`wrc` does not inherit the compiler's include path** — `#include <os2.h>` fails with
+3. **`wrc` does not inherit the compiler's include path** - `#include <os2.h>` fails with
    `E062` without `-i=`. And for anything past text and buttons (combo boxes, list boxes,
    containers, notebooks) prefer `CONTROL` with an explicit `WC_*` class: `wrc` compiles
    resources for Windows *and* OS/2, and the bare shorthand can yield a template PM
    rejects at `WinDlgBox` time with `PMERR_INVALID_HWND`.
 
-4. **Coordinates are bottom-left origin, y upward** — in the window *and* in dialog
+4. **Coordinates are bottom-left origin, y upward** - in the window *and* in dialog
    units. The OK button at `y=10` is near the *bottom* of a 62-unit dialog.
 
 Ship **both** accelerator conventions: the traditional OS/2 CUA keys

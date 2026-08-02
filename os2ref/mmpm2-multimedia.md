@@ -15,7 +15,7 @@ operations (playing, recording, seeking) run **asynchronously**: the application
 with the `MCI_WAIT` flag or requests `MCI_NOTIFY` and receives a Presentation Manager message
 (`MM_MCINOTIFY`) at a window when the operation finishes.
 
-Provenance: **[DOC-IBM]** OS/2 Toolkit 4.5 headers — `mcios2.h` (MCI messages, device types,
+Provenance: **[DOC-IBM]** OS/2 Toolkit 4.5 headers - `mcios2.h` (MCI messages, device types,
 flags, all `MCI_*_PARMS` structures, `mciSendCommand`/`mciSendString`/`mciGetErrorString`
 prototypes), `mmioos2.h` (MMIO prototypes, `MMIOINFO`, `MMCKINFO`, `FOURCC`, open/chunk flags,
 `MMIOM_*` messages), `mciapi.h` (the `mciPlayFile` high-level convenience layer), `os2medef.h`
@@ -26,25 +26,25 @@ remarks the headers do not carry.
 
 ---
 
-## 1. The two interfaces at a glance [DOC-IBM — `mcios2.h`, `mmioos2.h`]
+## 1. The two interfaces at a glance [DOC-IBM - `mcios2.h`, `mmioos2.h`]
 
 | Layer | Entry points | What it addresses |
 |---|---|---|
 | MCI (binary) | `mciSendCommand` | Logical media devices, by numeric device ID + numeric message |
 | MCI (string) | `mciSendString` | Same devices, by English command string; parsed into a command internally |
-| MCI helpers | `mciGetErrorString`, `mciGetDeviceID`, `mciMakeGroup`, `mciDeleteGroup`, `mciSetSysValue`, `mciQuerySysValue` | Error text, name→ID lookup, device grouping, system values |
+| MCI helpers | `mciGetErrorString`, `mciGetDeviceID`, `mciMakeGroup`, `mciDeleteGroup`, `mciSetSysValue`, `mciQuerySysValue` | Error text, name->ID lookup, device grouping, system values |
 | High-level | `mciPlayFile`, `mciPlayResource`, `mciRecordAudioFile` | One-call "just play this file" convenience (`mciapi.h`) |
 | MMIO | `mmioOpen`/`Close`/`Read`/`Write`/`Seek`/`GetInfo`/`SetInfo` | Multimedia files (buffered I/O, RIFF chunks, format translation) |
 | MMIO chunks | `mmioDescend`/`Ascend`/`CreateChunk`/`Advance` | Navigating and building the RIFF chunk hierarchy |
 | MMIO plug-ins | `mmioInstallIOProc`, `mmioStringToFOURCC` | Registering storage/format handlers keyed by a four-character code |
 
-MMPM/2 time is expressed in **`MMTIME`** units — `typedef ULONG MMTIME`, one unit = 1/3000
+MMPM/2 time is expressed in **`MMTIME`** units - `typedef ULONG MMTIME`, one unit = 1/3000
 second [DOC-IBM `os2medef.h:53`]. Conversion macros (`MSECTOMM`, `MSECFROMMM`, `REDBOOKTOMM`,
-`HMSTOMM`, …) are provided in `mcios2.h` [DOC-IBM `mcios2.h:261-295`].
+`HMSTOMM`, ...) are provided in `mcios2.h` [DOC-IBM `mcios2.h:261-295`].
 
 ---
 
-## 2. `mciSendCommand` — the binary command interface
+## 2. `mciSendCommand` - the binary command interface
 
 ```c
 ULONG APIENTRY mciSendCommand(USHORT usDeviceID,   /* device ID from MCI_OPEN (ignored on MCI_OPEN) */
@@ -58,12 +58,12 @@ ULONG APIENTRY mciSendCommand(USHORT usDeviceID,   /* device ID from MCI_OPEN (i
 `usDeviceID` is the ID returned in `MCI_OPEN_PARMS.usDeviceID` from a prior `MCI_OPEN`; it is
 ignored on the `MCI_OPEN` message itself, and the special value `MCI_ALL_DEVICE_ID` (`0xFFFF`)
 addresses every open device [DOC-IBM `mcios2.h:108`]. `ulParam1` carries the flags that select
-which fields of `pParam2` are valid — flag bits are defined **per message**, with a small set of
-common flags (§2.1) shared across all messages. `pParam2` points to the parameter block whose
-type matches `usMessage` (§4). The **return value** carries `MCIERR_SUCCESS` (0) or an error code
+which fields of `pParam2` are valid - flag bits are defined **per message**, with a small set of
+common flags (section 2.1) shared across all messages. `pParam2` points to the parameter block whose
+type matches `usMessage` (section 4). The **return value** carries `MCIERR_SUCCESS` (0) or an error code
 in its **low-order word**; if the error is device-dependent, the **high-order word holds the
-device ID** [DOC — EDM2 `mciSendCommand`]. Every parameter block begins with an `HWND
-hwndCallback` field used as the notification target (§6).
+device ID** [DOC - EDM2 `mciSendCommand`]. Every parameter block begins with an `HWND
+hwndCallback` field used as the notification target (section 6).
 
 ### 2.1 Common message flags [DOC-IBM `mcios2.h:214-225`]
 
@@ -100,11 +100,11 @@ Available on all MCI messages unless a message description says otherwise. `MCI_
 | `MCI_SEEK` | `5` | Reposition without playing |
 | `MCI_STOP` | `6` | Stop the current operation |
 | `MCI_PAUSE` | `7` | Pause (resumable) |
-| `MCI_INFO` | `8` | Return textual information (product name, file name, …) |
+| `MCI_INFO` | `8` | Return textual information (product name, file name, ...) |
 | `MCI_GETDEVCAPS` | `9` | Query device capabilities |
-| `MCI_STATUS` | `10` | Query current status (position, mode, length, …) |
+| `MCI_STATUS` | `10` | Query current status (position, mode, length, ...) |
 | `MCI_SPIN` | `11` | Spin the medium up/down (disc devices) |
-| `MCI_SET` | `12` | Set device parameters (time format, volume, audio on/off, door, …) |
+| `MCI_SET` | `12` | Set device parameters (time format, volume, audio on/off, door, ...) |
 | `MCI_STEP` | `13` | Step by frames |
 | `MCI_RECORD` | `14` | Begin recording |
 | `MCI_SYSINFO` | `15` | Query MMPM/2 system information (installed devices, counts) |
@@ -124,20 +124,20 @@ Available on all MCI messages unless a message description says otherwise. `MCI_
 | `MCI_CONNECTION` | `33` | Query/establish a device-to-device connection |
 | `MCI_GROUP` | `34` | Group operation |
 
-Values `40`–`63` (`MCI_CAPTURE`, `MCI_FREEZE`, `MCI_PUT`, `MCI_WHERE`, `MCI_WINDOW`,
-`MCI_CUT`/`COPY`/`PASTE`/`UNDO`, `MCI_MIXSETUP`, `MCI_BUFFER`, …) are reserved for digital video,
+Values `40`-`63` (`MCI_CAPTURE`, `MCI_FREEZE`, `MCI_PUT`, `MCI_WHERE`, `MCI_WINDOW`,
+`MCI_CUT`/`COPY`/`PASTE`/`UNDO`, `MCI_MIXSETUP`, `MCI_BUFFER`, ...) are reserved for digital video,
 video overlay, and the amp-mixer streaming path [DOC-IBM `mcios2.h:70-95`]. `MCI_MAX_COMMAND` is
 `64`; messages at or above `MCI_USER_MESSAGES` (`2000`) are reserved for applications [DOC-IBM
 `mcios2.h:96,103`].
 
 ---
 
-## 4. MCI parameter blocks [DOC-IBM — `mcios2.h`]
+## 4. MCI parameter blocks [DOC-IBM - `mcios2.h`]
 
 `pParam2` points to a message-specific structure. Every block leads with `HWND hwndCallback`
 (the notification window). The base block is `MCI_GENERIC_PARMS`, used by messages that need no
 data beyond the callback (`MCI_STOP`, `MCI_PAUSE`, `MCI_RESUME`, `MCI_ACQUIREDEVICE`,
-`MCI_CLOSE`, …):
+`MCI_CLOSE`, ...):
 
 ```c
 typedef struct _MCI_GENERIC_PARMS {
@@ -160,7 +160,7 @@ typedef struct _MCI_GENERIC_PARMS {
 
 [DOC-IBM `mcios2.h:1146-1155,1212-1217,1289-1294,1359-1363,1650-1662,2082-2092,1084-1089,1096-1099,1117-1122,826-833`]
 
-Device-class variants extend the base blocks with extra fields — e.g. `MCI_AMP_OPEN_PARMS` adds
+Device-class variants extend the base blocks with extra fields - e.g. `MCI_AMP_OPEN_PARMS` adds
 `PVOID pDevDataPtr`, and `MCI_VID_OPEN_PARMS` / `MCI_DGV_OPEN_PARMS` add `HWND hwndParent` for a
 video device's display window [DOC-IBM `mcios2.h:1160-1191`]. `MCI_VD_PLAY_PARMS` /
 `MCI_DGV_PLAY_PARMS` add a speed field (`ulFactor` / `ulSpeed`) [DOC-IBM `mcios2.h:1220-1236`].
@@ -168,7 +168,7 @@ video device's display window [DOC-IBM `mcios2.h:1160-1191`]. `MCI_VD_PLAY_PARMS
 ### 4.1 `MCI_OPEN` in detail
 
 `MCI_OPEN` is the entry to every device. `pszDeviceType` names the device (a device-type name
-from §5, or a system alias); `pszElementName` is typically a file name to associate, or `NULL`.
+from section 5, or a system alias); `pszElementName` is typically a file name to associate, or `NULL`.
 On success, `usDeviceID` receives the handle used for all subsequent messages. `MCI_OPEN` flags
 [DOC-IBM `mcios2.h:1129-1136`]:
 
@@ -201,7 +201,7 @@ On success, `usDeviceID` receives the handle used for all subsequent messages. `
 
 `MCI_SET` with `MCI_SET_TIME_FORMAT` sets how positions are interpreted. Values include
 `MCI_FORMAT_MILLISECONDS` (`1`), `MCI_FORMAT_MMTIME` (`2`), `MCI_FORMAT_MSF` (`5`, minute/second/
-frame — CD "red book"), `MCI_FORMAT_TMSF` (`6`, track/min/sec/frame), `MCI_FORMAT_FRAMES` (`8`),
+frame - CD "red book"), `MCI_FORMAT_TMSF` (`6`, track/min/sec/frame), `MCI_FORMAT_FRAMES` (`8`),
 `MCI_FORMAT_HMS` (`9`), `MCI_FORMAT_TRACKS` (`0x0A`), `MCI_FORMAT_BYTES` (`0x0B`),
 `MCI_FORMAT_SAMPLES` (`0x0C`), `MCI_FORMAT_HMSF` (`0x0D`).
 
@@ -228,12 +228,12 @@ Also defined: `MCI_DEVTYPE_VIDEOTAPE` (`1`), `MCI_DEVTYPE_VIDEODISC` (`2`), `MCI
 `MCI_DEVTYPE_HEADPHONE` (`14`), `MCI_DEVTYPE_MICROPHONE` (`15`), `MCI_DEVTYPE_MONITOR` (`16`),
 `MCI_DEVTYPE_FILTER` (`18`). Per-class capability/status item bases are grouped
 (`MCI_AMP_ITEM_BASE` `0x1000`, `MCI_CD_ITEM_BASE` `0x2000`, `MCI_SEQ_ITEM_BASE` `0x5000`,
-`MCI_WAVE_ITEM_BASE` `0x6000`, `MCI_DGV_ITEM_BASE` `0x8000`, …) so each device type numbers its
+`MCI_WAVE_ITEM_BASE` `0x6000`, `MCI_DGV_ITEM_BASE` `0x8000`, ...) so each device type numbers its
 own set/status items in a distinct range [DOC-IBM `mcios2.h:178-186`].
 
 ---
 
-## 6. Asynchronous notification model [DOC-IBM — `mcios2.h`, Toolkit sample `CAPTION/caption.c`]
+## 6. Asynchronous notification model [DOC-IBM - `mcios2.h`, Toolkit sample `CAPTION/caption.c`]
 
 An MCI command either **blocks** (`MCI_WAIT`) or **returns immediately** (`MCI_NOTIFY`). With
 `MCI_NOTIFY`, the device performs the operation on its own thread and, when the operation
@@ -243,24 +243,24 @@ related device-posted messages are `MM_MCIPASSDEVICE` (`0x0501`, device use gain
 `MM_MCIPOSITIONCHANGE` (`0x0502`), `MM_MCICUEPOINT` (`0x0503`), and `MM_MCIEVENT` (`0x0505`)
 [DOC-IBM `mcios2.h:199-205`].
 
-**`MM_MCINOTIFY` message parameters** [DOC-IBM — observed in Toolkit sample `caption.c:1261-1264`]:
+**`MM_MCINOTIFY` message parameters** [DOC-IBM - observed in Toolkit sample `caption.c:1261-1264`]:
 
 | Field | Extractor | Meaning |
 |---|---|---|
 | notification code | `SHORT1FROMMP(mp1)` | `MCI_NOTIFY_SUCCESSFUL` (0), `MCI_NOTIFY_SUPERSEDED` (1), `MCI_NOTIFY_ABORTED` (2), `MCI_NOTIFY_ERROR` (3) |
 | user parameter | `SHORT2FROMMP(mp1)` | The `usUserParm` passed to `mciSendCommand`/`mciSendString` |
-| command message | `SHORT2FROMMP(mp2)` | The MCI message (`MCI_PLAY`, …) that generated this notification |
+| command message | `SHORT2FROMMP(mp2)` | The MCI message (`MCI_PLAY`, ...) that generated this notification |
 
 The notification codes are `MCI_NOTIFY_SUCCESSFUL`/`SUPERSEDED`/`ABORTED`/`ERROR`
 [DOC-IBM `mcios2.h:191-194`]. On an error notification the code word carries the error; the
 handler dispatches on the command message to decide what completed. For `MM_MCIPASSDEVICE`,
-`SHORT1FROMMP(mp2)` is `MCI_GAINING_USE` (`2`) or `MCI_LOSING_USE` (`1`) [DOC-IBM `mcios2.h:207-208`] — the mechanism by which a
+`SHORT1FROMMP(mp2)` is `MCI_GAINING_USE` (`2`) or `MCI_LOSING_USE` (`1`) [DOC-IBM `mcios2.h:207-208`] - the mechanism by which a
 non-shareable device (e.g. the amp-mixer) is handed between applications as their windows
 activate [DOC-IBM `mcios2.h:207-208`; observed `daudio.c:690-697`].
 
 ---
 
-## 7. `mciSendString` — the string command interface
+## 7. `mciSendString` - the string command interface
 
 ```c
 ULONG APIENTRY mciSendString(PSZ    pszCommandBuf,   /* "<command> <object> <keywords>" */
@@ -269,17 +269,17 @@ ULONG APIENTRY mciSendString(PSZ    pszCommandBuf,   /* "<command> <object> <key
                              HWND   hwndCallBack,    /* notify window (required if "notify" used) */
                              USHORT usUserParm);     /* echoed in the notification */
 ```
-[DOC-IBM `mcios2.h:2404`; DOC — EDM2 `mciSendString`]
+[DOC-IBM `mcios2.h:2404`; DOC - EDM2 `mciSendString`]
 
 The command string has the form `<command> <object> <keywords>`, where the object is a device
 type, file name, or alias (`"open bell.wav alias wav1 wait"`, `"play wav1 from 0 to 1000 wait"`,
 `"status cdaudio mode"`). An internal parser converts the string into the equivalent
 `mciSendCommand` parameter block and message, so the string and command interfaces are two views
-of one engine [DOC — EDM2 `mciSendCommand` remarks]. Return data (for queries such as `status`)
+of one engine [DOC - EDM2 `mciSendCommand` remarks]. Return data (for queries such as `status`)
 is written as text into `pszReturnString`; if the application wants the parser to format the
 return value it must use the `wait` keyword. As with the binary interface, the return code is
 `MCIERR_SUCCESS` or an error code in the low-order word, with the device ID in the high-order word
-for device-dependent errors; `mciGetErrorString` converts a code to text [DOC — EDM2
+for device-dependent errors; `mciGetErrorString` converts a code to text [DOC - EDM2
 `mciSendString`]. The keywords `notify` and `wait` correspond to the `MCI_NOTIFY` / `MCI_WAIT`
 flags.
 
@@ -332,10 +332,10 @@ The stream-manager error space begins at `MEBASE` = `MCIERR_BASE + 500` (`5500`)
 
 ---
 
-## 9. MMIO — multimedia file I/O
+## 9. MMIO - multimedia file I/O
 
 MMIO is a buffered, format-aware file API. A handle is an **`HMMIO`** (`typedef ULONG HMMIO`)
-[DOC-IBM `os2medef.h:56`]. Every file is read and written through an **IOProc** — an installable
+[DOC-IBM `os2medef.h:56`]. Every file is read and written through an **IOProc** - an installable
 procedure identified by a four-character code (`FOURCC`) that knows a storage system (e.g. DOS
 file, in-memory buffer) and, layered on top, a file-format IOProc. This lets the same
 `mmioRead`/`mmioWrite` calls transparently translate between a file's stored format and the
@@ -347,9 +347,9 @@ application's desired format.
 |---|---|---|
 | `mmioOpen` | `HMMIO (PSZ pszFileName, PMMIOINFO pmmioinfo, ULONG ulOpenFlags)` | Open/create a media file; returns an `HMMIO` (0 on failure) |
 | `mmioClose` | `USHORT (HMMIO hmmio, USHORT usFlags)` | Close a media file |
-| `mmioRead` | `LONG (HMMIO hmmio, PCHAR pchBuffer, LONG cBytes)` | Read `cBytes`; returns bytes read (−1 = error, 0 = EOF) |
-| `mmioWrite` | `LONG (HMMIO hmmio, PCHAR pchBuffer, LONG cBytes)` | Write `cBytes`; returns bytes written (−1 = error) |
-| `mmioSeek` | `LONG (HMMIO hmmio, LONG lOffset, LONG lOrigin)` | Reposition; returns new offset (−1 = error) |
+| `mmioRead` | `LONG (HMMIO hmmio, PCHAR pchBuffer, LONG cBytes)` | Read `cBytes`; returns bytes read (-1 = error, 0 = EOF) |
+| `mmioWrite` | `LONG (HMMIO hmmio, PCHAR pchBuffer, LONG cBytes)` | Write `cBytes`; returns bytes written (-1 = error) |
+| `mmioSeek` | `LONG (HMMIO hmmio, LONG lOffset, LONG lOrigin)` | Reposition; returns new offset (-1 = error) |
 | `mmioGetInfo` | `USHORT (HMMIO hmmio, PMMIOINFO pmmioinfo, USHORT usFlags)` | Copy out the handle's `MMIOINFO` (e.g. for direct buffer access) |
 | `mmioSetInfo` | `USHORT (HMMIO hmmio, PMMIOINFO pmmioinfo, USHORT usFlags)` | Write back a modified `MMIOINFO` |
 | `mmioSetBuffer` | `USHORT (HMMIO hmmio, PCHAR pchBuffer, LONG cBytes, USHORT usFlags)` | Change/enable the I/O buffer |
@@ -373,7 +373,7 @@ Passed to `mmioOpen` to override defaults (IOProc, buffer, translation) and retu
 
 | Field | Type | Meaning |
 |---|---|---|
-| `ulFlags` | `ULONG` | Open flags (§9.3) |
+| `ulFlags` | `ULONG` | Open flags (section 9.3) |
 | `fccIOProc` | `FOURCC` | Four-character code of the IOProc to use |
 | `pIOProc` | `PMMIOPROC` | Explicit IOProc function pointer (in place of `fccIOProc`) |
 | `ulErrorRet` | `ULONG` | Extended error return |
@@ -415,7 +415,7 @@ Return codes: `mmioOpen` returns `0` on failure (extended error in `MMIOINFO.ulE
 ### 9.4 `mmioSeek` origins
 
 `lOrigin` uses the standard C stream origins `SEEK_SET` (start of file), `SEEK_CUR` (current
-position), and `SEEK_END` (end of file); `mmioSeek` returns the resulting absolute offset, or −1
+position), and `SEEK_END` (end of file); `mmioSeek` returns the resulting absolute offset, or -1
 on error [DOC-IBM `mmioos2.h:889`; observed in Toolkit samples, e.g. `ULTIMOIO/ioseek.c`,
 `mmioSeek(hmmio, lSeekValue, SEEK_SET)`].
 
@@ -435,14 +435,14 @@ value. The macro is:
 ```
 
 Predefined codes include `FOURCC_RIFF` (`'R','I','F','F'`), `FOURCC_LIST` (`'L','I','S','T'`),
-`FOURCC_MEM` (`'M','E','M',' '` — an in-memory file), `FOURCC_DOS` (`'D','O','S',' '` — a DOS
+`FOURCC_MEM` (`'M','E','M',' '` - an in-memory file), `FOURCC_DOS` (`'D','O','S',' '` - a DOS
 file), and the compound-file codes `FOURCC_CTOC`, `FOURCC_CGRP`, `FOURCC_CF`. `mmioStringToFOURCC`
 builds one from a string at runtime.
 
 ### 10.2 Chunks and `MMCKINFO` [DOC-IBM `mmioos2.h:46-52`]
 
-A RIFF file is a tree of **chunks**. Every chunk has an 8-byte header — a `FOURCC` id and a
-32-bit size — followed by its data; `RIFF` and `LIST` chunks are containers whose data begins with
+A RIFF file is a tree of **chunks**. Every chunk has an 8-byte header - a `FOURCC` id and a
+32-bit size - followed by its data; `RIFF` and `LIST` chunks are containers whose data begins with
 a `FOURCC` *form type* and then holds nested chunks. `MMCKINFO` describes a chunk during
 navigation or creation:
 
@@ -487,7 +487,7 @@ under a `FOURCC`. The MMIO engine drives it with `MMIOM_*` messages (base `MMIOM
 This is how MMIO stays format-independent: `mmioRead` on a `.WAV` file and on a compressed audio
 file are the same call to the application; the difference is the IOProc chain (storage-system
 IOProc plus optional format/CODEC IOProc) that the handle carries. IOProc capability flags
-(`MMIO_CANREADTRANSLATED`, `MMIO_CANSEEKTRANSLATED`, …) advertise what a given IOProc supports
+(`MMIO_CANREADTRANSLATED`, `MMIO_CANSEEKTRANSLATED`, ...) advertise what a given IOProc supports
 [DOC-IBM `mmioos2.h:150-159`].
 
 ### 11.1 MMIO error codes [DOC-IBM `meerror.h:304-337`]
@@ -500,22 +500,22 @@ Based at `MMIOERR_BASE` = `MEBASE + 1000`. Examples: `MMIOERR_CHUNKNOTFOUND`,
 ---
 
 ## Sources opened
-- `README.md`, `file-io.md` — house style.
-- `os2me.h` — MMPM/2 top-level include (component gating).
-- `mcios2.h` — MCI messages, device types, flags, `MCI_*_PARMS`
+- `README.md`, `file-io.md` - house style.
+- `os2me.h` - MMPM/2 top-level include (component gating).
+- `mcios2.h` - MCI messages, device types, flags, `MCI_*_PARMS`
   structures, `mciSendCommand`/`mciSendString`/`mciGetErrorString`/`mciGetDeviceID` prototypes,
   `MM_MCI*` notification messages, time formats, mode values.
-- `mciapi.h` — `mciPlayFile`/`mciPlayResource`/`mciRecordAudioFile`
+- `mciapi.h` - `mciPlayFile`/`mciPlayResource`/`mciRecordAudioFile`
   high-level layer and their flags.
-- `mmioos2.h` — MMIO prototypes, `MMIOINFO`, `MMCKINFO`, `FOURCC`
+- `mmioos2.h` - MMIO prototypes, `MMIOINFO`, `MMCKINFO`, `FOURCC`
   and `mmioFOURCC`, open/chunk flags, `MMIOM_*` IOProc messages, MMIO success/error sentinels.
-- `os2medef.h` — `MMTIME`, `HMMIO`, `FOURCC` base typedefs.
-- `meerror.h` — `MCIERR_*`, `MEBASE`, `MMIOERR_*` error values.
-- `Toolkit sample MM/CAPTION/caption.c` — observed `MM_MCINOTIFY` mp1/mp2
-  parameter breakdown; `.../DAUDIO/daudio.c` — observed `MM_MCIPASSDEVICE` / acquire-device usage;
-  `.../ULTIMOIO/ioseek.c` — observed `mmioSeek` origin usage.
-- EDM2 `MciSendCommand`, `MciSendString` — behavioural remarks
+- `os2medef.h` - `MMTIME`, `HMMIO`, `FOURCC` base typedefs.
+- `meerror.h` - `MCIERR_*`, `MEBASE`, `MMIOERR_*` error values.
+- `Toolkit sample MM/CAPTION/caption.c` - observed `MM_MCINOTIFY` mp1/mp2
+  parameter breakdown; `.../DAUDIO/daudio.c` - observed `MM_MCIPASSDEVICE` / acquire-device usage;
+  `.../ULTIMOIO/ioseek.c` - observed `mmioSeek` origin usage.
+- EDM2 `MciSendCommand`, `MciSendString` - behavioural remarks
   (return-code word layout, string-parser relationship, notify semantics).
 
 ## See also
-- `dive-video.md` — DIVE (Direct Interface Video Extensions), the fast-video/blitter path used by motion-video handlers.
+- `dive-video.md` - DIVE (Direct Interface Video Extensions), the fast-video/blitter path used by motion-video handlers.

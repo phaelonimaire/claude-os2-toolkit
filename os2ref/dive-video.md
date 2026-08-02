@@ -1,10 +1,10 @@
-# DIVE — Direct Interface Video Extensions
+# DIVE - Direct Interface Video Extensions
 
 **DIVE** (Direct Interface Video Extensions) is the OS/2 multimedia system's fast-video
 interface: a single stand-alone DLL that gives motion-video decoders, interactive games, and
 3-D graphics libraries an optimized path to the screen. Its purpose is to consolidate the
-awkward, device-specific work of writing straight into video memory — the "direct access" or
-"black hole" path — into one API that handles clipping to the visible region, image scaling,
+awkward, device-specific work of writing straight into video memory - the "direct access" or
+"black hole" path - into one API that handles clipping to the visible region, image scaling,
 color-space (pel-format) conversion, and bank switching on banked displays. An application can
 either hand pixels to the **DIVE blitter** (which uses acceleration hardware where present) and
 let DIVE do the clipping/conversion, or take a raw pointer to the frame buffer and do that work
@@ -35,7 +35,7 @@ Two ways to use an instance: [DOC-IBM, mmapg.txt "Using Dive"]
 
 - **The DIVE blitter.** The application fills *image buffers* (identified by small integer
   buffer numbers), describes the source and destination with `DiveSetupBlitter`, then calls
-  `DiveBlitImage` to transfer buffer→screen or buffer→buffer. DIVE performs the clipping,
+  `DiveBlitImage` to transfer buffer->screen or buffer->buffer. DIVE performs the clipping,
   scaling, and color conversion.
 - **Direct frame-buffer access.** `DiveOpen` (with `fNonScreenInstance = FALSE`) returns a
   pointer to the frame buffer; the application does its own clipping, color conversion, and bank
@@ -64,7 +64,7 @@ Three well-known destination "buffer" identifiers select a screen plane in `Dive
 | `DIVE_BUFFER_ALTERNATE_PLANE` | `0x00000002` | Transfer to the alternate (overlay) plane; an error if the hardware has none. [DOC-IBM, dive.h:57,67] |
 
 `DIVE_FULLY_VISIBLE` (`0xffffffff`) is a sentinel for `ulNumDstRects` meaning "the whole
-destination is visible" — usable when the application knows there is no clipping (e.g. a
+destination is visible" - usable when the application knows there is no clipping (e.g. a
 non-screen destination) rather than constructing a visible-region array. [DOC-IBM,
 dive.h:59,156-158]
 
@@ -100,7 +100,7 @@ and uses `APIENTRY` linkage. [DOC-IBM, dive.h:24-53,169-240]
 > Secondary sources sometimes name a `DiveSetDestinationColorKey`; no such symbol exists in the
 > Toolkit's `dive.h`. The color-key/transparency mechanism is `DiveSetTransparentBlitMode` plus
 > destination color-key handling implied by the alternate-plane "key color" note (dive.h:75).
-> Treat a distinct `DiveSetDestinationColorKey` entry point as **[unverified]** — not present in
+> Treat a distinct `DiveSetDestinationColorKey` entry point as **[unverified]** - not present in
 > the source examined.
 
 ### Lifecycle: open and close
@@ -120,7 +120,7 @@ and no frame-buffer pointer is meaningful. A matching `DiveClose` must be made a
 
 ## 3. `DiveQueryCaps` and `DIVE_CAPS`
 
-`DiveQueryCaps(PDIVE_CAPS pDiveCaps, ULONG ulPlaneBufNum)` reports what the display can do — depth,
+`DiveQueryCaps(PDIVE_CAPS pDiveCaps, ULONG ulPlaneBufNum)` reports what the display can do - depth,
 resolution, scan-line size, whether the plane is directly addressable and/or bank-switched, its
 color encoding, and the set of supported input/output FOURCC formats. [DOC-IBM, dive.h:169]
 
@@ -147,14 +147,14 @@ into which DIVE writes the supported-format FOURCCs. [DOC-IBM, dive.h:84,99-100]
 
 ---
 
-## 4. The blitter setup — `SETUP_BLITTER`
+## 4. The blitter setup - `SETUP_BLITTER`
 
 `DiveSetupBlitter(HDIVE hDiveInst, PSETUP_BLITTER pSetupBlitter)` establishes everything a
 subsequent `DiveBlitImage` needs: the source and destination color formats and geometry, the
 sub-rectangle to display, screen position, and the visible-region clip list. It must be called
 again whenever the visible region, source color format, or source/destination size changes.
 [DOC-IBM, dive.h:176; mmapg.txt line 5008] Calling `DiveSetupBlitter(hDiveInst, 0)` (a NULL setup
-pointer) suspends blitting — used in response to `WM_VRNDISABLED`. [DOC-IBM, mmapg.txt line 5002]
+pointer) suspends blitting - used in response to `WM_VRNDISABLED`. [DOC-IBM, mmapg.txt line 5002]
 
 ```c
 typedef struct _SETUP_BLITTER {
@@ -187,19 +187,19 @@ typedef struct _SETUP_BLITTER {
 Notes on the fields, from the header: [DOC-IBM, dive.h:110-162]
 
 - **`ulStructLen`** is set to the number of bytes actually used; the header marks the legal
-  partial sizes 8, 28, 32, 52, 60, or 68 — so a caller may fill only a prefix of the struct.
+  partial sizes 8, 28, 32, 52, 60, or 68 - so a caller may fill only a prefix of the struct.
 - **`fInvert`** flips the image: bit 0 horizontal, bit 1 vertical; other bits ignored.
 - **Source vs. destination geometry.** A width/height mismatch between source and destination is
   how scaling is requested. `ulSrcPosX/Y` and `lDstPosX/Y` select sub-rectangles. Destination
   positions are signed (`LONG`); source positions are unsigned.
-- **`ulDitherType`** — `0` no dither, `1` a 2×2 dither; dithering applies only to direct-color →
+- **`ulDitherType`** - `0` no dither, `1` a 2x2 dither; dithering applies only to direct-color ->
   `LUT8` conversion.
-- **`lScreenPosX/lScreenPosY`** — the window's position in world/desktop coordinates, with Y
+- **`lScreenPosX/lScreenPosY`** - the window's position in world/desktop coordinates, with Y
   measured from the bottom (`0` = bottom). Ignored unless the destination is the screen.
-- **`ulNumDstRects` / `pVisDstRects`** — the visible-region rectangle list (window coordinates),
+- **`ulNumDstRects` / `pVisDstRects`** - the visible-region rectangle list (window coordinates),
   ignored for non-screen destinations; use `DIVE_FULLY_VISIBLE` when there is no clipping.
 
-For a non-screen (buffer→buffer) blit, the destination is described purely by
+For a non-screen (buffer->buffer) blit, the destination is described purely by
 `fccDstColorFormat` / `ulDstWidth` / `ulDstHeight`, with `ulNumDstRects = 1` and a single
 rectangle `(0, 0, ulDstWidth, ulDstHeight)`. [DOC-IBM, mmapg.txt line 5062]
 
@@ -209,7 +209,7 @@ rectangle `(0, 0, ulDstWidth, ulDstHeight)`. [DOC-IBM, mmapg.txt line 5062]
 
 DIVE prefers to allocate source buffers itself, because it can place them in off-screen VRAM to
 accelerate blits. [DOC-IBM, mmapg.txt line 4952] The buffer lifecycle is
-**allocate → begin-access → fill → end-access → blit → free**.
+**allocate -> begin-access -> fill -> end-access -> blit -> free**.
 
 ```c
 ULONG APIENTRY DiveAllocImageBuffer ( HDIVE hDiveInst, PULONG pulBufferNumber,
@@ -235,7 +235,7 @@ ULONG APIENTRY DiveEndImageBufferAccess ( HDIVE hDiveInst, ULONG ulBufferNumber 
 - **`DiveBeginImageBufferAccess`** locks the buffer for CPU access and returns its base address
   in `*ppbImageBuffer` and its geometry in `*pulBufferScanLineBytes` (bytes per scan line, which
   DIVE computes from the color format) and `*pulBufferScanLines`. The application writes pixel
-  data using the returned scan-line stride — a line at a time — then calls
+  data using the returned scan-line stride - a line at a time - then calls
   `DiveEndImageBufferAccess` before blitting. [DOC-IBM, dive.h:233-240; mmapg.txt lines 4973-4979]
 
 ### Blitting
@@ -248,10 +248,10 @@ ULONG APIENTRY DiveBlitImageLines ( HDIVE hDiveInst, ULONG ulSrcBufNumber,
 [DOC-IBM, dive.h:179-189]
 
 `DiveBlitImage` transfers `ulSrcBufNumber` to `ulDstBufNumber`, where the destination may be an
-allocated buffer number or one of the `DIVE_BUFFER_*` screen-plane identifiers (§1). The current
+allocated buffer number or one of the `DIVE_BUFFER_*` screen-plane identifiers (section 1). The current
 `DiveSetupBlitter` settings govern conversion, scaling, inversion, and clipping.
-`DiveBlitImageLines` is identical but takes `pbLineMask`, one byte per source line — `0` means
-the line is unchanged (skip it), `0xFF` means changed — for partial-frame updates. [DOC-IBM,
+`DiveBlitImageLines` is identical but takes `pbLineMask`, one byte per source line - `0` means
+the line is unchanged (skip it), `0xFF` means changed - for partial-frame updates. [DOC-IBM,
 dive.h:179-189]
 
 ---
@@ -278,11 +278,11 @@ system-defined table: [DOC-IBM, dive.h:273-277]
 | `DIVE_PALETTE_PHYSICAL` | `(PBYTE)0x00000000` | Use the current physical palette. |
 | `DIVE_PALETTE_DEFAULT` | `(PBYTE)0xffffffff` | Use the default palette. |
 
-**Neither** palette call sets the *physical* hardware palette — they only inform DIVE of what a
+**Neither** palette call sets the *physical* hardware palette - they only inform DIVE of what a
 palette is for conversion. [DOC-IBM, dive.h:245] The header cautions that an application which
-must set the physical palette should confine itself to the middle 236 entries (10–245, leaving 10
+must set the physical palette should confine itself to the middle 236 entries (10-245, leaving 10
 at each end for the Workplace Shell), or run full-screen if it needs all 256; and that doing so
-sends no `WM_REALIZEPALETTE` to other applications, so their colors will be wrong — the practice
+sends no `WM_REALIZEPALETTE` to other applications, so their colors will be wrong - the practice
 is discouraged. The physical palette is set via a PM sequence
 (`GpiCreateLogColorTable` + `Gre32EntrY3(hdc, 0, 0x000060C6)`), not through DIVE. [DOC-IBM,
 dive.h:244-270] Applications must call `DiveSetSourcePalette` at init and again on each
@@ -312,12 +312,12 @@ the bank number and the count of remaining scan lines in that bank. `prectlDest`
 the window's visible region for correct clipping. On a bank-switched display the application must
 not write more than `*pulRemLinesInBank` lines before calling `DiveSwitchBank`. Data written
 directly must already be in the screen's color-encoding (from `DiveQueryCaps`) and, at 256
-colors, match the current physical palette — DIVE's blitter can be used beforehand to convert
+colors, match the current physical palette - DIVE's blitter can be used beforehand to convert
 into a same-encoding destination buffer. [DOC-IBM, mmapg.txt lines 5095-5106]
 
 ---
 
-## 8. Transparent (color-key) blitting — `INCL_MM_OS2`
+## 8. Transparent (color-key) blitting - `INCL_MM_OS2`
 
 `DiveSetTransparentBlitMode` composites graphics and image data using a transparency key: a
 destination pixel is left unchanged where the corresponding source pixel is "transparent"
@@ -373,18 +373,18 @@ own format" code. [DOC-IBM, fourcc.h:20-42]
 | `FOURCC_MONO` | `'MONO'` | 1 bit/pixel, 0 = black / 1 = white. [DOC-IBM, fourcc.h:37,160-164] |
 | `FOURCC_VGA` | `'VGA '` | 16-color VGA, two 4-bit pixels per byte. [DOC-IBM, fourcc.h:42,206-210] |
 | `FOURCC_Y888` | `'Y888'` | YUV, three full-size planes (CCIR601). [DOC-IBM, fourcc.h:32,105-123] |
-| `FOURCC_Y2X2` | `'Y2X2'` | YUV, three planes, chroma 2×2 subsampled. [DOC-IBM, fourcc.h:33,125-135] |
-| `FOURCC_Y4X4` | `'Y4X4'` | YUV, three planes, chroma 4×4 subsampled. [DOC-IBM, fourcc.h:34,137-145] |
-| `FOURCC_YUV9` | `'YUV9'` | DVI/Indeo three-plane 4×4-subsampled (same as Y4X4). [DOC-IBM, fourcc.h:35,147-148] |
-| `FOURCC_Y644` | `'Y644'` | Two-plane; Y plane + 4×4-subsampled combined UV plane. [DOC-IBM, fourcc.h:36,150-158] |
-| `FOURCC_Y422` | `'Y422'` | Single-plane interleaved Y-U-Y-V (2×1 subsampled). [DOC-IBM, fourcc.h:38,166-174] |
+| `FOURCC_Y2X2` | `'Y2X2'` | YUV, three planes, chroma 2x2 subsampled. [DOC-IBM, fourcc.h:33,125-135] |
+| `FOURCC_Y4X4` | `'Y4X4'` | YUV, three planes, chroma 4x4 subsampled. [DOC-IBM, fourcc.h:34,137-145] |
+| `FOURCC_YUV9` | `'YUV9'` | DVI/Indeo three-plane 4x4-subsampled (same as Y4X4). [DOC-IBM, fourcc.h:35,147-148] |
+| `FOURCC_Y644` | `'Y644'` | Two-plane; Y plane + 4x4-subsampled combined UV plane. [DOC-IBM, fourcc.h:36,150-158] |
+| `FOURCC_Y422` | `'Y422'` | Single-plane interleaved Y-U-Y-V (2x1 subsampled). [DOC-IBM, fourcc.h:38,166-174] |
 | `FOURCC_Y42B` | `'Y42B'` | Y422 byte-swapped within words. [DOC-IBM, fourcc.h:39,176-180] |
 | `FOURCC_Y42D` | `'Y42D'` | Y422 byte-swapped within DWORDs. [DOC-IBM, fourcc.h:40,182-186] |
-| `FOURCC_Y411` | `'Y411'` | Single-plane interleaved, 4×1 subsampled. [DOC-IBM, fourcc.h:41,188-204] |
+| `FOURCC_Y411` | `'Y411'` | Single-plane interleaved, 4x1 subsampled. [DOC-IBM, fourcc.h:41,188-204] |
 
 The RGB bit layouts (e.g. `R565` = `rrrrr gggggg bbbbb` in a USHORT) and the CCIR601 conversion
 equations for the YUV formats are given field-by-field in `fourcc.h`. [DOC-IBM, fourcc.h:53-204]
-A **conversion support matrix** in the same header shows which (input → output) format pairs the
+A **conversion support matrix** in the same header shows which (input -> output) format pairs the
 DIVE blitter converts; broadly, the RGB/`LUT8` output rows and `Y422` accept nearly all listed
 inputs, while most YUV planar formats are inputs only. [DOC-IBM, fourcc.h:215-241] The programming
 guide lists the engine's supported input formats (`LUT8`, `GREY`, `R565`/`R555`/`R664`,
@@ -451,7 +451,7 @@ dive.h:24-53]
 | First allocated buffer number | `0x00000010` | dive.h:63 |
 | `DIVE_PALETTE_PHYSICAL` | `(PBYTE)0x00000000` | dive.h:276 |
 | `DIVE_PALETTE_DEFAULT` | `(PBYTE)0xffffffff` | dive.h:277 |
-| `DIVE_TBM_*` | `0x0`–`0x05` | dive.h:297-319 |
+| `DIVE_TBM_*` | `0x0`-`0x05` | dive.h:297-319 |
 
 ## See also
-- `mmpm2-multimedia.md` — the surrounding MMOS2 MCI/MMIO subsystem and the `FOURCC`/`mmioFOURCC` codes DIVE shares.
+- `mmpm2-multimedia.md` - the surrounding MMOS2 MCI/MMIO subsystem and the `FOURCC`/`mmioFOURCC` codes DIVE shares.

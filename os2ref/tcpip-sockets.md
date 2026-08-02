@@ -3,8 +3,8 @@
 The BSD-derived sockets programming interface that OS/2 TCP/IP exports to applications:
 `socket`, `bind`, `listen`, `accept`, `connect`, the `send`/`recv` and `sendto`/`recvfrom`
 families, `select`, socket-option and name query calls, and the address structures they share.
-It is a Berkeley 4.4-style API — the OS/2 Toolkit ships the Berkeley `sys/socket.h`,
-`netinet/in.h`, and `netdb.h` almost verbatim — with a small set of OS/2-specific additions
+It is a Berkeley 4.4-style API - the OS/2 Toolkit ships the Berkeley `sys/socket.h`,
+`netinet/in.h`, and `netdb.h` almost verbatim - with a small set of OS/2-specific additions
 (`sock_init`, `soclose`, `so_cancel`, `os2_ioctl`, `os2_select`, `sock_errno`/`psock_errno`) that
 exist because an OS/2 socket is **not** a Control Program file handle and cannot be reached through
 `DosRead`/`DosWrite`/`DosClose`. Every entry point uses the `_System` (`APIENTRY`) linkage. A
@@ -13,12 +13,12 @@ descriptor is a plain `int` returned by `socket()` or `accept()`; addresses are 
 port values travel in **network byte order** (big-endian), for which the `htons`/`htonl` /
 `ntohs`/`ntohl` conversions are provided.
 
-Provenance: **[DOC-IBM]** OS/2 Toolkit 4.5 TCP/IP headers — `sys/socket.h` (call prototypes,
+Provenance: **[DOC-IBM]** OS/2 Toolkit 4.5 TCP/IP headers - `sys/socket.h` (call prototypes,
 `SOCK_*`, `AF_*`/`PF_*`, `SO_*`, `MSG_*`, `struct sockaddr`/`msghdr`/`linger`), `netinet/in.h`
 (`struct sockaddr_in`/`in_addr`, `IPPROTO_*`, `INADDR_*`, `sin_*`), `netdb.h`
 (`gethostbyname`/`getservbyname` and `struct hostent`/`servent`/`protoent`), `unistd.h`
 (`soclose`, `select`, `os2_select`), `sys/ioctl.h` + `sys/sockio.h` + `sys/filio.h`
-(`ioctl`/`os2_ioctl`, `SIOC*`, `FIONBIO`), `types.h` (`fd_set`, `FD_*` — the 32-bit `_System` API), `arpa/inet.h`
+(`ioctl`/`os2_ioctl`, `SIOC*`, `FIONBIO`), `types.h` (`fd_set`, `FD_*` - the 32-bit `_System` API), `arpa/inet.h`
 (`inet_addr`/`inet_ntoa`), `sys/itypes.h` and `pmwsock.h` (byte-order macros/prototypes),
 `nerrno.h` (`SOCE*` error codes). **[DOC-IBM]** the IBM TCP/IP Toolkit `SAMPLES/TCPIPTK/SOCKET`
 programs (`tcpc.c`, `tcps.c`, `udpc.c`, `selects.c`) and `OS2IOCTL/os2ioctl.c` for canonical call
@@ -27,9 +27,9 @@ requirement, `select` timeout semantics) the headers do not carry.
 
 ---
 
-## 1. Function map [DOC-IBM — `sys/socket.h`, `unistd.h`, `netdb.h`, `arpa/inet.h`, `sys/ioctl.h`]
+## 1. Function map [DOC-IBM - `sys/socket.h`, `unistd.h`, `netdb.h`, `arpa/inet.h`, `sys/ioctl.h`]
 
-### 1.1 Core socket calls [DOC-IBM — `sys/socket.h`]
+### 1.1 Core socket calls [DOC-IBM - `sys/socket.h`]
 
 | Function | Prototype | Purpose |
 |---|---|---|
@@ -51,7 +51,7 @@ requirement, `select` timeout semantics) the headers do not carry.
 | `shutdown` | `int shutdown(int s, int how)` | Shut down part or all of a full-duplex connection |
 | `socketpair` | `int socketpair(int domain, int type, int protocol, int *sv)` | Create a connected pair of sockets |
 
-### 1.2 OS/2-specific additions [DOC-IBM — `sys/socket.h`, `unistd.h`, `sys/ioctl.h`]
+### 1.2 OS/2-specific additions [DOC-IBM - `sys/socket.h`, `unistd.h`, `sys/ioctl.h`]
 
 | Function | Prototype | Purpose |
 |---|---|---|
@@ -67,10 +67,10 @@ requirement, `select` timeout semantics) the headers do not carry.
 | `psock_errno` | `void psock_errno(const char *string)` | Print `string` plus the text of the last socket error |
 | `sock_strerror` | `char *sock_strerror(int errno)` | Map an `SOCE*` code to its message text |
 | `getinetversion` | `int getinetversion(char *)` | Query the installed TCP/IP stack version |
-| `addsockettolist` | `void addsockettolist(int s)` | Register a socket in the process's socket list (see §2) |
+| `addsockettolist` | `void addsockettolist(int s)` | Register a socket in the process's socket list (see section 2) |
 | `removesocketfromlist` | `int removesocketfromlist(int s)` | Remove a socket from the process's socket list |
 
-### 1.3 Name / address resolution [DOC-IBM — `netdb.h`, `arpa/inet.h`]
+### 1.3 Name / address resolution [DOC-IBM - `netdb.h`, `arpa/inet.h`]
 
 | Function | Prototype | Purpose |
 |---|---|---|
@@ -92,10 +92,10 @@ The name-database files live under `\MPTN\ETC` (`hosts`, `services`, `protocols`
 
 ---
 
-## 2. The socket handle model — a socket is not a file handle [DOC-IBM / DOC]
+## 2. The socket handle model - a socket is not a file handle [DOC-IBM / DOC]
 
 A socket descriptor is a small `int`, returned by `socket()` or `accept()`, that names an entry in
-a **separate descriptor space** owned by the TCP/IP socket library and its transport driver — not
+a **separate descriptor space** owned by the TCP/IP socket library and its transport driver - not
 the Control Program file-handle (`HFILE`) space. The evidence is structural in the API itself:
 
 - A socket is closed with **`soclose(s)`**, a dedicated call [DOC-IBM `unistd.h:46`], not with
@@ -103,20 +103,20 @@ the Control Program file-handle (`HFILE`) space. The evidence is structural in t
   (`tcpc.c`, `tcps.c`, `udpc.c`) [DOC-IBM].
 - Control is done with **`ioctl`/`os2_ioctl`** [DOC-IBM `sys/ioctl.h:61,65`], not `DosDevIOCtl`,
   and errors are read with **`sock_errno()`** [DOC-IBM `sys/socket.h:383`] returning the biased
-  `SOCE*` codes (§8), a namespace disjoint from the Control Program `ERROR_*` space.
+  `SOCE*` codes (section 8), a namespace disjoint from the Control Program `ERROR_*` space.
 - The socket library keeps a **per-process socket list**; `addsockettolist()` /
   `removesocketfromlist()` register and deregister descriptors in it [DOC-IBM
   `sys/socket.h:389-390`]. This list is what lets the library find and clean up a process's sockets
   independently of the file system.
 
 Before any socket call, a process must call **`sock_init()`** once; it initializes the library's
-connection to the transport (`INET.SYS`) and returns `0` on success — a non-zero result indicates
-the stack is not running [DOC — *TCP/IP Programming for OS/2*; DOC-IBM `selects.c` checks
-`sock_init() != 0` → "INET.SYS probably is not running"]. All Toolkit samples call `sock_init()`
+connection to the transport (`INET.SYS`) and returns `0` on success - a non-zero result indicates
+the stack is not running [DOC - *TCP/IP Programming for OS/2*; DOC-IBM `selects.c` checks
+`sock_init() != 0` -> "INET.SYS probably is not running"]. All Toolkit samples call `sock_init()`
 first [DOC-IBM `tcpc.c:60`, `tcps.c:62`, `udpc.c:56`].
 
 `fd_set` is correspondingly **not** a bitmask of file descriptors but a counted array of socket
-numbers [DOC-IBM `types.h:105-118` — `FD_SETSIZE`=64 @105, `struct fd_set` @109-112, `__TCPFDIsSet` @118]:
+numbers [DOC-IBM `types.h:105-118` - `FD_SETSIZE`=64 @105, `struct fd_set` @109-112, `__TCPFDIsSet` @118]:
 
 ```c
 #pragma pack(4)
@@ -133,7 +133,7 @@ typedef struct fd_set {
 
 ---
 
-## 3. Creating a socket — `socket(domain, type, protocol)`
+## 3. Creating a socket - `socket(domain, type, protocol)`
 
 ### 3.1 Address / protocol family (`domain`) [DOC-IBM `sys/socket.h:102-140`]
 
@@ -172,9 +172,9 @@ Explicit values come from the `IPPROTO_*` set: `IPPROTO_IP` (0), `IPPROTO_ICMP` 
 
 ---
 
-## 4. Address structures [DOC-IBM — `netinet/in.h`, `sys/socket.h`]
+## 4. Address structures [DOC-IBM - `netinet/in.h`, `sys/socket.h`]
 
-### 4.1 `struct sockaddr` — the generic form [DOC-IBM `sys/socket.h:146-150`]
+### 4.1 `struct sockaddr` - the generic form [DOC-IBM `sys/socket.h:146-150`]
 
 Passed (by cast) to every call that takes an address. It is a length + family header followed by
 family-specific bytes.
@@ -185,7 +185,7 @@ family-specific bytes.
 | `sa_family` | `u_char` | Address family (`AF_*`) |
 | `sa_data` | `char[14]` | Family-specific address value (nominal; longer in practice) |
 
-### 4.2 `struct sockaddr_in` — the internet form [DOC-IBM `netinet/in.h:132-140`]
+### 4.2 `struct sockaddr_in` - the internet form [DOC-IBM `netinet/in.h:132-140`]
 
 Byte-for-byte overlays `struct sockaddr` for `AF_INET`. The header packs it to byte alignment
 (`#pragma pack(1)`).
@@ -214,7 +214,7 @@ INADDR_ANY` before `bind` [DOC-IBM `tcps.c:83`]; a client fills it from a resolv
 
 ---
 
-## 5. Byte order — `htons` / `htonl` / `ntohs` / `ntohl` [DOC-IBM]
+## 5. Byte order - `htons` / `htonl` / `ntohs` / `ntohl` [DOC-IBM]
 
 Ports and addresses are stored and transmitted in **network (big-endian) byte order**; on the
 little-endian x86 host the application must convert host values before placing them in a
@@ -223,12 +223,12 @@ and as callable functions:
 
 | Symbol | Signature | Purpose |
 |---|---|---|
-| `htons` | `u_short htons(u_short)` | Host → network, 16-bit (ports) |
-| `ntohs` | `u_short ntohs(u_short)` | Network → host, 16-bit |
-| `htonl` | `u_long htonl(u_long)` | Host → network, 32-bit (addresses) |
-| `ntohl` | `u_long ntohl(u_long)` | Network → host, 32-bit |
+| `htons` | `u_short htons(u_short)` | Host -> network, 16-bit (ports) |
+| `ntohs` | `u_short ntohs(u_short)` | Network -> host, 16-bit |
+| `htonl` | `u_long htonl(u_long)` | Host -> network, 32-bit (addresses) |
+| `ntohl` | `u_long ntohl(u_long)` | Network -> host, 32-bit |
 
-The macro forms expand to byte-swap primitives — `htons`/`ntohs` to `_bswap` (16-bit swap),
+The macro forms expand to byte-swap primitives - `htons`/`ntohs` to `_bswap` (16-bit swap),
 `htonl`/`ntohl` to `_lswap` (32-bit swap) [DOC-IBM `sys/itypes.h:123-126`]; the function-prototype
 forms are declared in `pmwsock.h` (`APIENTRY htonl`/`htons`/`ntohl`/`ntohs`) [DOC-IBM
 `pmwsock.h:670-682`]. Toolkit code applies `htons(port)` when filling `sin_port` [DOC-IBM
@@ -236,7 +236,7 @@ forms are declared in `pmwsock.h` (`APIENTRY htonl`/`htons`/`ntohl`/`ntohs`) [DO
 
 ---
 
-## 6. Socket options — `getsockopt` / `setsockopt` [DOC-IBM `sys/socket.h`]
+## 6. Socket options - `getsockopt` / `setsockopt` [DOC-IBM `sys/socket.h`]
 
 Options are addressed by a `level` and an `optname`. The socket level is `SOL_SOCKET`
 (`0xffff`) [DOC-IBM `sys/socket.h:97`]; IP-level options use `level = IPPROTO_IP` with the
@@ -318,26 +318,26 @@ build [DOC-IBM `sys/sockio.h:39-41`].)
 
 ---
 
-## 8. Readiness multiplexing — `select` and `os2_select`
+## 8. Readiness multiplexing - `select` and `os2_select`
 
 Two forms coexist [DOC-IBM `unistd.h:57-58`]:
 
-- **`os2_select(int *sockets, int nrd, int nwr, int nex, long timeout)`** — the OS/2-native form.
+- **`os2_select(int *sockets, int nrd, int nwr, int nex, long timeout)`** - the OS/2-native form.
   `sockets` points to a flat array holding the read-check descriptors first, then the write-check,
   then the except-check; `nrd`/`nwr`/`nex` give the counts of each group; `timeout` is in
   **milliseconds**. On return the array entries that are not ready are set to `-1` and the function
   returns the number ready. *TCP/IP Programming for OS/2* shows this form (an array of sockets, a
   read count of 1, and an 18000 ms timeout) invoked to wait up to 18 seconds for a response
-  [DOC — *TCP/IP Programming for OS/2* §FTP client; the prototype is header-confirmed
+  [DOC - *TCP/IP Programming for OS/2* section FTP client; the prototype is header-confirmed
   (`unistd.h:57`) but the array/`-1`/count-ready convention is book-described, not header-defined.
   Note the Toolkit `selects.c` sample uses the BSD `select()` form (a `timeval`), not `os2_select`].
-- **`select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *tv)`** —
-  the BSD form over the counted-array `fd_set` (§2). A `NULL` `tv` blocks indefinitely; a zero
+- **`select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *tv)`** -
+  the BSD form over the counted-array `fd_set` (section 2). A `NULL` `tv` blocks indefinitely; a zero
   `timeval` polls.
 
 ---
 
-## 9. Name resolution structures [DOC-IBM — `netdb.h`]
+## 9. Name resolution structures [DOC-IBM - `netdb.h`]
 
 `gethostbyname`/`gethostbyaddr` return a pointer to a static `struct hostent`; addresses come back
 in **network order**, ready to copy into `sin_addr` [DOC-IBM `netdb.h:81`, and `tcpc.c:88` copies
@@ -367,7 +367,7 @@ in **network order**, ready to copy into `sin_addr` [DOC-IBM `netdb.h:81`, and `
 
 ---
 
-## 10. Error codes — `sock_errno()` and the `SOCE*` space [DOC-IBM — `nerrno.h`]
+## 10. Error codes - `sock_errno()` and the `SOCE*` space [DOC-IBM - `nerrno.h`]
 
 Socket errors are **not** Control Program `ERROR_*` values. They are BSD `errno` values biased by
 `SOCBASEERR` (`10000` in user space) so they cannot collide with the C runtime's `errno`
@@ -407,52 +407,52 @@ Socket errors are **not** Control Program `ERROR_*` values. They are BSD `errno`
 | `SOCEOS2ERR` | `10100` | Underlying OS/2 error (also `SOCELAST`) |
 
 For source portability, `nerrno.h` also defines the plain BSD spellings (`EWOULDBLOCK`,
-`ECONNRESET`, …) as aliases of the corresponding `SOCE*` value when not already defined [DOC-IBM
+`ECONNRESET`, ...) as aliases of the corresponding `SOCE*` value when not already defined [DOC-IBM
 `nerrno.h:128-318`].
 
 ---
 
-## 11. Canonical call sequences [DOC-IBM — Toolkit `SAMPLES/TCPIPTK/SOCKET`]
+## 11. Canonical call sequences [DOC-IBM - Toolkit `SAMPLES/TCPIPTK/SOCKET`]
 
 **TCP server** [DOC-IBM `tcps.c`]:
-`sock_init()` → `socket(PF_INET, SOCK_STREAM, 0)` → fill `sockaddr_in` (`sin_family = AF_INET`,
-`sin_port = htons(port)`, `sin_addr.s_addr = INADDR_ANY`) → `bind` → `listen(s, backlog)` →
-`accept(s, &client, &namelen)` (returns the connected descriptor `ns`) → `recv`/`send` on `ns` →
+`sock_init()` -> `socket(PF_INET, SOCK_STREAM, 0)` -> fill `sockaddr_in` (`sin_family = AF_INET`,
+`sin_port = htons(port)`, `sin_addr.s_addr = INADDR_ANY`) -> `bind` -> `listen(s, backlog)` ->
+`accept(s, &client, &namelen)` (returns the connected descriptor `ns`) -> `recv`/`send` on `ns` ->
 `soclose(ns)` and `soclose(s)`.
 
 **TCP client** [DOC-IBM `tcpc.c`]:
-`sock_init()` → `gethostbyname(host)` → fill `sockaddr_in` (`sin_addr` from `h_addr`,
-`sin_port = htons(port)`) → `socket(PF_INET, SOCK_STREAM, 0)` → `connect(s, &server, sizeof server)`
-→ `send`/`recv` → `soclose(s)`.
+`sock_init()` -> `gethostbyname(host)` -> fill `sockaddr_in` (`sin_addr` from `h_addr`,
+`sin_port = htons(port)`) -> `socket(PF_INET, SOCK_STREAM, 0)` -> `connect(s, &server, sizeof server)`
+-> `send`/`recv` -> `soclose(s)`.
 
 **UDP client** [DOC-IBM `udpc.c`]:
-`sock_init()` → `socket(PF_INET, SOCK_DGRAM, 0)` → fill `sockaddr_in` (`sin_addr` from
-`inet_addr(text)`, `sin_port = htons(port)`) → `sendto(s, buf, len, 0, &server, sizeof server)` →
+`sock_init()` -> `socket(PF_INET, SOCK_DGRAM, 0)` -> fill `sockaddr_in` (`sin_addr` from
+`inet_addr(text)`, `sin_port = htons(port)`) -> `sendto(s, buf, len, 0, &server, sizeof server)` ->
 `soclose(s)`. A datagram server correspondingly uses `recvfrom` to learn the sender's address.
 
 ---
 
 ## Sources opened
-- `README.md`, `file-io.md` — house style.
-- `SYS/socket.h` — call prototypes, `SOCK_*`, `AF_*`/`PF_*`, `SO_*`,
+- `README.md`, `file-io.md` - house style.
+- `SYS/socket.h` - call prototypes, `SOCK_*`, `AF_*`/`PF_*`, `SO_*`,
   `MSG_*`, `SOL_SOCKET`, `SOMAXCONN`, `struct sockaddr`/`msghdr`/`linger`, OS/2 additions
   (`sock_init`, `so_cancel`, `soabort`, `sock_errno`, `psock_errno`, `sock_strerror`,
   `addsockettolist`/`removesocketfromlist`, `getinetversion`).
-- `NETINET/in.h` — `struct sockaddr_in`/`in_addr`, `IPPROTO_*`,
+- `NETINET/in.h` - `struct sockaddr_in`/`in_addr`, `IPPROTO_*`,
   `INADDR_*`, `IN_LOOPBACKNET`, `IP_*`.
-- `netdb.h` — `struct hostent`/`servent`/`protoent`/`netent`,
+- `netdb.h` - `struct hostent`/`servent`/`protoent`/`netent`,
   `gethostby*`/`getservby*`/`getprotoby*`, `h_errno`, `NETDB_*`/`HOST_NOT_FOUND` codes,
   `\MPTN\ETC` database paths.
-- `unistd.h` — `soclose`, `select`, `os2_select`, `gethostname`.
-- `SYS/ioctl.h`, `SYS/sockio.h`, `SYS/filio.h` — `ioctl`/`os2_ioctl`,
+- `unistd.h` - `soclose`, `select`, `os2_select`, `gethostname`.
+- `SYS/ioctl.h`, `SYS/sockio.h`, `SYS/filio.h` - `ioctl`/`os2_ioctl`,
   `SIOC*`, `FIONREAD`/`FIONBIO`/`FIOASYNC`.
 - `types.h` (`fd_set`, `FD_SETSIZE`, `FD_*` for the 32-bit `_System` API).
-- `ARPA/inet.h` — `inet_addr`/`inet_ntoa`/`inet_network`/`inet_aton`.
-- `SYS/itypes.h`, `pmwsock.h` — `htons`/`htonl`/`ntohs`/`ntohl`.
-- `nerrno.h` — `SOCE*` error codes and BSD aliases.
+- `ARPA/inet.h` - `inet_addr`/`inet_ntoa`/`inet_network`/`inet_aton`.
+- `SYS/itypes.h`, `pmwsock.h` - `htons`/`htonl`/`ntohs`/`ntohl`.
+- `nerrno.h` - `SOCE*` error codes and BSD aliases.
 - `Toolkit sample TCPIPTK/SOCKET/tcpc.c`, `tcps.c`, `udpc.c`, `selects.c`;
-  `SAMPLES/TCPIPTK/OS2IOCTL/os2ioctl.c` — canonical call sequences and `os2_ioctl` usage.
-- *TCP/IP Programming for OS/2* (IBM) — `sock_init` requirement, `select`/`soclose` behavioural
+  `SAMPLES/TCPIPTK/OS2IOCTL/os2ioctl.c` - canonical call sequences and `os2_ioctl` usage.
+- *TCP/IP Programming for OS/2* (IBM) - `sock_init` requirement, `select`/`soclose` behavioural
   detail.
 </content>
 </invoke>

@@ -5,7 +5,7 @@ entry table.
 
 Why this exists: 16-bit OS/2 entry points use callee stack cleanup (RETF N), so
 anything dispatching to them needs N per ordinal. Community-derived tables
-(e.g. osFree's) have a known error class here — a wrong N silently leaks or
+(e.g. osFree's) have a known error class here - a wrong N silently leaks or
 over-pops the caller's 16-bit stack on every call, and the symptom appears far
 from the cause. The byte-authoritative source for N is IBM's own binary: LX
 16-bit entry-table entries carry a "parameter word count" in their flags byte

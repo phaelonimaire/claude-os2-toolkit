@@ -1,9 +1,9 @@
-/* hello-console — a minimal OS/2 text-mode program.
+/* hello-console - a minimal OS/2 text-mode program.
  *
  * The .def marks it WINDOWCOMPAT, so it runs in a VIO window (or full screen).
  * This deliberately uses plain C stdio, which is all most console programs
  * need; VioWrtTTY below shows the OS/2-native path for when you need direct
- * screen control (cursor placement, attributes, full-screen output) — see
+ * screen control (cursor placement, attributes, full-screen output) - see
  * os2ref/vio-kbd-mou.md.
  *
  * Build: see BUILD.md.
@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     fflush(stdout);          /* stdio and Vio* are separate output paths */
 
     /* APIRET16 APIENTRY16 VioWrtTTY(PCH pch, USHORT cb, HVIO hvio);
-     *   [DOC-IBM: Toolkit 4.5 bsesub.h — see os2ref/vio-kbd-mou.md §2.2]
+     *   [DOC-IBM: Toolkit 4.5 bsesub.h - see os2ref/vio-kbd-mou.md section 2.2]
      * hvio is 0 for the caller's own session. Note APIRET16 (USHORT), not the
      * 32-bit APIRET: the Vio family is a 16-bit API. 0 == success. */
     {

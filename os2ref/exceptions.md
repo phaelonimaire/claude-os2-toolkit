@@ -83,11 +83,11 @@ The handler returns a disposition (`ULONG`). [DOC-IBM]
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `XCPT_CONTINUE_SEARCH` | `0x00000000` | Exception not handled — pass to the next-older handler. |
-| `XCPT_CONTINUE_EXECUTION` | `0xFFFFFFFF` | Exception handled — resume the thread from the `CONTEXTRECORD`. |
+| `XCPT_CONTINUE_SEARCH` | `0x00000000` | Exception not handled - pass to the next-older handler. |
+| `XCPT_CONTINUE_EXECUTION` | `0xFFFFFFFF` | Exception handled - resume the thread from the `CONTEXTRECORD`. |
 | `XCPT_CONTINUE_STOP` | `0x00716668` | Exception handled by a debugger (via `DosDebug`). |
 
-## Handler flags — `fHandlerFlags` [DOC-IBM `bsexcpt.h:52`]
+## Handler flags - `fHandlerFlags` [DOC-IBM `bsexcpt.h:52`]
 
 These appear in the report record's `fHandlerFlags` field. An application may only *set*
 `EH_NONCONTINUABLE`; all others are set by the system.
@@ -141,8 +141,8 @@ Field layout (fields are `ULONG` unless noted) [DOC-IBM `bsexcpt.h:229-291`]:
 
 | Field | Section (flag) | Notes |
 |---|---|---|
-| `ContextFlags` | — | which sections are valid |
-| `ctx_env[7]`, `ctx_stack[8]` | `CONTEXT_FLOATING_POINT` | `ctx_stack` is 8 × `FPREG` (coprocessor stack) |
+| `ContextFlags` | - | which sections are valid |
+| `ctx_env[7]`, `ctx_stack[8]` | `CONTEXT_FLOATING_POINT` | `ctx_stack` is 8 x `FPREG` (coprocessor stack) |
 | `ctx_SegGs`, `ctx_SegFs`, `ctx_SegEs`, `ctx_SegDs` | `CONTEXT_SEGMENTS` | segment registers |
 | `ctx_RegEdi`, `ctx_RegEsi`, `ctx_RegEax`, `ctx_RegEbx`, `ctx_RegEcx`, `ctx_RegEdx` | `CONTEXT_INTEGER` | general registers |
 | `ctx_RegEbp`, `ctx_RegEip`, `ctx_SegCs`, `ctx_EFlags`, `ctx_RegEsp`, `ctx_SegSs` | `CONTEXT_CONTROL` | control/flow registers |
@@ -169,27 +169,27 @@ facility 1. The decoding masks are:
 | Constant | Value | `ExceptionInfo` |
 |---|---|---|
 | `XCPT_GUARD_PAGE_VIOLATION` | `0x80000001` | [0] access code (`XCPT_READ_ACCESS`/`XCPT_WRITE_ACCESS`); [1] fault address |
-| `XCPT_UNABLE_TO_GROW_STACK` | `0x80010001` | — |
+| `XCPT_UNABLE_TO_GROW_STACK` | `0x80010001` | - |
 
 ### Portable fatal hardware exceptions [DOC-IBM `bsexcpt.h:134`]
 
 | Constant | Value | `ExceptionInfo` |
 |---|---|---|
-| `XCPT_ACCESS_VIOLATION` | `0xC0000005` | [0] access code; [1] fault address, or selector (`XCPT_SPACE_ACCESS`), or −1 (`XCPT_LIMIT_ACCESS`) |
+| `XCPT_ACCESS_VIOLATION` | `0xC0000005` | [0] access code; [1] fault address, or selector (`XCPT_SPACE_ACCESS`), or -1 (`XCPT_LIMIT_ACCESS`) |
 | `XCPT_DATATYPE_MISALIGNMENT` | `0xC000009E` | [0] access code; [1] alignment; [2] fault address |
-| `XCPT_BREAKPOINT` | `0xC000009F` | — |
-| `XCPT_SINGLE_STEP` | `0xC00000A0` | — |
-| `XCPT_ILLEGAL_INSTRUCTION` | `0xC000001C` | — |
-| `XCPT_PRIVILEGED_INSTRUCTION` | `0xC000009D` | — |
-| `XCPT_INTEGER_DIVIDE_BY_ZERO` | `0xC000009B` | — |
-| `XCPT_INTEGER_OVERFLOW` | `0xC000009C` | — |
-| `XCPT_FLOAT_DENORMAL_OPERAND` | `0xC0000094` | — |
-| `XCPT_FLOAT_DIVIDE_BY_ZERO` | `0xC0000095` | — |
-| `XCPT_FLOAT_INEXACT_RESULT` | `0xC0000096` | — |
-| `XCPT_FLOAT_INVALID_OPERATION` | `0xC0000097` | — |
-| `XCPT_FLOAT_OVERFLOW` | `0xC0000098` | — |
-| `XCPT_FLOAT_STACK_CHECK` | `0xC0000099` | — |
-| `XCPT_FLOAT_UNDERFLOW` | `0xC000009A` | — |
+| `XCPT_BREAKPOINT` | `0xC000009F` | - |
+| `XCPT_SINGLE_STEP` | `0xC00000A0` | - |
+| `XCPT_ILLEGAL_INSTRUCTION` | `0xC000001C` | - |
+| `XCPT_PRIVILEGED_INSTRUCTION` | `0xC000009D` | - |
+| `XCPT_INTEGER_DIVIDE_BY_ZERO` | `0xC000009B` | - |
+| `XCPT_INTEGER_OVERFLOW` | `0xC000009C` | - |
+| `XCPT_FLOAT_DENORMAL_OPERAND` | `0xC0000094` | - |
+| `XCPT_FLOAT_DIVIDE_BY_ZERO` | `0xC0000095` | - |
+| `XCPT_FLOAT_INEXACT_RESULT` | `0xC0000096` | - |
+| `XCPT_FLOAT_INVALID_OPERATION` | `0xC0000097` | - |
+| `XCPT_FLOAT_OVERFLOW` | `0xC0000098` | - |
+| `XCPT_FLOAT_STACK_CHECK` | `0xC0000099` | - |
+| `XCPT_FLOAT_UNDERFLOW` | `0xC000009A` | - |
 
 The `ExceptionInfo` access-code (violation) flags used above are: `XCPT_UNKNOWN_ACCESS`
 `0x00000000`, `XCPT_READ_ACCESS` `0x00000001`, `XCPT_WRITE_ACCESS` `0x00000002`,
@@ -201,10 +201,10 @@ The `ExceptionInfo` access-code (violation) flags used above are: `XCPT_UNKNOWN_
 | Constant | Value | `ExceptionInfo` |
 |---|---|---|
 | `XCPT_IN_PAGE_ERROR` | `0xC0000006` | [0] fault address |
-| `XCPT_PROCESS_TERMINATE` | `0xC0010001` | — |
+| `XCPT_PROCESS_TERMINATE` | `0xC0010001` | - |
 | `XCPT_ASYNC_PROCESS_TERMINATE` | `0xC0010002` | [0] TID of the terminating thread |
-| `XCPT_NONCONTINUABLE_EXCEPTION` | `0xC0000024` | — |
-| `XCPT_INVALID_DISPOSITION` | `0xC0000025` | — |
+| `XCPT_NONCONTINUABLE_EXCEPTION` | `0xC0000024` | - |
+| `XCPT_INVALID_DISPOSITION` | `0xC0000025` | - |
 
 ### Non-portable fatal exceptions [DOC-IBM `bsexcpt.h:178`]
 
@@ -218,9 +218,9 @@ The `ExceptionInfo` access-code (violation) flags used above are: `XCPT_UNKNOWN_
 
 | Constant | Value | `ExceptionInfo` |
 |---|---|---|
-| `XCPT_UNWIND` | `0xC0000026` | — |
-| `XCPT_BAD_STACK` | `0xC0000027` | — |
-| `XCPT_INVALID_UNWIND_TARGET` | `0xC0000028` | — |
+| `XCPT_UNWIND` | `0xC0000026` | - |
+| `XCPT_BAD_STACK` | `0xC0000027` | - |
+| `XCPT_INVALID_UNWIND_TARGET` | `0xC0000028` | - |
 | `XCPT_SIGNAL` | `0xC0010003` | [0] signal number |
 
 The signal numbers carried by `XCPT_SIGNAL` are `XCPT_SIGNAL_INTR` (1),
@@ -278,5 +278,5 @@ thread's `CONTEXTRECORD` (subject to the requested `level`), the read-only count
 the context a handler receives.
 
 ## See also
-- `process-thread.md` — the per-thread TIB and the `FS:[0]` exception-registration chain the handler list is rooted in.
-- `error-codes.md` — the `ERROR_*` return space (distinct from the `XCPT_*` exception codes here).
+- `process-thread.md` - the per-thread TIB and the `FS:[0]` exception-registration chain the handler list is rooted in.
+- `error-codes.md` - the `ERROR_*` return space (distinct from the `XCPT_*` exception codes here).

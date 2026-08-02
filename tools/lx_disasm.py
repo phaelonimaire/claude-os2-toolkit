@@ -185,7 +185,7 @@ def main():
     # ndisasm an empty buffer and printing nothing.
     if start_off >= len(image):
         sys.exit("VA 0x%x is at object %d offset 0x%x, past its %d bytes of "
-                 "file-backed image (uninitialized tail — nothing to disassemble)"
+                 "file-backed image (uninitialized tail - nothing to disassemble)"
                  % (start_va, obj.num, start_off, len(image)))
 
     # Decide how many bytes to feed ndisasm.

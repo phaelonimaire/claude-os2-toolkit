@@ -3,7 +3,7 @@
 How the OS/2 base (`Dos*`) API reports success and failure: every API returns an `APIRET`
 value where **0 means success** and any non-zero value is an `ERROR_*` code drawn from a
 single, flat, system-wide number space. The same space is partitioned into contiguous ranges
-by subsystem, layered on top by two independent classification services — `DosErrClass`, which
+by subsystem, layered on top by two independent classification services - `DosErrClass`, which
 maps any code to a *class / action / locus* triple, and the message retriever
 (`DosGetMessage` and friends), which turns a code into human-readable text from a message file.
 This reference gives the model of the convention, the range map, `DosErrClass`, the message
@@ -29,7 +29,7 @@ text are transcribed from those headers.
 
 The contract is uniform across the `Dos*` surface: a function returns `NO_ERROR` (`0`) on
 success, or a non-zero `ERROR_*` code on failure. `NO_ERROR` is defined as `0` in `bseerr.h`.
-The returned code is the *only* status channel — there is no separate `errno`; output values
+The returned code is the *only* status channel - there is no separate `errno`; output values
 are returned through caller-supplied out-pointers and are only valid when the function returned
 `NO_ERROR`.
 
@@ -37,15 +37,15 @@ are returned through caller-supplied out-pointers and are only valid when the fu
 reserved for application-defined use and are never assigned by the system. [DOC-IBM: `bseerr.h`]
 
 ### How the header is conditionally included [DOC-IBM]
-`bseerr.h` splits the code space into two sets guarded by preprocessor symbols: codes **0–302**
+`bseerr.h` splits the code space into two sets guarded by preprocessor symbols: codes **0-302**
 are compiled when `INCL_DOSERRORS` or `INCL_ERROR_H` is defined (the header calls this
-"set 0 – 302"), and codes **303 and up** when `INCL_DOSERRORS` or `INCL_ERROR2_H` is defined.
+"set 0 - 302"), and codes **303 and up** when `INCL_DOSERRORS` or `INCL_ERROR2_H` is defined.
 Defining `INCL_ERRORS` turns on all of them. This split is historical (the second set originated
 in a separate `error2.h`); at runtime it is one continuous number space.
 
 ---
 
-## The ERROR_* number space — range map [DOC-IBM]
+## The ERROR_* number space - range map [DOC-IBM]
 
 Codes are grouped into contiguous ranges by originating subsystem. The table below maps the
 ranges present in `bseerr.h`; representative members of the important ranges follow in later
@@ -53,29 +53,29 @@ sections.
 
 | Range | Subsystem / origin |
 |---|---|
-| `0` | `NO_ERROR` — success |
-| `1`–`~49` | DOS-compatible base errors (file, path, handle, memory, media/disk) — the classic INT 21h heritage |
-| `50`–`~74` | LAN / network redirector (`ERROR_NOT_SUPPORTED` … `ERROR_REDIR_PAUSED`) |
-| `80`–`~95` | more file / process base errors |
-| `99`–`~113` | semaphore, device-in-use, pipe, disk-full |
-| `115`–`~166` | protection, category/level, JOIN/SUBST, thread/module, muxwait |
-| `180`–`~223` | dynamic-link and executable **loader** errors (bad EXE format, ordinal, segment) |
-| `224`–`~302` | pipes (named), EA (extended attributes), 32-bit semaphores, session (`SMG`) |
-| `303`–`~347` | process control (`DosSub*` suballocation, PID/TID, screen-group) and **queue** (`QUE`) |
-| `316`–`321` | message retriever (`MR`) errors |
-| `322`–`~328` | timer (`TS`) / system-internal |
-| `349`–`~471` | `VIO` (video), `SMG`/`SGS`/`SCS` (session manager), `KBD` (keyboard), `MOU`/`MOUSE`, `MON` (device monitor), `NLS` (national language) |
-| `472`–`~535` | code page, selectors, trace (`TRC`), logfile (`LF`), timer (`TMR`) |
-| `537`–`~548` | performance view (`PVW`) / profiling (`PRF`) |
-| `639`–`651` | virtual DOS machine / virtual device driver (`VDM` / `VDD`) |
-| `671`–`684` | bidirectional-text (`BIDI`) API parameter errors |
-| `730`–`~731` | device monitor buffer / corrupted module |
-| `2055`–`2060` | logfile facility results (`LF_*` timeout / success) |
-| `32768`–`~32904` | swapper, page-memory-manager (`PMM`), and memory-manager internal errors |
-| `65026`–`65079` | code-page-switch I/O (`CPSIO`) |
-| `0xFF00` (65280) and up | `ERROR_USER_DEFINED_BASE` — application-reserved |
+| `0` | `NO_ERROR` - success |
+| `1`-`~49` | DOS-compatible base errors (file, path, handle, memory, media/disk) - the classic INT 21h heritage |
+| `50`-`~74` | LAN / network redirector (`ERROR_NOT_SUPPORTED` ... `ERROR_REDIR_PAUSED`) |
+| `80`-`~95` | more file / process base errors |
+| `99`-`~113` | semaphore, device-in-use, pipe, disk-full |
+| `115`-`~166` | protection, category/level, JOIN/SUBST, thread/module, muxwait |
+| `180`-`~223` | dynamic-link and executable **loader** errors (bad EXE format, ordinal, segment) |
+| `224`-`~302` | pipes (named), EA (extended attributes), 32-bit semaphores, session (`SMG`) |
+| `303`-`~347` | process control (`DosSub*` suballocation, PID/TID, screen-group) and **queue** (`QUE`) |
+| `316`-`321` | message retriever (`MR`) errors |
+| `322`-`~328` | timer (`TS`) / system-internal |
+| `349`-`~471` | `VIO` (video), `SMG`/`SGS`/`SCS` (session manager), `KBD` (keyboard), `MOU`/`MOUSE`, `MON` (device monitor), `NLS` (national language) |
+| `472`-`~535` | code page, selectors, trace (`TRC`), logfile (`LF`), timer (`TMR`) |
+| `537`-`~548` | performance view (`PVW`) / profiling (`PRF`) |
+| `639`-`651` | virtual DOS machine / virtual device driver (`VDM` / `VDD`) |
+| `671`-`684` | bidirectional-text (`BIDI`) API parameter errors |
+| `730`-`~731` | device monitor buffer / corrupted module |
+| `2055`-`2060` | logfile facility results (`LF_*` timeout / success) |
+| `32768`-`~32904` | swapper, page-memory-manager (`PMM`), and memory-manager internal errors |
+| `65026`-`65079` | code-page-switch I/O (`CPSIO`) |
+| `0xFF00` (65280) and up | `ERROR_USER_DEFINED_BASE` - application-reserved |
 
-Note: the ranges are not perfectly dense — some numeric positions in 1–1000 are consumed by
+Note: the ranges are not perfectly dense - some numeric positions in 1-1000 are consumed by
 *message* IDs rather than error IDs (the header notes that a message ID in a given position
 makes that position unusable as an error code), so a few numbers are intentionally skipped.
 [DOC-IBM: `bseerr.h` module header]
@@ -86,7 +86,7 @@ makes that position unusable as an error code), so a few numbers are intentional
 
 All names and values below are transcribed verbatim from `bseerr.h`.
 
-### DOS-compatible base errors (1–39)
+### DOS-compatible base errors (1-39)
 | Value | Name | Meaning |
 |---|---|---|
 | 0 | `NO_ERROR` | success |
@@ -112,7 +112,7 @@ All names and values below are transcribed verbatim from `bseerr.h`.
 | 38 | `ERROR_HANDLE_EOF` | end of file reached |
 | 39 | `ERROR_HANDLE_DISK_FULL` | disk full |
 
-### Base process / parameter / semaphore / pipe (87–234)
+### Base process / parameter / semaphore / pipe (87-234)
 | Value | Name | Meaning |
 |---|---|---|
 | 87 | `ERROR_INVALID_PARAMETER` | a parameter is not valid |
@@ -137,7 +137,7 @@ All names and values below are transcribed verbatim from `bseerr.h`.
 | 232 | `ERROR_NO_DATA` | no data on non-blocking pipe read |
 | 234 | `ERROR_MORE_DATA` | more data available |
 
-### Executable / dynamic-link loader (180–214)
+### Executable / dynamic-link loader (180-214)
 | Value | Name | Meaning |
 |---|---|---|
 | 182 | `ERROR_INVALID_ORDINAL` | export ordinal not valid |
@@ -150,7 +150,7 @@ All names and values below are transcribed verbatim from `bseerr.h`.
 | 213 | `ERROR_BAD_DYNALINK` | invalid dynamic link |
 | 214 | `ERROR_TOO_MANY_MODULES` | module-table limit reached |
 
-### 32-bit semaphores and extended attributes (275–301)
+### 32-bit semaphores and extended attributes (275-301)
 | Value | Name | Meaning |
 |---|---|---|
 | 282 | `ERROR_EAS_NOT_SUPPORTED` | file system does not support EAs |
@@ -164,7 +164,7 @@ All names and values below are transcribed verbatim from `bseerr.h`.
 | 300 | `ERROR_ALREADY_RESET` | event semaphore already reset |
 | 301 | `ERROR_SEM_BUSY` | semaphore busy |
 
-### Queue subsystem (`QUE`, 329–347)
+### Queue subsystem (`QUE`, 329-347)
 | Value | Name | Meaning |
 |---|---|---|
 | 330 | `ERROR_QUE_PROC_NOT_OWNED` | process does not own the queue |
@@ -191,7 +191,7 @@ All names and values below are transcribed verbatim from `bseerr.h`.
 
 ---
 
-## Error classification — `DosErrClass` [DOC-IBM]
+## Error classification - `DosErrClass` [DOC-IBM]
 
 Any `ERROR_*` code can be mapped, without a lookup table of the caller's own, to a triple that
 tells a program how to *react* to an error it does not specifically recognize. `DosErrClass`
@@ -199,14 +199,14 @@ performs that mapping:
 
 ```c
 APIRET APIENTRY DosErrClass(ULONG  code,      /* in:  the ERROR_* code to classify */
-                            PULONG pClass,     /* out: ERRCLASS_* — what kind of error */
-                            PULONG pAction,    /* out: ERRACT_*   — suggested response */
-                            PULONG pLocus);    /* out: ERRLOC_*   — where it occurred */
+                            PULONG pClass,     /* out: ERRCLASS_* - what kind of error */
+                            PULONG pAction,    /* out: ERRACT_*   - suggested response */
+                            PULONG pLocus);    /* out: ERRLOC_*   - where it occurred */
 ```
 
 The three output enumerations are defined in `bseerr.h`:
 
-### Class — `ERRCLASS_*` (the *kind* of failure)
+### Class - `ERRCLASS_*` (the *kind* of failure)
 | Value | Name | Meaning |
 |---|---|---|
 | 1 | `ERRCLASS_OUTRES` | out of resource |
@@ -225,7 +225,7 @@ The three output enumerations are defined in `bseerr.h`:
 | 14 | `ERRCLASS_CANT` | (no comment in header) |
 | 15 | `ERRCLASS_TIME` | (no comment in header) |
 
-### Action — `ERRACT_*` (the *recommended response*)
+### Action - `ERRACT_*` (the *recommended response*)
 | Value | Name | Meaning |
 |---|---|---|
 | 1 | `ERRACT_RETRY` | retry immediately |
@@ -236,7 +236,7 @@ The three output enumerations are defined in `bseerr.h`:
 | 6 | `ERRACT_IGNORE` | ignore the error |
 | 7 | `ERRACT_INTRET` | retry after user intervention |
 
-### Locus — `ERRLOC_*` (*where* the error occurred)
+### Locus - `ERRLOC_*` (*where* the error occurred)
 | Value | Name | Meaning |
 |---|---|---|
 | 1 | `ERRLOC_UNK` | no appropriate value |
@@ -253,7 +253,7 @@ the specific code.
 
 ## Hard errors and the INT 24h codes [DOC-IBM]
 
-A distinct, small code space describes **hard errors** — device-level failures raised through the
+A distinct, small code space describes **hard errors** - device-level failures raised through the
 critical-error (INT 24h) heritage path. These `ERROR_I24_*` codes are numbered independently of
 the main `ERROR_*` space (they start again at 0) and appear in a hard-error report:
 
@@ -286,7 +286,7 @@ responses the caller may return, and the packed `I24_*` fields describing the op
 | `I24_AREA` | `0x06` | affected-area field |
 | `I24_CLASS` | `0x80` | error-class bit |
 
-### Controlling hard-error and exception pop-ups — `DosError` [DOC-IBM]
+### Controlling hard-error and exception pop-ups - `DosError` [DOC-IBM]
 
 ```c
 APIRET APIENTRY DosError(ULONG error);   /* bitwise OR of the FERR_* flags below */
@@ -304,7 +304,7 @@ program exceptions, at process scope. The flags (from `bsedos.h`):
 
 ---
 
-## Abnormal-termination codes — `TC_*` [DOC-IBM]
+## Abnormal-termination codes - `TC_*` [DOC-IBM]
 
 When a process ends abnormally, a small `TC_*` code records the cause (defined in `bseerr.h`).
 These are termination causes, not `APIRET` values:
@@ -319,10 +319,10 @@ These are termination causes, not `APIRET` values:
 
 ---
 
-## Turning a code into text — the message services [DOC-IBM]
+## Turning a code into text - the message services [DOC-IBM]
 
 `ERROR_*` codes carry associated message IDs. The header notes that "the message id's for the
-first 1000 error codes … are constructed from the comment on the `#define`" — i.e. the
+first 1000 error codes ... are constructed from the comment on the `#define`" - i.e. the
 `/* MSG%NAME */` comments in `bseerr.h` (and `MSG%none` marks an error with no user-visible
 message). At runtime the text lives in a compiled **message file** (the base system messages are
 built from a source such as `oso001.txt`), and programs retrieve it with the message API in
@@ -346,7 +346,7 @@ APIRET APIENTRY DosGetMessage(PCHAR* pTable,      /* in:  table of variable subs
                               PSZ    pszFile,      /* in:  message-file name (e.g. the .MSG file) */
                               PULONG pcbMsg);      /* out: length of the returned message */
 ```
-`pTable`/`cTable` supply the strings that replace the `%1`, `%2`, … insertion points in the
+`pTable`/`cTable` supply the strings that replace the `%1`, `%2`, ... insertion points in the
 stored message; `msgnumber` selects the message; `pszFile` names the `.MSG` file to read it from;
 the formatted result is written to `pBuf` and its length returned in `pcbMsg`.
 (In C++ compilation `pszFile` is typed `PCSZ`; otherwise `PSZ`.)
@@ -386,13 +386,13 @@ one. (In C++ compilation `pszFilename` is typed `PCSZ`.)
 ---
 
 ## Sources opened
-- `bseerr.h` — the full `ERROR_*` list (both sets), `ERRCLASS_*` /
+- `bseerr.h` - the full `ERROR_*` list (both sets), `ERRCLASS_*` /
   `ERRACT_*` / `ERRLOC_*`, `ERROR_I24_*`, `ALLOWED_*` / `I24_*`, `TC_*`, `ERROR_USER_DEFINED_BASE`,
   and the module-header notes on message IDs.
-- `bsedos.h` — prototypes for `DosError`, `DosErrClass`,
+- `bsedos.h` - prototypes for `DosError`, `DosErrClass`,
   `DosGetMessage`, `DosInsertMessage` (`DosInsMessage`), `DosPutMessage`, `DosQueryMessageCP`, and
   the `FERR_*` flags.
-- `os2def.h` — the `APIRET` / `APIRET16` / `APIRET32` typedefs.
+- `os2def.h` - the `APIRET` / `APIRET16` / `APIRET32` typedefs.
 
 ## See also
-- `calling-convention.md` — the `APIRET` return convention these codes travel in. Individual `Dos*`/`Win*` docs list the codes each call returns.
+- `calling-convention.md` - the `APIRET` return convention these codes travel in. Individual `Dos*`/`Win*` docs list the codes each call returns.

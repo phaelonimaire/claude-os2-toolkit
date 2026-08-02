@@ -1,4 +1,4 @@
-# OS/2 Presentation Manager — GPI Fonts, Bitmaps, and Metafiles
+# OS/2 Presentation Manager - GPI Fonts, Bitmaps, and Metafiles
 
 The depth topics of the Graphics Programming Interface beyond the core drawing primitives:
 the **fonts** an application selects and measures text with, the **bitmaps** it creates,
@@ -10,7 +10,7 @@ This reference documents the model and the representative API surface; the core 
 calls, the DC/PS model, and the transform pipeline are in `gpi-drawing.md`, and the internal
 engine that executes primitives (GRE / VMAN / the presentation driver) is in `pm-graphics.md`.
 
-Provenance: **[DOC-IBM]** OS/2 Toolkit 4.5 headers — `os2def.h` (`FATTRS`, `FONTMETRICS`,
+Provenance: **[DOC-IBM]** OS/2 Toolkit 4.5 headers - `os2def.h` (`FATTRS`, `FONTMETRICS`,
 `PANOSE`, `FATTR_*` / `FM_*` constants, `FIXED`, `STR8`), `pmgpi.h` (all `Gpi*` font / bitmap /
 metafile prototypes, `FONT_*` / `QF_*` / `CHS_*` / `TXTBOX_*` / `LCID_ALL` / `ROP_*` / `BBO_*` /
 `CBM_INIT` / `HBM_ERROR` / `PMF_*` / `LC_*` / `LT_*` / `RES_*` constants, `KERNINGPAIRS`,
@@ -18,8 +18,8 @@ metafile prototypes, `FONT_*` / `QF_*` / `CHS_*` / `TXTBOX_*` / `LCID_ALL` / `RO
 the legacy 1.x forms, `RGB2`, `BCA_*` compression, `BITMAPFILEHEADER2`, `BFT_*`), `pmdev.h`
 (`DevOpenDC` / `DevCloseDC`, `OD_METAFILE` / `OD_METAFILE_NOQUERY` / `OD_MEMORY` DC types).
 **[DOC-IBM]** the IBM *GPI Programming Guide and Reference* (the on-line "GPI Guide and
-Reference" book) for behavioural detail — the font-matching algorithm, the bitmap memory-DC
-model, `BitBlt` inclusivity/stretch semantics, and metafile playback options — cited per section.
+Reference" book) for behavioural detail - the font-matching algorithm, the bitmap memory-DC
+model, `BitBlt` inclusivity/stretch semantics, and metafile playback options - cited per section.
 
 ---
 
@@ -28,20 +28,20 @@ model, `BitBlt` inclusivity/stretch semantics, and metafile playback options —
 A presentation space keeps a small table of **local identifiers** (`lcid`, also called
 *setids*). A logical font, a bitmap, or a pattern set is loaded/created, bound to an `lcid`
 the application chooses, and then *selected* into the PS by that number. Drawing calls read
-the currently-selected setid — they never take a font or bitmap handle directly. `lcid` values
+the currently-selected setid - they never take a font or bitmap handle directly. `lcid` values
 1 and up are application-assigned; `0` is the reserved **default** setid (the system default
 font, released with `GpiSetCharSet(hps, 0)`).
 
-**The range is 0 through 254** — "It must be in the range 0 through 254" [DOC-IBM — `gpi2.txt`,
-*GpiCreateLogFont*, `lLcid`] — so a PS supports at most 254 application setids at once. Redefining
+**The range is 0 through 254** - "It must be in the range 0 through 254" [DOC-IBM - `gpi2.txt`,
+*GpiCreateLogFont*, `lLcid`] - so a PS supports at most 254 application setids at once. Redefining
 an lcid already bound to a logical font simply replaces it, *unless* that lcid is the current
-pattern-set or marker-set, or refers to a bitmap, in which case the call errors [DOC-IBM — same].
+pattern-set or marker-set, or refers to a bitmap, in which case the call errors [DOC-IBM - same].
 
 **The table belongs to the PS, not to the application.** Because setids live in one presentation
 space, an object that is shared across several PSs (a font used by more than one window or by a
-memory PS as well as the screen) cannot cache "its" lcid — it must hold the *request* (e.g. the
+memory PS as well as the screen) cannot cache "its" lcid - it must hold the *request* (e.g. the
 `FATTRS`) and be bound separately in each PS. When the PS is released the setids go with it; do not
-call `GpiDeleteSetId` on a PS that is already gone. [OBS-RE — established porting Scintilla to PM,
+call `GpiDeleteSetId` on a PS that is already gone. [OBS-RE - established porting Scintilla to PM,
 where one `Font` object is shared by every drawing surface.]
 
 | Call | Purpose |
@@ -49,7 +49,7 @@ where one `Font` object is shared by every drawing surface.]
 | `GpiSetCharSet(HPS, LONG lcid)` | Select the logical font at `lcid` as the current font (0 = default) [pmgpi.h:1519] |
 | `GpiQueryCharSet(HPS)` | Return the currently selected font `lcid` [pmgpi.h:1522] |
 | `GpiDeleteSetId(HPS, LONG lcid)` | Delete a setid; `LCID_ALL` (`-1`) deletes all [pmgpi.h:1656, 1764] |
-| `GpiQueryNumberSetIds(HPS)` / `GpiQuerySetIds(...)` | Enumerate the setids in use and their types (`LCIDT_FONT`=6, `LCIDT_BITMAP`=7) [pmgpi.h:1652–1654, 1812–1818] |
+| `GpiQueryNumberSetIds(HPS)` / `GpiQuerySetIds(...)` | Enumerate the setids in use and their types (`LCIDT_FONT`=6, `LCIDT_BITMAP`=7) [pmgpi.h:1652-1654, 1812-1818] |
 
 A setid must not be deleted while selected: releasing a font (`GpiSetCharSet(hps, 0)`) precedes
 `GpiDeleteSetId` [DOC-IBM, `GpiDeleteSetId` example]. Attempting to reuse an in-use setid fails
@@ -63,22 +63,22 @@ with `PMERR_SETID_IN_USE` (0x2102).
 
 OS/2 fonts are of two kinds:
 
-- **Image (bit-map) fonts** — a fixed raster of glyphs at specific point sizes and device
+- **Image (bit-map) fonts** - a fixed raster of glyphs at specific point sizes and device
   resolutions. Sharp at their design size; they do not scale smoothly.
-- **Outline (vector) fonts** — glyph contours (Adobe Type 1 via ATM, TrueType) that are scaled,
+- **Outline (vector) fonts** - glyph contours (Adobe Type 1 via ATM, TrueType) that are scaled,
   rotated, and sheared to any size by the rasterizer. Selected by setting `FATTR_FONTUSE_OUTLINE`
   in the requested attributes; drawn filled unless `FATTR_SEL_OUTLINE` requests hollow glyphs.
 
 An application never names a *physical* font directly. It fills a **`FATTRS`** structure
 describing what it wants (face name, size hints, style flags) and calls `GpiCreateLogFont`,
 which binds a **logical font** to an `lcid`. The system matches the logical request against the
-available physical fonts — those loaded at init, built into the device/driver, or loaded
-privately by `GpiLoadFonts` — and **the chosen physical font is fixed at create time and never
+available physical fonts - those loaded at init, built into the device/driver, or loaded
+privately by `GpiLoadFonts` - and **the chosen physical font is fixed at create time and never
 re-chosen for that logical font** [DOC-IBM, `GpiCreateLogFont` Remarks].
 
 The matching algorithm (paraphrased from the Remarks): if a face name is given, the system
 seeks that face; if empty, a default is chosen. A non-zero `lMatch` requests one exact physical
-font (device/driver-specific — discouraged for portability); on any mismatch the search restarts
+font (device/driver-specific - discouraged for portability); on any mismatch the search restarts
 as if `lMatch` were 0. With `lMatch` 0 and a *bit-map* request, the system searches image fonts
 for the requested `lAveCharWidth` / `lMaxBaselineExt`, falling back to an outline font of the
 face; with an *outline* request it searches outline fonts by the selection flags, falling back
@@ -88,7 +88,7 @@ setting **every** field of `FATTRS`, and setting the character box / angle / she
 (`GpiSetCharBox` / `GpiSetCharAngle` / `GpiSetCharShear`) before drawing so a substituted vector
 font renders as intended [DOC-IBM].
 
-### 2.2 `FATTRS` — the logical-font request [DOC-IBM — os2def.h:422]
+### 2.2 `FATTRS` - the logical-font request [DOC-IBM - os2def.h:422]
 
 ```c
 typedef struct _FATTRS {          /* fat */
@@ -105,7 +105,7 @@ typedef struct _FATTRS {          /* fat */
 } FATTRS;
 ```
 
-`FACESIZE` is 32 [os2def.h:418]. Flag families [os2def.h:396–415]:
+`FACESIZE` is 32 [os2def.h:418]. Flag families [os2def.h:396-415]:
 
 | Field | Constants |
 |---|---|
@@ -113,7 +113,7 @@ typedef struct _FATTRS {          /* fat */
 | `fsType` | `FATTR_TYPE_KERNING` 0x0004, `_MBCS` 0x0008, `_DBCS` 0x0010, `_ANTIALIASED` 0x0020 |
 | `fsFontUse` | `FATTR_FONTUSE_NOMIX` 0x0002, `_OUTLINE` 0x0004 (request an outline font), `_TRANSFORMABLE` 0x0008 |
 
-### 2.3 `FONTMETRICS` — the measured description [DOC-IBM — os2def.h:532]
+### 2.3 `FONTMETRICS` - the measured description [DOC-IBM - os2def.h:532]
 
 Returned by `GpiQueryFontMetrics` (current font) and `GpiQueryFonts` (one per matching physical
 font). It is large; the key groups:
@@ -144,70 +144,70 @@ typedef struct _FONTMETRICS {     /* fm */
 ```
 
 Distinguishing image from outline is read from `fsDefn`: **`FM_DEFN_OUTLINE`** (0x0001) marks an
-outline font; the character-set coverage bits (`FM_DEFN_LATIN1` 0x0010, `_CYRILLIC`, `_GREEK`, …)
-and the composite `FM_DEFN_UGL*` masks describe glyph coverage [os2def.h:449–470]. `fsType`
+outline font; the character-set coverage bits (`FM_DEFN_LATIN1` 0x0010, `_CYRILLIC`, `_GREEK`, ...)
+and the composite `FM_DEFN_UGL*` masks describe glyph coverage [os2def.h:449-470]. `fsType`
 carries `FM_TYPE_FIXED` (0x0001, monospaced), `FM_TYPE_KERNING` (0x0004), `FM_TYPE_DBCS`/`_MBCS`,
-`FM_TYPE_UNICODE` [os2def.h:438–447]. `fsSelection` mirrors the applied style
-(`FM_SEL_ITALIC`/`_BOLD`/…), and `fsCapabilities` reports what the font cannot do
-(`FM_CAP_NO_COLOR`, `FM_CAP_NO_HOLLOW`, …) [os2def.h:472–511]. `lMatch` is the value to place in
+`FM_TYPE_UNICODE` [os2def.h:438-447]. `fsSelection` mirrors the applied style
+(`FM_SEL_ITALIC`/`_BOLD`/...), and `fsCapabilities` reports what the font cannot do
+(`FM_CAP_NO_COLOR`, `FM_CAP_NO_HOLLOW`, ...) [os2def.h:472-511]. `lMatch` is the value to place in
 `FATTRS.lMatch` to force exactly this physical font.
 
-### 2.4 Font create / load / query surface [DOC-IBM — pmgpi.h]
+### 2.4 Font create / load / query surface [DOC-IBM - pmgpi.h]
 
 | Symbol | Purpose |
 |---|---|
 | `GpiCreateLogFont(HPS, PSTR8 pName, LONG lLcid, PFATTRS)` | Create a logical font from `FATTRS`, bind to `lLcid`. Returns `FONT_MATCH` (2) if the request was met, `FONT_DEFAULT` (1) if a default was substituted, `GPI_ERROR` on failure [pmgpi.h:1648, 1759] |
-| `GpiSetCharSet` / `GpiDeleteSetId` | Select / delete the font (§1) |
+| `GpiSetCharSet` / `GpiDeleteSetId` | Select / delete the font (section 1) |
 | `GpiLoadFonts(HAB, PSZ file)` / `GpiUnloadFonts` | Load a private `.FON` font file for this process; `GpiLoadPublicFonts` / `GpiUnloadPublicFonts` make it system-wide [pmgpi.h:1771, 1844] |
-| `GpiQueryFonts(HPS, ULONG flOptions, PSZ face, PLONG pReq, LONG cbMetrics, PFONTMETRICS)` | Enumerate physical fonts matching `face` (NULL = all); fill an array of `FONTMETRICS`. `flOptions`: `QF_PUBLIC` 0x0001, `QF_PRIVATE` 0x0002, `QF_NO_GENERIC` 0x0004, `QF_NO_DEVICE` 0x0008. Returns count; call with `*pReq` to size then to fill [pmgpi.h:1730–1734, 1791] |
+| `GpiQueryFonts(HPS, ULONG flOptions, PSZ face, PLONG pReq, LONG cbMetrics, PFONTMETRICS)` | Enumerate physical fonts matching `face` (NULL = all); fill an array of `FONTMETRICS`. `flOptions`: `QF_PUBLIC` 0x0001, `QF_PRIVATE` 0x0002, `QF_NO_GENERIC` 0x0004, `QF_NO_DEVICE` 0x0008. Returns count; call with `*pReq` to size then to fill [pmgpi.h:1730-1734, 1791] |
 | `GpiQueryFontMetrics(HPS, LONG cbMetrics, PFONTMETRICS)` | Metrics of the *currently selected* font [pmgpi.h:1799] |
 | `GpiQueryLogicalFont(HPS, LONG lcid, PSTR8, PFATTRS, LONG)` | Recover the name + `FATTRS` a logical font was created from [pmgpi.h:1834] |
-| `GpiQueryKerningPairs(HPS, LONG, PKERNINGPAIRS)` | Kerning table of the current font — array of `KERNINGPAIRS {sFirstChar, sSecondChar, lKerningAmount}` [pmgpi.h:1660, 1803] |
+| `GpiQueryKerningPairs(HPS, LONG, PKERNINGPAIRS)` | Kerning table of the current font - array of `KERNINGPAIRS {sFirstChar, sSecondChar, lKerningAmount}` [pmgpi.h:1660, 1803] |
 | `GpiQueryWidthTable(HPS, LONG first, LONG count, PLONG)` | Advance widths for a character range [pmgpi.h:1807] |
 | `GpiQueryFaceString(HPS, PSZ family, PFACENAMEDESC, LONG, PSZ out)` | Build a compound face name from a family + `FACENAMEDESC` weight/width/style descriptor [pmgpi.h:1683, 1821] |
-| `GpiQueryRasterizerCaps(PRASTERIZERCAPS)` | Report installed scalable-font engines: `RC_ATMAVAIL`/`RC_ATMENABLED` (1), `RC_TTAVAIL`/`RC_TTENABLED` (2) [pmgpi.h:1668–1680] |
+| `GpiQueryRasterizerCaps(PRASTERIZERCAPS)` | Report installed scalable-font engines: `RC_ATMAVAIL`/`RC_ATMENABLED` (1), `RC_TTAVAIL`/`RC_TTENABLED` (2) [pmgpi.h:1668-1680] |
 
-The logical-font name (`pName`, type `PSTR8` — a pointer to an 8-character array, `CHAR[8]`
+The logical-font name (`pName`, type `PSTR8` - a pointer to an 8-character array, `CHAR[8]`
 [os2def.h:327]) is an optional 8-char
 AVIO/font name; most callers pass `NULL` and reference the font by `lcid` alone.
 
-### 2.5 Text measurement and precise placement [DOC-IBM — pmgpi.h]
+### 2.5 Text measurement and precise placement [DOC-IBM - pmgpi.h]
 
 Drawing text is `GpiCharStringAt` (see `gpi-drawing.md`); the depth calls measure and place it.
 
 - **`GpiQueryTextBox(HPS, LONG cChars, PCH str, LONG cPts, PPOINTL aptl)`** returns the
   parallelogram that would enclose the string, plus the concatenation point, in
   world coordinates relative to the start point. Fill `TXTBOX_COUNT` (5) points, indexed
-  `TXTBOX_TOPLEFT`/`_BOTTOMLEFT`/`_TOPRIGHT`/`_BOTTOMRIGHT`/`_CONCAT` [pmgpi.h:1344–1351, 1510].
+  `TXTBOX_TOPLEFT`/`_BOTTOMLEFT`/`_TOPRIGHT`/`_BOTTOMRIGHT`/`_CONCAT` [pmgpi.h:1344-1351, 1510].
   The box height is the font's maximum height (descenders/accents included), **not** the height
   of the actual glyphs, and it does not equal the character box [DOC-IBM, Remarks]. Not valid
   when the drawing mode is *retain*.
 
 - **`GpiCharStringPos(HPS, PRECTL, ULONG flOptions, LONG c, PCH str, PLONG adx)`** and
   `GpiCharStringPosAt` draw a string with per-character advance control (`adx` = increment array)
-  and options `flOptions` [pmgpi.h:1180–1185, 1560]: `CHS_OPAQUE` 0x0001 (fill the background
+  and options `flOptions` [pmgpi.h:1180-1185, 1560]: `CHS_OPAQUE` 0x0001 (fill the background
   box), `CHS_VECTOR` 0x0002 (use the `adx` increments), `CHS_LEAVEPOS` 0x0008 (do not move
   current position), `CHS_CLIP` 0x0010 (clip to the supplied `PRECTL`), `CHS_UNDERSCORE` 0x0200,
   `CHS_STRIKEOUT` 0x0400. `GpiQueryCharStringPos` / `GpiQueryCharStringPosAt` return the
   positions each character *would* occupy without drawing [pmgpi.h:1489].
 
-Character presentation attributes that affect both measurement and drawing — `GpiSetCharBox`
+Character presentation attributes that affect both measurement and drawing - `GpiSetCharBox`
 (size, `SIZEF` of `FIXED`), `GpiSetCharAngle` (baseline gradient), `GpiSetCharShear`,
 `GpiSetCharDirection`, `GpiSetCharMode`, `GpiSetTextAlignment`, `GpiSetCharExtra` /
-`GpiSetCharBreakExtra` (inter-character / break spacing, `FIXED`) — are all PS state
-[pmgpi.h:1524–1595]. `FIXED` is a `LONG` with an implicit binary point between the 2nd and 3rd
+`GpiSetCharBreakExtra` (inter-character / break spacing, `FIXED`) - are all PS state
+[pmgpi.h:1524-1595]. `FIXED` is a `LONG` with an implicit binary point between the 2nd and 3rd
 hex digits (i.e. 1/65536 units) [os2def.h:309].
 
 ---
 
 ## 3. Bitmaps
 
-### 3.1 The bitmap model — handle, owning device, memory DC [DOC-IBM]
+### 3.1 The bitmap model - handle, owning device, memory DC [DOC-IBM]
 
 A bitmap is an off-screen raster owned by a device and referenced by an **`HBITMAP`**. Creating
 one requires a PS associated with a DC that names the target *physical* device (any screen window
 DC will do), because the bitmap's format belongs to that device [DOC-IBM, `GpiCreateBitmap`
-Remarks]. To **draw into** a bitmap — or to use it as the source of most bitmap operations — it
+Remarks]. To **draw into** a bitmap - or to use it as the source of most bitmap operations - it
 must be **selected into a memory device context** with `GpiSetBitmap`; the memory DC is opened
 with `DevOpenDC(..., OD_MEMORY, ...)` [pmdev.h:82] and given a PS. A bitmap is process-private:
 it cannot be touched from another process and is auto-deleted at process exit [DOC-IBM]. Only one
@@ -215,19 +215,19 @@ memory DC may hold a given bitmap at a time; selecting a new bitmap returns the 
 selected handle [DOC-IBM, `GpiSetBitmap` Remarks].
 
 ```
-GpiCreateBitmap / GpiLoadBitmap ─► HBITMAP
-        │
-   GpiSetBitmap(hpsMem, hbm)  ── selects it into a memory DC's PS
-        │
+GpiCreateBitmap / GpiLoadBitmap -> HBITMAP
+        |
+   GpiSetBitmap(hpsMem, hbm)  -- selects it into a memory DC's PS
+        |
    draw with Gpi* into hpsMem, or read/write raw bits (GpiSet/QueryBitmapBits)
-        │
-   GpiWCBitBlt(hpsScreen, hbm, ...) ── blit the bitmap onto a window / device
+        |
+   GpiWCBitBlt(hpsScreen, hbm, ...) -- blit the bitmap onto a window / device
 ```
 
-### 3.2 `BITMAPINFOHEADER2` / `BITMAPINFO2` — bitmap parameterization [DOC-IBM — pmbitmap.h:119]
+### 3.2 `BITMAPINFOHEADER2` / `BITMAPINFO2` - bitmap parameterization [DOC-IBM - pmbitmap.h:119]
 
 The 2.x ("info2") structures are the current form; the 1.x forms
-(`BITMAPINFOHEADER` / `BITMAPINFO`, `cbFix` + `USHORT cx,cy,cPlanes,cBitCount` [pmbitmap.h:59–86])
+(`BITMAPINFOHEADER` / `BITMAPINFO`, `cbFix` + `USHORT cx,cy,cPlanes,cBitCount` [pmbitmap.h:59-86])
 are the compact legacy layout still accepted where a short header suffices.
 
 ```c
@@ -255,19 +255,19 @@ typedef struct _BITMAPINFO2 {   /* bmi2 = header + trailing colour table */
 } BITMAPINFO2;
 ```
 
-`ulCompression` values [pmbitmap.h:101–105]: `BCA_UNCOMP` 0, `BCA_RLE8` 1, `BCA_RLE4` 2,
+`ulCompression` values [pmbitmap.h:101-105]: `BCA_UNCOMP` 0, `BCA_RLE8` 1, `BCA_RLE4` 2,
 `BCA_HUFFMAN1D` 3, `BCA_RLE24` 4. Standard uncompressed formats are 1/4/8/16/24-bit per pel; a
 device may support others but the standard formats are the portable/convertible set [DOC-IBM].
 `cbFix` is a versioning discriminant: a caller sets it to the size of the header form it filled,
 so the engine reads only the fields present.
 
 The on-disk `.BMP`/icon/pointer file layout wraps this: `BITMAPFILEHEADER2` = `{usType, cbSize,
-xHotspot, yHotspot, offBits, BITMAPINFOHEADER2 bmp2}` [pmbitmap.h:199–207], with `usType` one of
-the `BFT_*` signatures — `BFT_BMAP` 0x4D42 (`'BM'`), `BFT_ICON` 0x4349 (`'IC'`), `BFT_POINTER`
+xHotspot, yHotspot, offBits, BITMAPINFOHEADER2 bmp2}` [pmbitmap.h:199-207], with `usType` one of
+the `BFT_*` signatures - `BFT_BMAP` 0x4D42 (`'BM'`), `BFT_ICON` 0x4349 (`'IC'`), `BFT_POINTER`
 0x5450 (`'PT'`), `BFT_COLORICON`/`BFT_COLORPOINTER`, `BFT_BITMAPARRAY` 0x4142 (`'BA'`, a
-multi-image container) [pmbitmap.h:226–231].
+multi-image container) [pmbitmap.h:226-231].
 
-### 3.3 Bitmap create / load / transfer surface [DOC-IBM — pmgpi.h]
+### 3.3 Bitmap create / load / transfer surface [DOC-IBM - pmgpi.h]
 
 | Symbol | Purpose |
 |---|---|
@@ -279,23 +279,23 @@ multi-image container) [pmbitmap.h:226–231].
 | `GpiBitBlt(HPS hpsTgt, HPS hpsSrc, LONG cPts, PPOINTL aptl, LONG lRop, ULONG flOptions)` | Blit between two PSes (both bound to memory DCs / the device) in **device** coordinates [pmgpi.h:1938] |
 | `GpiSetBitmapBits` / `GpiQueryBitmapBits` | Write/read raw pel data by scan-line range; return `BMB_ERROR` (-1) on failure [pmgpi.h:1975, 1988, 2001] |
 | `GpiSetBitmapId(HPS, HBITMAP, LONG lcid)` / `GpiQueryBitmapHandle(HPS, LONG lcid)` | Give a bitmap a setid (for use as a pattern) and recover it [pmgpi.h:1997, 2010] |
-| `GpiQueryBitmapInfoHeader(HBITMAP, PBITMAPINFOHEADER2)` / `GpiQueryBitmapParameters(HBITMAP, PBITMAPINFOHEADER)` | Read back a bitmap's dimensions/format (2.x / legacy header) [pmgpi.h:2013–2017] |
+| `GpiQueryBitmapInfoHeader(HBITMAP, PBITMAPINFOHEADER2)` / `GpiQueryBitmapParameters(HBITMAP, PBITMAPINFOHEADER)` | Read back a bitmap's dimensions/format (2.x / legacy header) [pmgpi.h:2013-2017] |
 | `GpiQueryDeviceBitmapFormats(HPS, LONG, PLONG)` | List `(cPlanes, cBitCount)` pairs the device supports [pmgpi.h:2019] |
 | `GpiDrawBits(HPS, PVOID bits, PBITMAPINFO2, LONG cPts, PPOINTL, LONG lRop, ULONG flOptions)` | Blit directly from an application memory buffer, no `HBITMAP` [pmgpi.h:2033] |
 
 **Blt semantics** [DOC-IBM, `GpiWCBitBlt`/`GpiBitBlt` Remarks]: source and target DCs must be the
 same physical device, which must support raster ops. Rectangles are given as point pairs in
-`aptl` (`cPts` = 2 for a straight copy, 4 to specify source *and* target rectangles → stretch /
+`aptl` (`cPts` = 2 for a straight copy, 4 to specify source *and* target rectangles -> stretch /
 compress). Source rectangles are noninclusive (left/lower in, right/upper out); the target of
 `GpiWCBitBlt` is inclusive-inclusive. If the target rectangle differs in size, the image is
-stretched or compressed; `flOptions` (`BBO_OR` 0, `BBO_AND` 1, `BBO_IGNORE` 2 — how eliminated
+stretched or compressed; `flOptions` (`BBO_OR` 0, `BBO_AND` 1, `BBO_IGNORE` 2 - how eliminated
 rows/columns are combined on compression; plus `BBO_PAL_COLORS` 4, `BBO_NO_COLOR_INFO` 8)
-[pmgpi.h:1921–1926] controls the reduction. Rotation in the transform rotates the copy.
-`lRop` is a **raster operation** combining source, pattern, and destination — `ROP_SRCCOPY`
+[pmgpi.h:1921-1926] controls the reduction. Rotation in the transform rotates the copy.
+`lRop` is a **raster operation** combining source, pattern, and destination - `ROP_SRCCOPY`
 0x00CC (plain copy), `ROP_SRCAND` 0x0088, `ROP_SRCPAINT` 0x00EE, `ROP_SRCINVERT` 0x0066,
 `ROP_PATCOPY` 0x00F0, `ROP_DSTINVERT` 0x0055, `ROP_ONE`/`ROP_ZERO`, and the rest of the ternary
-set [pmgpi.h:1904–1919]. Monochrome↔colour conversion uses the target PS's area foreground/
-background colours (1-bits → area colour, 0-bits → background) — the only format conversion a blit
+set [pmgpi.h:1904-1919]. Monochrome<->colour conversion uses the target PS's area foreground/
+background colours (1-bits -> area colour, 0-bits -> background) - the only format conversion a blit
 performs.
 
 ---
@@ -304,8 +304,8 @@ performs.
 
 ### 4.1 The metafile as a recorded order stream [DOC-IBM]
 
-A **metafile** is a device-independent recording of GPI drawing orders — the sequence of
-primitives, attribute changes, and resource definitions issued to a PS — that can be stored,
+A **metafile** is a device-independent recording of GPI drawing orders - the sequence of
+primitives, attribute changes, and resource definitions issued to a PS - that can be stored,
 transported, and replayed onto any device later. It is *not* a raster snapshot; it is the
 drawing *program*, so replay re-executes at the target device's resolution.
 
@@ -313,19 +313,19 @@ A metafile is created not by a dedicated "create" call but by aiming a **device 
 metafile recorder:
 
 ```
-DevOpenDC(hab, OD_METAFILE, "*", ...)  ─► HDC   (a recording DC)
-GpiCreatePS / GpiAssociate               ── attach a PS; all Gpi* now records into the metafile
+DevOpenDC(hab, OD_METAFILE, "*", ...)  -> HDC   (a recording DC)
+GpiCreatePS / GpiAssociate               -- attach a PS; all Gpi* now records into the metafile
    ...draw...
-DevCloseDC(hdc)                          ─► HMF  (the finished metafile handle)
+DevCloseDC(hdc)                          -> HMF  (the finished metafile handle)
 ```
 
 `DevOpenDC` type `OD_METAFILE` (7) records with full query support; `OD_METAFILE_NOQUERY` (9) is
-a faster recorder that rejects query calls made against it [pmdev.h:81–83]. `DevCloseDC` returns
+a faster recorder that rejects query calls made against it [pmdev.h:81-83]. `DevCloseDC` returns
 the **`HMF`** (metafile handle) instead of the usual boolean when closing a metafile DC
-[pmdev.h:228]. There is no `GpiCreateMetaFile` function in the API — the recording DC *is* the
+[pmdev.h:228]. There is no `GpiCreateMetaFile` function in the API - the recording DC *is* the
 creation mechanism.
 
-### 4.2 Playing and manipulating a metafile [DOC-IBM — pmgpi.h]
+### 4.2 Playing and manipulating a metafile [DOC-IBM - pmgpi.h]
 
 | Symbol | Purpose |
 |---|---|
@@ -339,20 +339,20 @@ creation mechanism.
 | `GpiResumePlay` / `GpiSuspendPlay(HPS)` | Suspend/resume playback (banded output) [pmgpi.h:2264] |
 
 `GpiPlayMetaFile`'s **option array** (`alOpt`, indexed by the `PMF_*` constants
-[pmgpi.h:2197–2208]) tunes replay:
+[pmgpi.h:2197-2208]) tunes replay:
 
 | Index (`PMF_*`) | Controls (values) |
 |---|---|
 | `PMF_SEGBASE` (0) | Base segment identifier for retained segments |
-| `PMF_LOADTYPE` (1) | `LT_DEFAULT` 0 / `LT_NOMODIFY` 1 / `LT_ORIGINALVIEW` 4 — how transforms are applied |
-| `PMF_RESOLVE` (2) | `RS_DEFAULT` 0 / `RS_NODISCARD` 1 — name resolution |
-| `PMF_LCIDS` (3) | `LC_DEFAULT` 0 / `LC_NOLOAD` 1 / `LC_LOADDISC` 3 — how the metafile's setids (fonts/bitmaps) are loaded/discarded |
-| `PMF_RESET` (4) | `RES_DEFAULT` 0 / `RES_NORESET` 1 / `RES_RESET` 2 — reset the PS from the metafile's saved state |
-| `PMF_SUPPRESS` (5) | `SUP_*` — suppress actual drawing (load resources only) |
-| `PMF_COLORTABLES` (6) | `CTAB_*` — replace / keep the colour table |
-| `PMF_COLORREALIZABLE` (7) | `CREA_*` — palette realization |
-| `PMF_DEFAULTS` (8) | `DDEF_*` — treatment of default attributes |
-| `PMF_DELETEOBJECTS` (9) | `DOBJ_*` — delete recorded objects after play |
+| `PMF_LOADTYPE` (1) | `LT_DEFAULT` 0 / `LT_NOMODIFY` 1 / `LT_ORIGINALVIEW` 4 - how transforms are applied |
+| `PMF_RESOLVE` (2) | `RS_DEFAULT` 0 / `RS_NODISCARD` 1 - name resolution |
+| `PMF_LCIDS` (3) | `LC_DEFAULT` 0 / `LC_NOLOAD` 1 / `LC_LOADDISC` 3 - how the metafile's setids (fonts/bitmaps) are loaded/discarded |
+| `PMF_RESET` (4) | `RES_DEFAULT` 0 / `RES_NORESET` 1 / `RES_RESET` 2 - reset the PS from the metafile's saved state |
+| `PMF_SUPPRESS` (5) | `SUP_*` - suppress actual drawing (load resources only) |
+| `PMF_COLORTABLES` (6) | `CTAB_*` - replace / keep the colour table |
+| `PMF_COLORREALIZABLE` (7) | `CREA_*` - palette realization |
+| `PMF_DEFAULTS` (8) | `DDEF_*` - treatment of default attributes |
+| `PMF_DELETEOBJECTS` (9) | `DOBJ_*` - delete recorded objects after play |
 | `PMF_PERPAGEINFOPTR` (12) | pointer to a `PERPAGEINFO` for multi-page play (a range/list of pages) [pmgpi.h:2214] |
 
 Playback interacts with the PS drawing mode (`GpiSetDrawingMode`): with a *retain* mode, replayed
@@ -364,7 +364,7 @@ alter PS state, `GpiResetPS` beforehand (or the `RES_RESET` option) restores a c
 
 ---
 
-## 5. Common error codes [DOC-IBM — gpi book / pmerr.h]
+## 5. Common error codes [DOC-IBM - gpi book / pmerr.h]
 
 Values seen across these subsystems (`WinGetLastError`):
 `PMERR_INV_HPS` 0x207F, `PMERR_PS_BUSY` 0x20F4, `PMERR_INV_SETID` 0x20CA,
@@ -377,8 +377,8 @@ Values seen across these subsystems (`WinGetLastError`):
 
 ## 6. See also
 
-- `gpi-drawing.md` — the DC/PS model, coordinate/transform pipeline, and core primitives
+- `gpi-drawing.md` - the DC/PS model, coordinate/transform pipeline, and core primitives
   (lines, areas, paths, `GpiCharStringAt`).
-- `pm-graphics.md` — the internal engine (GRE / VMAN / presentation driver) that executes the
+- `pm-graphics.md` - the internal engine (GRE / VMAN / presentation driver) that executes the
   orders a metafile records and the pels a blit moves.
-- `printing-spooler.md` — the queued DC, where metafile-style device independence meets output.
+- `printing-spooler.md` - the queued DC, where metafile-style device independence meets output.

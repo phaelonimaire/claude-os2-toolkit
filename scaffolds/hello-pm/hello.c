@@ -1,4 +1,4 @@
-/* hello-pm — a minimal OS/2 Presentation Manager application.
+/* hello-pm - a minimal OS/2 Presentation Manager application.
  *
  * The canonical PM skeleton: an anchor block (HAB) and a per-thread message
  * queue, a registered window class, a standard frame + client window, the

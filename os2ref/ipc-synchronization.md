@@ -6,7 +6,7 @@ kinds of 32-bit semaphore (mutex, event, and muxwait) with their named `\SEM32\`
 API (`\QUEUES\`). All of these are kernel objects with system-wide names, created private by
 default and shared either by giving them a name or by requesting the shared attribute
 explicitly. Waiting operations share one timeout convention: a millisecond count, with
-`SEM_INDEFINITE_WAIT` (−1) meaning block forever and `SEM_IMMEDIATE_RETURN` (0) meaning poll
+`SEM_INDEFINITE_WAIT` (-1) meaning block forever and `SEM_IMMEDIATE_RETURN` (0) meaning poll
 and return at once.
 
 Provenance: **[DOC-IBM]** OS/2 Toolkit 4.5 header `bsedos.h` (all function prototypes,
@@ -20,7 +20,7 @@ observation rather than a documented rule.
 ## 1. Semaphores
 
 OS/2 provides three distinct 32-bit semaphore types, all declared under `INCL_DOSSEMAPHORES`.
-Each is a `ULONG` handle. **[DOC-IBM — `bsedos.h`]**
+Each is a `ULONG` handle. **[DOC-IBM - `bsedos.h`]**
 
 | Type | Handle | Purpose |
 |---|---|---|
@@ -30,7 +30,7 @@ Each is a `ULONG` handle. **[DOC-IBM — `bsedos.h`]**
 
 The generic semaphore-handle type used by the muxwait record is `HSEM` (`typedef ULONG HSEM`),
 which is the common type an `HEV` or `HMTX` is passed as when placed in a muxwait set.
-**[DOC-IBM — `bsedos.h`]**
+**[DOC-IBM - `bsedos.h`]**
 
 ### 1.1 Shared vs. private, and the `\SEM32\` name model [DOC-IBM / DOC]
 
@@ -38,14 +38,14 @@ A semaphore's scope is decided at creation, by the first parameter of the create
 
 - **Named (shared) semaphore.** The name is a string beginning `\SEM32\` (for example
   `\SEM32\MYAPP\READY`). Any process can obtain a handle to the same object by passing that name
-  to the corresponding `DosOpen…Sem` call. A named semaphore is inherently shared. **[DOC]**
+  to the corresponding `DosOpen...Sem` call. A named semaphore is inherently shared. **[DOC]**
 - **Unnamed private semaphore.** The name pointer is `NULL`. The semaphore is private to the
   creating process unless the `DC_SEM_SHARED` (`0x01`) attribute is set, in which case an
   unnamed semaphore is placed in the shared arena and its handle can be inherited by / passed to
-  other processes even though it has no name. **[DOC-IBM — `bsedos.h`: "`DC_SEM_SHARED` …
+  other processes even though it has no name. **[DOC-IBM - `bsedos.h`: "`DC_SEM_SHARED` ...
   indicate whether the semaphore is shared or private when the PSZ is null"]**
 
-### 1.2 Creation attributes [DOC-IBM — `bsedos.h`]
+### 1.2 Creation attributes [DOC-IBM - `bsedos.h`]
 
 Passed in the `flAttr` parameter of the create calls:
 
@@ -57,7 +57,7 @@ Passed in the `flAttr` parameter of the create calls:
 | `DCE_AUTORESET` | `0x1000` | event | Event auto-resets on post (returns to reset state). |
 | `DCE_POSTONE` | `0x0800` | event | Post wakes only one waiter and auto-resets when multiple wait. |
 
-### 1.3 Timeout convention [DOC-IBM — `bsedos.h`]
+### 1.3 Timeout convention [DOC-IBM - `bsedos.h`]
 
 The `ulTimeout` parameter of the blocking calls (`DosRequestMutexSem`, `DosWaitEventSem`,
 `DosWaitMuxWaitSem`) is a `ULONG` millisecond count, with two named sentinels:
@@ -68,9 +68,9 @@ The `ulTimeout` parameter of the blocking calls (`DosRequestMutexSem`, `DosWaitE
 | `SEM_IMMEDIATE_RETURN` | `0L` | Do not block; return immediately with the current state. |
 
 A wait that times out returns `ERROR_TIMEOUT` (640) or `ERROR_SEM_TIMEOUT` (121) depending on
-the call. **[DOC-IBM — `bseerr.h`]**
+the call. **[DOC-IBM - `bseerr.h`]**
 
-### 1.4 Mutex semaphore functions [DOC-IBM — `bsedos.h`]
+### 1.4 Mutex semaphore functions [DOC-IBM - `bsedos.h`]
 
 | Function | One-line purpose |
 |---|---|
@@ -94,10 +94,10 @@ APIRET APIENTRY DosQueryMutexSem(HMTX hmtx, PID *ppid, TID *ptid, PULONG pulCoun
 **ownership-tracked**: only the owning thread may release it, and `DosRequestMutexSem` may be
 called repeatedly by the owner (nested), each request requiring a matching release. If the owning
 thread ends without releasing, a subsequent request returns `ERROR_SEM_OWNER_DIED` (105); the
-non-owner release attempt returns `ERROR_NOT_OWNER` (288). **[DOC-IBM — `bsedos.h` /
+non-owner release attempt returns `ERROR_NOT_OWNER` (288). **[DOC-IBM - `bsedos.h` /
 `bseerr.h`]**
 
-### 1.5 Event semaphore functions [DOC-IBM — `bsedos.h`]
+### 1.5 Event semaphore functions [DOC-IBM - `bsedos.h`]
 
 | Function | One-line purpose |
 |---|---|
@@ -124,10 +124,10 @@ An event carries a **post count**: `DosPostEventSem` increments it, `DosResetEve
 posted state and returns via `pulPostCt` how many posts occurred since the previous reset, and
 `DosQueryEventSem` reads that count non-destructively. Posting an already-posted event returns
 `ERROR_ALREADY_POSTED` (299); resetting an already-reset event returns `ERROR_ALREADY_RESET`
-(300) [DOC-IBM — `bseerr.h:331-332`]. With `DCE_AUTORESET` the event returns to the reset state automatically once waiters have
-been released. **[DOC-IBM — `bsedos.h`]**
+(300) [DOC-IBM - `bseerr.h:331-332`]. With `DCE_AUTORESET` the event returns to the reset state automatically once waiters have
+been released. **[DOC-IBM - `bsedos.h`]**
 
-### 1.6 MuxWait semaphore functions [DOC-IBM — `bsedos.h`]
+### 1.6 MuxWait semaphore functions [DOC-IBM - `bsedos.h`]
 
 A muxwait groups a set of existing event *or* mutex semaphores so a thread can wait on the whole
 set at once. The set is described by an array of `SEMRECORD` and a count; a single muxwait holds
@@ -155,7 +155,7 @@ APIRET APIENTRY DosQueryMuxWaitSem(HMUX hmux, PULONG pcSemRec, PSEMRECORD pSemRe
                                    PULONG pflAttr);
 ```
 
-The set member is a `SEMRECORD` (structure tag `psr`): **[DOC-IBM — `bsedos.h`]**
+The set member is a `SEMRECORD` (structure tag `psr`): **[DOC-IBM - `bsedos.h`]**
 
 ```c
 typedef struct _PSEMRECORD {   /* psr */
@@ -167,9 +167,9 @@ typedef struct _PSEMRECORD {   /* psr */
 On a satisfied `DosWaitMuxWaitSem`, the `ulUser` value of the member that satisfied the wait is
 returned through `pulUser`, letting the caller identify which semaphore fired. `flAttr` selects
 `DCMW_WAIT_ANY` (`0x02`) or `DCMW_WAIT_ALL` (`0x04`), combined with `DC_SEM_SHARED` for an unnamed
-shared muxwait. **[DOC-IBM — `bsedos.h`]**
+shared muxwait. **[DOC-IBM - `bsedos.h`]**
 
-### 1.7 Common semaphore error codes [DOC-IBM — `bseerr.h`]
+### 1.7 Common semaphore error codes [DOC-IBM - `bseerr.h`]
 
 | Error | Value | Meaning |
 |---|---|---|
@@ -196,32 +196,32 @@ OS/2 has two pipe families: **anonymous** pipes (a read/write handle pair for a 
 child) and **named** pipes (a `\PIPE\`-named bidirectional server/client channel). Named-pipe
 declarations are under `INCL_DOSNMPIPES`; `DosCreatePipe` is under `INCL_DOSQUEUES`.
 
-### 2.1 Anonymous pipes [DOC-IBM — `bsedos.h`]
+### 2.1 Anonymous pipes [DOC-IBM - `bsedos.h`]
 
 ```c
 APIRET APIENTRY DosCreatePipe(PHFILE phfRead, PHFILE phfWrite, ULONG cb);
 ```
 
-`DosCreatePipe` returns two file handles — a read handle and a write handle — connected by a
+`DosCreatePipe` returns two file handles - a read handle and a write handle - connected by a
 buffer of `cb` bytes. The handles are ordinary `HFILE`s usable with `DosRead` / `DosWrite` /
 `DosClose`, and are inherited by child processes, which is how an anonymous pipe connects a parent
-and its child. It has no name and cannot be opened by unrelated processes. **[DOC-IBM —
+and its child. It has no name and cannot be opened by unrelated processes. **[DOC-IBM -
 `bsedos.h`]**
 
-### 2.2 Named pipes — the `\PIPE\` model [DOC-IBM / DOC]
+### 2.2 Named pipes - the `\PIPE\` model [DOC-IBM / DOC]
 
-A named pipe has a name of the form `\PIPE\name`. One process is the **server** — it creates the
+A named pipe has a name of the form `\PIPE\name`. One process is the **server** - it creates the
 pipe with `DosCreateNPipe` and manages the connection with `DosConnectNPipe` /
-`DosDisConnectNPipe` — and other processes are **clients**, which reach it by opening the same
+`DosDisConnectNPipe` - and other processes are **clients**, which reach it by opening the same
 `\PIPE\name` with `DosOpen` (the pipe presents as a file). Named pipes can be duplex and support a
-byte-stream or message mode. **[DOC-IBM — `bsedos.h`; DOC — Control Program Reference]**
+byte-stream or message mode. **[DOC-IBM - `bsedos.h`; DOC - Control Program Reference]**
 
 | Function | One-line purpose |
 |---|---|
 | `DosCreateNPipe` | (Server) Create a named-pipe instance with access/pipe modes and buffer sizes. |
 | `DosConnectNPipe` | (Server) Place the pipe in the LISTENING state, ready for a client to open. |
 | `DosDisConnectNPipe` | (Server) Disconnect the current client, returning the pipe to DISCONNECTED. |
-| `DosCallNPipe` | (Client) Open, write a request, read a reply, and close — a one-shot transaction by name. |
+| `DosCallNPipe` | (Client) Open, write a request, read a reply, and close - a one-shot transaction by name. |
 | `DosTransactNPipe` | Write a request and read a reply over an already-open message-mode pipe. |
 | `DosWaitNPipe` | (Client) Wait for a pipe instance to become available when all are busy. |
 | `DosPeekNPipe` | Read pipe data without removing it, plus available-byte counts and state. |
@@ -246,21 +246,21 @@ APIRET APIENTRY DosPeekNPipe(HPIPE hpipe, PVOID pBuf, ULONG cbBuf, PULONG pcbAct
                              PAVAILDATA pAvail, PULONG pState);
 ```
 
-The pipe handle type is `HPIPE` (`typedef LHANDLE HPIPE`). **[DOC-IBM — `bsedos.h`]**
+The pipe handle type is `HPIPE` (`typedef LHANDLE HPIPE`). **[DOC-IBM - `bsedos.h`]**
 
-#### 2.2.1 `DosCreateNPipe` open-mode flags (`openmode`) [DOC-IBM — `bsedos.h`]
+#### 2.2.1 `DosCreateNPipe` open-mode flags (`openmode`) [DOC-IBM - `bsedos.h`]
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `NP_ACCESS_INBOUND` | `0x0000` | Client → server only. |
-| `NP_ACCESS_OUTBOUND` | `0x0001` | Server → client only. |
+| `NP_ACCESS_INBOUND` | `0x0000` | Client -> server only. |
+| `NP_ACCESS_OUTBOUND` | `0x0001` | Server -> client only. |
 | `NP_ACCESS_DUPLEX` | `0x0002` | Bidirectional. |
 | `NP_INHERIT` | `0x0000` | Handle inherited by child processes. |
 | `NP_NOINHERIT` | `0x0080` | Handle not inherited. |
 | `NP_WRITEBEHIND` | `0x0000` | Write-behind allowed. |
 | `NP_NOWRITEBEHIND` | `0x4000` | Write-behind disabled. |
 
-#### 2.2.2 `DosCreateNPipe` pipe-mode flags (`pipemode`) and instance count [DOC-IBM — `bsedos.h`]
+#### 2.2.2 `DosCreateNPipe` pipe-mode flags (`pipemode`) and instance count [DOC-IBM - `bsedos.h`]
 
 | Constant | Value | Meaning |
 |---|---|---|
@@ -277,11 +277,11 @@ The pipe handle type is `HPIPE` (`typedef LHANDLE HPIPE`). **[DOC-IBM — `bsedo
 The low byte `NP_ICOUNT` (`0x00FF`) of the pipe mode holds the instance-count field. The
 handle-state word queried by `DosQueryNPHState` uses the parallel bit set `NP_NBLK` (`0x8000`,
 non-blocking), `NP_SERVER` (`0x4000`, server end), `NP_WMESG` (`0x0400`, write messages),
-`NP_RMESG` (`0x0100`, read as messages). **[DOC-IBM — `bsedos.h`]**
+`NP_RMESG` (`0x0100`, read as messages). **[DOC-IBM - `bsedos.h`]**
 
-#### 2.2.3 Pipe states and state machine [DOC-IBM — `bsedos.h`]
+#### 2.2.3 Pipe states and state machine [DOC-IBM - `bsedos.h`]
 
-A named pipe moves through four states. Two constant sets name them — the `NP_STATE_*` set used
+A named pipe moves through four states. Two constant sets name them - the `NP_STATE_*` set used
 by `DosPeekNPipe`/`DosQueryNPHState`, and the plain `NP_*` set:
 
 | State | `NP_STATE_*` | `NP_*` | Reached by |
@@ -292,19 +292,19 @@ by `DosPeekNPipe`/`DosQueryNPHState`, and the plain `NP_*` set:
 | Closing | `NP_STATE_CLOSING` `0x0004` | `NP_CLOSING` `4` | After client or server close. |
 
 The documented transition table (from `bsedos.h`): a server `DosCreateNPipe` produces
-DISCONNECTED; a server connect moves DISCONNECTED → LISTENING; a client open moves LISTENING →
-CONNECTED; a server disconnect returns CONNECTED (or CLOSING) → DISCONNECTED; a client close moves
-CONNECTED → CLOSING. If the server disconnects its end, the client end enters a state where any
-future operation except close returns an error. **[DOC-IBM — `bsedos.h`]**
+DISCONNECTED; a server connect moves DISCONNECTED -> LISTENING; a client open moves LISTENING ->
+CONNECTED; a server disconnect returns CONNECTED (or CLOSING) -> DISCONNECTED; a client close moves
+CONNECTED -> CLOSING. If the server disconnects its end, the client end enters a state where any
+future operation except close returns an error. **[DOC-IBM - `bsedos.h`]**
 
-#### 2.2.4 Named-pipe timeout sentinels [DOC-IBM — `bsedos.h`]
+#### 2.2.4 Named-pipe timeout sentinels [DOC-IBM - `bsedos.h`]
 
 | Constant | Value | Meaning |
 |---|---|---|
 | `NP_INDEFINITE_WAIT` | `-1` | Block forever (the `msec` parameter). |
 | `NP_DEFAULT_WAIT` | `0L` | Use the pipe's default wait time. |
 
-#### 2.2.5 Named-pipe structures [DOC-IBM — `bsedos.h`]
+#### 2.2.5 Named-pipe structures [DOC-IBM - `bsedos.h`]
 
 ```c
 typedef struct _AVAILDATA {   /* AVAILDATA */
@@ -330,10 +330,10 @@ typedef struct _PIPESEMSTATE {   /* nmpsmst */
 ```
 
 The `PIPESEMSTATE.fStatus` values have named forms: `NPSS_EOI` (0), `NPSS_RDATA` (1),
-`NPSS_WSPACE` (2), `NPSS_CLOSE` (3); the `fFlag` bit `NPSS_WAIT` is `0x01`. **[DOC-IBM —
+`NPSS_WSPACE` (2), `NPSS_CLOSE` (3); the `fFlag` bit `NPSS_WAIT` is `0x01`. **[DOC-IBM -
 `bsedos.h`]**
 
-#### 2.2.6 `DosConnectNPipe` behavior and return codes [DOC — EDM2 "DosConnectNmPipe"]
+#### 2.2.6 `DosConnectNPipe` behavior and return codes [DOC - EDM2 "DosConnectNmPipe"]
 
 The server issues this once before the first client and again (after `DosDisConnectNPipe`) before
 each subsequent client. On return the pipe is in the LISTENING state; a client `DosOpen` to a pipe
@@ -349,9 +349,9 @@ that is not listening fails. Behavioral edge cases:
   returns `ERROR_INTERRUPT` (95).
 
 Return codes: `NO_ERROR`, `ERROR_INTERRUPT` (95), `ERROR_BROKEN_PIPE` (109), `ERROR_BAD_PIPE`
-(230), `ERROR_PIPE_NOT_CONNECTED` (233). **[DOC — EDM2 "DosConnectNmPipe"]**
+(230), `ERROR_PIPE_NOT_CONNECTED` (233). **[DOC - EDM2 "DosConnectNmPipe"]**
 
-### 2.3 Pipe error codes [DOC-IBM — `bseerr.h`]
+### 2.3 Pipe error codes [DOC-IBM - `bseerr.h`]
 
 | Error | Value | Meaning |
 |---|---|---|
@@ -368,8 +368,8 @@ Return codes: `NO_ERROR`, `ERROR_INTERRUPT` (95), `ERROR_BROKEN_PIPE` (109), `ER
 A queue is a named, single-owner FIFO/LIFO/priority list of elements that many processes can
 write to and the owner reads from. Each element is a `(request-code, data-pointer, length)`
 triple tagged with the writing process's PID. Declared under `INCL_DOSQUEUES`. The handle type is
-`HQUEUE` (`typedef LHANDLE HQUEUE`). By convention the queue name begins `\QUEUES\`. **[DOC-IBM —
-`bsedos.h`; DOC — Control Program Reference]**
+`HQUEUE` (`typedef LHANDLE HQUEUE`). By convention the queue name begins `\QUEUES\`. **[DOC-IBM -
+`bsedos.h`; DOC - Control Program Reference]**
 
 | Function | One-line purpose |
 |---|---|
@@ -396,20 +396,20 @@ APIRET APIENTRY DosPurgeQueue(HQUEUE hq);
 APIRET APIENTRY DosQueryQueue(HQUEUE hq, PULONG pcbEntries);
 ```
 
-### 3.1 Ordering discipline (`priority` on create) [DOC-IBM — `bsedos.h`]
+### 3.1 Ordering discipline (`priority` on create) [DOC-IBM - `bsedos.h`]
 
 | Constant | Value | Meaning |
 |---|---|---|
 | `QUE_FIFO` | `0L` | First-in, first-out. |
 | `QUE_LIFO` | `1L` | Last-in, first-out. |
-| `QUE_PRIORITY` | `2L` | Ordered by the per-element priority byte (0–15, 15 highest). |
+| `QUE_PRIORITY` | `2L` | Ordered by the per-element priority byte (0-15, 15 highest). |
 | `QUE_NOCONVERT_ADDRESS` | `0L` | Do not address-convert element data across the 16/32-bit boundary. |
 | `QUE_CONVERT_ADDRESS` | `4L` | Address-convert 16-bit element data pointers for the reader. |
 
 The discipline and the convert flag are OR-combined in the `priority` parameter of
-`DosCreateQueue`. **[DOC-IBM — `bsedos.h`]**
+`DosCreateQueue`. **[DOC-IBM - `bsedos.h`]**
 
-### 3.2 Element identity [DOC-IBM — `bsedos.h`]
+### 3.2 Element identity [DOC-IBM - `bsedos.h`]
 
 Each read/peek fills a `REQUESTDATA` identifying who wrote the element and carrying a
 caller-defined `ULONG`:
@@ -425,23 +425,23 @@ The queue stores a pointer to the element data, not a copy; the writer and the o
 access to that memory (for example via shared memory), which is why `QUE_CONVERT_ADDRESS` exists
 for 16-bit writers. A blocking `DosReadQueue` (`wait = TRUE`) sleeps until an element is
 available; alternatively an event semaphore (`hsem`) can be supplied and posted when the queue
-becomes non-empty. **[DOC-IBM — `bsedos.h`]**
+becomes non-empty. **[DOC-IBM - `bsedos.h`]**
 
 On write, the per-element priority byte is honoured only for a `QUE_PRIORITY` queue: priority 15
 adds the element at the top (LIFO within that priority), 0 adds it at the tail, and elements of
 equal priority stay FIFO. Reading with an `element` code of 0 removes elements in the queue's
 creation-order discipline; a non-zero code (obtained from `DosPeekQueue`) removes a specific
-element. **[DOC — EDM2 "DosWriteQueue (OS/2 1.x)", "DosReadQueue (OS/2 1.x)"]**
+element. **[DOC - EDM2 "DosWriteQueue (OS/2 1.x)", "DosReadQueue (OS/2 1.x)"]**
 
-### 3.3 Per-call return codes [DOC — EDM2 "DosReadQueue (OS/2 1.x)", "DosWriteQueue (OS/2 1.x)"]
+### 3.3 Per-call return codes [DOC - EDM2 "DosReadQueue (OS/2 1.x)", "DosWriteQueue (OS/2 1.x)"]
 
-- `DosReadQueue` returns `NO_ERROR`, `ERROR_QUE_PROC_NOT_OWNED` (330 — a non-owner tried to read),
-  `ERROR_QUE_ELEMENT_NOT_EXIST` (333), `ERROR_QUE_INVALID_HANDLE` (337), `ERROR_QUE_EMPTY` (342 —
+- `DosReadQueue` returns `NO_ERROR`, `ERROR_QUE_PROC_NOT_OWNED` (330 - a non-owner tried to read),
+  `ERROR_QUE_ELEMENT_NOT_EXIST` (333), `ERROR_QUE_INVALID_HANDLE` (337), `ERROR_QUE_EMPTY` (342 -
   empty queue with no-wait requested), or `ERROR_QUE_INVALID_WAIT` (433).
 - `DosWriteQueue` returns `NO_ERROR`, `ERROR_QUE_NO_MEMORY` (334), or `ERROR_QUE_INVALID_HANDLE`
-  (337 — returned when the owning process has terminated or the queue was closed before the write).
+  (337 - returned when the owning process has terminated or the queue was closed before the write).
 
-### 3.4 Queue error codes [DOC-IBM — `bseerr.h`]
+### 3.4 Queue error codes [DOC-IBM - `bseerr.h`]
 
 | Error | Value | Meaning |
 |---|---|---|
@@ -467,14 +467,14 @@ element. **[DOC — EDM2 "DosWriteQueue (OS/2 1.x)", "DosReadQueue (OS/2 1.x)"]*
 | Event semaphore | `HEV` | `\SEM32\` | unnamed create | a name, or `DC_SEM_SHARED` |
 | MuxWait semaphore | `HMUX` | `\SEM32\` | unnamed create | a name, or `DC_SEM_SHARED` |
 | Anonymous pipe | `HFILE` pair | (none) | always | handle inheritance |
-| Named pipe | `HPIPE` | `\PIPE\` | — (server-owned, client-opened) | its name |
-| Queue | `HQUEUE` | `\QUEUES\` | — (single owner, many writers) | its name |
+| Named pipe | `HPIPE` | `\PIPE\` | - (server-owned, client-opened) | its name |
+| Queue | `HQUEUE` | `\QUEUES\` | - (single owner, many writers) | its name |
 
 All named objects live in the shared arena and persist as long as at least one handle to them
 remains open; the object is destroyed when the last handle closes (for a queue, closing the
 owner's handle destroys it). A named semaphore/pipe/queue name is a case-insensitive path-style
-string under its prefix. **[DOC — Control Program Reference; DOC-IBM — `bsedos.h` for the
+string under its prefix. **[DOC - Control Program Reference; DOC-IBM - `bsedos.h` for the
 attribute mechanics]**
 
 ## See also
-- `process-thread.md` — the threads/processes these semaphores, pipes, and queues coordinate; `memory-api.md` — the shared memory named IPC objects live alongside.
+- `process-thread.md` - the threads/processes these semaphores, pipes, and queues coordinate; `memory-api.md` - the shared memory named IPC objects live alongside.

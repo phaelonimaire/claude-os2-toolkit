@@ -1,11 +1,11 @@
-# OS/2 Presentation Manager — Clipboard and Dynamic Data Exchange
+# OS/2 Presentation Manager - Clipboard and Dynamic Data Exchange
 
 The two Presentation Manager (PM) facilities for moving data *between applications*: the
 **clipboard**, a single system-wide store used for one-time, user-initiated transfers (Copy /
 Paste); and **Dynamic Data Exchange (DDE)**, a message-based protocol for ongoing, program-driven
 conversations in which one application (the *client*) requests data or actions from another (the
 *server*), optionally establishing a standing link that pushes updates as source data changes. The
-two are independent — DDE neither uses nor depends on the clipboard — but they share a data-format
+two are independent - DDE neither uses nor depends on the clipboard - but they share a data-format
 vocabulary (the `CF_*` / `SZFMT_*` names) and both rely on **shareable memory** to move a payload
 across process boundaries.
 
@@ -26,15 +26,15 @@ at a time. An application must **open** the clipboard before reading or writing 
 it afterward; opening serializes access across the whole system. Around the store sit three
 distinguished roles:
 
-- **The setter** — any application that puts data in, via `WinSetClipbrdData`.
-- **The owner** — a window (`WinSetClipbrdData` makes the setting window's owner, or set explicitly
+- **The setter** - any application that puts data in, via `WinSetClipbrdData`.
+- **The owner** - a window (`WinSetClipbrdData` makes the setting window's owner, or set explicitly
   with `WinSetClipbrdOwner`) that receives the clipboard notification messages, and in particular
   is asked to *render* delayed formats and to draw its own display format (Section 4).
-- **The viewer** — an optional window, set with `WinSetClipbrdViewer`, that displays the current
+- **The viewer** - an optional window, set with `WinSetClipbrdViewer`, that displays the current
   clipboard contents and is told (via `WM_DRAWCLIPBOARD`) whenever they change.
 
 A reader "does not become the owner of the object in it; it must not update or free the object"
-[DOC-IBM — pm2.txt, WinOpenClipbrd Remarks].
+[DOC-IBM - pm2.txt, WinOpenClipbrd Remarks].
 
 ### Opening, closing, and emptying [DOC-IBM]
 
@@ -46,8 +46,8 @@ A reader "does not become the owner of the object in it; it must not update or f
 
 Provenance: **[DOC-IBM]** `pmwin.h:3709-3711`; semantics from pm2.txt (WinOpenClipbrd,
 WinCloseClipbrd, WinEmptyClipbrd). A data handle returned by a query **must not be used after
-`WinCloseClipbrd`** — the reader copies or consumes it while the clipboard is still open
-[DOC-IBM — pm2.txt, WinQueryClipbrdData Remarks].
+`WinCloseClipbrd`** - the reader copies or consumes it while the clipboard is still open
+[DOC-IBM - pm2.txt, WinQueryClipbrdData Remarks].
 
 ### Owner and viewer [DOC-IBM]
 
@@ -60,9 +60,9 @@ WinCloseClipbrd, WinEmptyClipbrd). A data handle returned by a query **must not 
 
 Provenance: **[DOC-IBM]** `pmwin.h:3684-3685, 3695-3696, 3713-3714`. The owner window receives, at
 appropriate times: `WM_DESTROYCLIPBOARD`, `WM_RENDERFMT`, `WM_RENDERALLFMTS`, `WM_PAINTCLIPBOARD`,
-`WM_SIZECLIPBOARD`, `WM_HSCROLLCLIPBOARD`, `WM_VSCROLLCLIPBOARD` [DOC-IBM — pm2.txt,
+`WM_SIZECLIPBOARD`, `WM_HSCROLLCLIPBOARD`, `WM_VSCROLLCLIPBOARD` [DOC-IBM - pm2.txt,
 WinSetClipbrdOwner Remarks]. The viewer window receives `WM_DRAWCLIPBOARD` when the contents change
-[DOC-IBM — pm2.txt, WinSetClipbrdViewer Remarks].
+[DOC-IBM - pm2.txt, WinSetClipbrdViewer Remarks].
 
 ---
 
@@ -79,7 +79,7 @@ object; `rgfFmtInfo` (the `CFI_*` flags, Section 3) states the object's memory m
 The clipboard must be open. Returns `TRUE` if placed, `FALSE` on error or if `ulData` is `NULL`
 without a valid combination.
 
-Key semantics [DOC-IBM — pm2.txt, WinSetClipbrdData]:
+Key semantics [DOC-IBM - pm2.txt, WinSetClipbrdData]:
 
 - **Ownership transfers to the system.** "An object passed to the clipboard becomes the property of
   the system, and is not deleted when the process that created it terminates." Once set, the setting
@@ -111,7 +111,7 @@ ULONG APIENTRY WinEnumClipbrdFmts(HAB hab, ULONG fmt);
 
 Walks the list of formats currently present. Pass `fmt = 0` to get the first available format;
 pass the last returned value to get the next. **Returns 0 when enumeration is complete** (no more
-formats). The clipboard should be open. [DOC-IBM — pm2.txt, WinEnumClipbrdFmts.]
+formats). The clipboard should be open. [DOC-IBM - pm2.txt, WinEnumClipbrdFmts.]
 
 ### `WinQueryClipbrdFmtInfo` [DOC-IBM `pmwin.h:3692-3694`]
 
@@ -121,9 +121,9 @@ BOOL APIENTRY WinQueryClipbrdFmtInfo(HAB hab, ULONG fmt, PULONG prgfFmtInfo);
 
 Reports whether format `fmt` is present and, if so, writes its `CFI_*` flags to `*prgfFmtInfo`.
 Returns `TRUE` (format present, `*prgfFmtInfo` set) or `FALSE` (absent, not set). **This does not
-cause the data to be rendered.** The flags returned are those the setter supplied — standard bitmap
+cause the data to be rendered.** The flags returned are those the setter supplied - standard bitmap
 / metafile formats read back `CFI_HANDLE`, text formats read back `CFI_POINTER`, and user-defined
-formats read back whatever value was passed to `WinSetClipbrdData` [DOC-IBM — pm2.txt,
+formats read back whatever value was passed to `WinSetClipbrdData` [DOC-IBM - pm2.txt,
 WinQueryClipbrdFmtInfo].
 
 ---
@@ -145,11 +145,11 @@ WinQueryClipbrdFmtInfo].
 | `CF_MMPMLAST` | `19` | Last of the MMPM/2 format range. |
 
 Format values above the predefined set are **private formats** created through the system atom
-manager: register a name with `WinAddAtom(WinQuerySystemAtomTable(), "…")` and use the returned atom
+manager: register a name with `WinAddAtom(WinQuerySystemAtomTable(), "...")` and use the returned atom
 as the format id; other applications recover the same id with `WinFindAtom`
-[DOC-IBM — pm2.txt, WinQueryClipbrdFmtInfo Remarks]. `pmwin.h` also defines the equivalent
+[DOC-IBM - pm2.txt, WinQueryClipbrdFmtInfo Remarks]. `pmwin.h` also defines the equivalent
 `SZFMT_*` *string* names used to register formats by name (`SZFMT_TEXT "#1"`,
-`SZFMT_BITMAP "#2"`, … `SZFMT_DIB "Dib"`, `SZFMT_OEMTEXT "OemText"`) [DOC-IBM `pmwin.h:3626-3644`].
+`SZFMT_BITMAP "#2"`, ... `SZFMT_DIB "Dib"`, `SZFMT_OEMTEXT "OemText"`) [DOC-IBM `pmwin.h:3626-3644`].
 
 ### Format-info flags (`CFI_*`) [DOC-IBM `pmwin.h:3700-3703`]
 
@@ -171,8 +171,8 @@ requirements from pm2.txt (WinSetClipbrdData flFmtInfo).
 
 ## 4. Delayed (render-on-demand) rendering [DOC-IBM]
 
-An application that can produce a format only on demand — because rendering is expensive, or it can
-supply several formats — uses **delayed rendering**: it calls `WinSetClipbrdData` with
+An application that can produce a format only on demand - because rendering is expensive, or it can
+supply several formats - uses **delayed rendering**: it calls `WinSetClipbrdData` with
 `ulData = NULLHANDLE` for each such format, and **must become the clipboard owner**. The format then
 appears present (so `WinEnumClipbrdFmts` / `WinQueryClipbrdFmtInfo` report it), but the data is not
 produced until someone asks for it.
@@ -181,11 +181,11 @@ produced until someone asks for it.
   owner **`WM_RENDERFMT`**. The owner renders that one format and passes the pointer/handle back via
   `WinSetClipbrdData` (same shareable-memory rules as ordinary data); the query then returns the
   fresh handle. This is simply a deferred execution of the normal set operation
-  [DOC-IBM — pm4.txt / pmv2base.txt, DDE-and-clipboard rendering].
+  [DOC-IBM - pm4.txt / pmv2base.txt, DDE-and-clipboard rendering].
 - Just before the owning application **terminates** while it still holds delayed formats, the system
   sends **`WM_RENDERALLFMTS`** so the owner can render every format it is capable of and hand each to
   `WinSetClipbrdData`, ensuring the data outlives the owner
-  [DOC-IBM — pm3.txt, WM_RENDERALLFMTS].
+  [DOC-IBM - pm3.txt, WM_RENDERALLFMTS].
 
 ### Clipboard messages [DOC-IBM `pmwin.h:3602-3609`]
 
@@ -205,21 +205,21 @@ parameters from pm3.txt (WM_RENDERFMT / WM_RENDERALLFMTS).
 
 ---
 
-## 5. Dynamic Data Exchange — the conversation model [DOC-IBM]
+## 5. Dynamic Data Exchange - the conversation model [DOC-IBM]
 
 DDE is a **message protocol between two windows**, one per participating application; the windows
 need not be visible (they are identified only by handle). The application that starts the exchange
 is the **client**; the one that services requests is the **server**. A server can serve many clients
 and a client can talk to many servers; an application can be both at once. The unit of work is a
-**transaction** — a client request that the server acts on. Data crosses the process boundary in a
+**transaction** - a client request that the server acts on. Data crosses the process boundary in a
 **shared-memory object** whose first bytes are a `DDESTRUCT` (Section 7). DDE is independent of the
-clipboard [DOC-IBM — pm4.txt, About Dynamic Data Exchange].
+clipboard [DOC-IBM - pm4.txt, About Dynamic Data Exchange].
 
 A conversation is scoped by a **(application name, topic)** pair at initiation, and thereafter each
 transaction names an **item** within the topic and a data **format**. The reserved system topic
 `"System"` (`SZDDESYS_TOPIC`) and its items (`SZDDESYS_ITEM_TOPICS "Topics"`,
 `SZDDESYS_ITEM_SYSITEMS "SysItems"`, `SZDDESYS_ITEM_FORMATS "Formats"`, `SZDDESYS_ITEM_STATUS`,
-`SZDDESYS_ITEM_HELP`, …) let a client discover what a server supports
+`SZDDESYS_ITEM_HELP`, ...) let a client discover what a server supports
 [DOC-IBM `pmwin.h:4384-4395`].
 
 ### Initiation [DOC-IBM]
@@ -230,30 +230,30 @@ sent, the call does not return until every recipient has responded. A potential 
 its top-level frame to receive `WM_DDE_INITIATE`; if the application name matches (or is
 zero-length) and it supports the topic (or the topic is zero-length), it replies by calling
 `WinDdeRespond`, which sends `WM_DDE_INITIATEACK` back to the client
-[DOC-IBM — pm4.txt, Client and Server Interaction / initiation]. Zero-length application or topic
+[DOC-IBM - pm4.txt, Client and Server Interaction / initiation]. Zero-length application or topic
 strings are the discovery mechanism: a zero-length topic makes a server acknowledge *once per topic
-it supports*, so a client can enumerate servers and topics [DOC-IBM — pm4.txt].
+it supports*, so a client can enumerate servers and topics [DOC-IBM - pm4.txt].
 
 Two applications that already hold each other's window handles (by some other agreement) may
-exchange DDE messages directly without the initiate sequence [DOC-IBM — pm4.txt].
+exchange DDE messages directly without the initiate sequence [DOC-IBM - pm4.txt].
 
 ### The five transaction types [DOC-IBM `pmwin.h:4487-4494`]
 
 Within an established conversation the client drives one of five transactions, each with its own
 message; the server answers with `WM_DDE_ACK`, `WM_DDE_DATA`, or a negative `WM_DDE_ACK`:
 
-- **Request** (`WM_DDE_REQUEST`) — one-time pull of an item in a given format. Server replies
+- **Request** (`WM_DDE_REQUEST`) - one-time pull of an item in a given format. Server replies
   `WM_DDE_DATA` (success) or negative `WM_DDE_ACK`. A client typically asks for its richest format
   first, then steps down through simpler formats on rejection.
-- **Poke** (`WM_DDE_POKE`) — client pushes an unsolicited data item to the server; server replies
+- **Poke** (`WM_DDE_POKE`) - client pushes an unsolicited data item to the server; server replies
   positive/negative `WM_DDE_ACK`.
-- **Advise** (`WM_DDE_ADVISE`) — client establishes a standing link on an item; thereafter the
+- **Advise** (`WM_DDE_ADVISE`) - client establishes a standing link on an item; thereafter the
   server posts `WM_DDE_DATA` on every change until unadvised. With `DDE_FNODATA` set the server
   posts only a *notification* (0-byte data) rather than the value. Multiple advise loops with
   different formats may coexist on one item.
-- **Unadvise** (`WM_DDE_UNADVISE`) — client tears down a link (a zero-length item name tears down
+- **Unadvise** (`WM_DDE_UNADVISE`) - client tears down a link (a zero-length item name tears down
   *all* links in the conversation). Server replies `WM_DDE_ACK`.
-- **Execute** (`WM_DDE_EXECUTE`) — client sends a command string for the server to run; server
+- **Execute** (`WM_DDE_EXECUTE`) - client sends a command string for the server to run; server
   replies positive/negative `WM_DDE_ACK`.
 
 ### Termination [DOC-IBM]
@@ -261,7 +261,7 @@ message; the server answers with `WM_DDE_ACK`, `WM_DDE_DATA`, or a negative `WM_
 Either side ends the exchange by posting `WM_DDE_TERMINATE` (with a zero-length shared-memory
 pointer). The recipient is expected to respond promptly by posting its own `WM_DDE_TERMINATE`
 (rather than a `WM_DDE_ACK`), after which each side may destroy its DDE window. An application
-must end all exchanges before terminating [DOC-IBM — pm4.txt, DDE Termination].
+must end all exchanges before terminating [DOC-IBM - pm4.txt, DDE Termination].
 
 ---
 
@@ -283,9 +283,9 @@ Provenance: **[DOC-IBM]** `pmwin.h:4454-4458, 4467-4472, 4474-4478`; semantics f
 | `DDEPM_RETRY` | `0x00000001` | If the target queue is full, retry at 1-second intervals until posted, meanwhile pumping the caller's own queue (`WinPeekMsg`/`WinDispatchMsg`) so the two apps cannot deadlock. Without it, a full queue returns `FALSE` immediately. |
 | `DDEPM_NOFREE` | `0x00000002` | Do not free the shared object after posting. |
 
-**Shared-memory discipline** [DOC-IBM — pm4.txt, Shared-Memory Object]: the sender allocates with
+**Shared-memory discipline** [DOC-IBM - pm4.txt, Shared-Memory Object]: the sender allocates with
 `DosAllocSharedMem`, writes a `DDESTRUCT` + item name + data, and calls `WinDdePostMsg` (which gives
-the object to the recipient via `DosGiveSharedMem` and frees it from the sender's address space —
+the object to the recipient via `DosGiveSharedMem` and frees it from the sender's address space -
 no `DosFreeMem` needed by the sender). The sender must not touch the object after posting; the
 **recipient** calls `DosFreeMem` when done. The recipient's process id, needed to give the object,
 comes from `WinQueryWindowProcess` on the recipient window.
@@ -294,7 +294,7 @@ comes from `WinQueryWindowProcess` on the recipient window.
 
 ## 7. DDE structures [DOC-IBM]
 
-### `DDEINIT` — initiation data [DOC-IBM `pmwin.h:4413-4420`]
+### `DDEINIT` - initiation data [DOC-IBM `pmwin.h:4413-4420`]
 
 Carried as `mp2` of `WM_DDE_INITIATE` / `WM_DDE_INITIATEACK`. `WinDdeInitiate` / `WinDdeRespond`
 fill it automatically; the receiving window procedure extracts the names and (per default
@@ -310,13 +310,13 @@ typedef struct _DDEINIT {   /* ddei */
 ```
 
 Application names must not contain slashes or backslashes (reserved for future network use)
-[DOC-IBM — pm4.txt, DDEINIT pszAppName]. `offConvContext` is a byte offset (not a pointer) to a
+[DOC-IBM - pm4.txt, DDEINIT pszAppName]. `offConvContext` is a byte offset (not a pointer) to a
 `CONVCONTEXT`, recovered with the `DDEI_PCONVCONTEXT(pddei)` macro [DOC-IBM `pmwin.h:4506-4507`].
 (An inline `DDEINIT` example in the programming guide still shows an obsolete 16-bit
-`USHORT usConvContext` field; the version-correct Toolkit header — `ULONG offConvContext` — supersedes
+`USHORT usConvContext` field; the version-correct Toolkit header - `ULONG offConvContext` - supersedes
 it, Rule 1.2.)
 
-### `CONVCONTEXT` — national-language conversation context [DOC-IBM `pmwin.h:4400-4409`]
+### `CONVCONTEXT` - national-language conversation context [DOC-IBM `pmwin.h:4400-4409`]
 
 ```c
 typedef struct _CONVCONTEXT {   /* cctxt */
@@ -331,7 +331,7 @@ typedef struct _CONVCONTEXT {   /* cctxt */
 
 `fsContext` may carry `DDECTXT_CASESENSITIVE` (`0x0001`) [DOC-IBM `pmwin.h:4411`].
 
-### `DDESTRUCT` — the transaction control block [DOC-IBM `pmwin.h:4422-4430`]
+### `DDESTRUCT` - the transaction control block [DOC-IBM `pmwin.h:4422-4430`]
 
 The header of every shared-memory transaction object; the item-name string and the data follow it
 in the same object, located by the offset fields (offsets, not pointers, so the block is
@@ -348,7 +348,7 @@ typedef struct _DDESTRUCT {   /* dde */
 ```
 
 - `offszItemName` points to a **null-terminated** item name; the item name is *always* null
-  terminated — if there is no item, a single `0x00` sits at that position.
+  terminated - if there is no item, a single `0x00` sits at that position.
 - `offabData` must be computed whether or not data is present; if there is no data, `cbData` is 0.
 - The two helper macros locate the trailing fields:
   `DDES_PSZITEMNAME(pddes)` = `((PSZ)pddes) + pddes->offszItemName`, and
@@ -367,11 +367,11 @@ typedef struct _DDESTRUCT {   /* dde */
 | `DDE_FRESERVED` | `0x00C0` | Reserved; must be 0. |
 | `DDE_FAPPSTATUS` | `0xFF00` | Upper 8 bits reserved for application-specific status. |
 
-**Format (`usFormat`)** [DOC-IBM — pm4.txt, DDESTRUCT usFormat]: `DDEFMT_TEXT` (`0x0001`,
+**Format (`usFormat`)** [DOC-IBM - pm4.txt, DDESTRUCT usFormat]: `DDEFMT_TEXT` (`0x0001`,
 `pmwin.h:4444`) is the system standard text format; otherwise a value registered with the atom
 manager, conventionally named by the `SZFMT_*` / `SZDDEFMT_*` strings (`SZFMT_BITMAP`,
 `SZFMT_CPTEXT`, `SZFMT_DIF`, `SZFMT_METAFILE`, `SZFMT_METAFILEPICT`, `SZFMT_SYLK`, `SZFMT_TIFF`,
-`SZDDEFMT_RTF "Rich Text Format"`, …) [DOC-IBM `pmwin.h:3626-3644`]. Registering a name in the
+`SZDDEFMT_RTF "Rich Text Format"`, ...) [DOC-IBM `pmwin.h:3626-3644`]. Registering a name in the
 system atom table guarantees both applications derive the same format id.
 
 The `MFP` (metafile) and `CPTEXT` (codepage text) payload structures used by the corresponding
@@ -386,34 +386,34 @@ All DDE messages carry the **sender's window handle in `mp1`**. Initiate message
 
 | Message | Value | mp2 | Role |
 |---|---|---|---|
-| `WM_DDE_INITIATE` | `0x00A0` | `PDDEINIT` | Client → all desktop frames: request a conversation (sent, not posted). Default window proc frees the segment. |
-| `WM_DDE_REQUEST` | `0x00A1` | `PDDESTRUCT` | Client → server: one-time request for an item/format. |
+| `WM_DDE_INITIATE` | `0x00A0` | `PDDEINIT` | Client -> all desktop frames: request a conversation (sent, not posted). Default window proc frees the segment. |
+| `WM_DDE_REQUEST` | `0x00A1` | `PDDESTRUCT` | Client -> server: one-time request for an item/format. |
 | `WM_DDE_ACK` | `0x00A2` | `PDDESTRUCT` | Acknowledgement; the client/server reads `fsStatus` (`DDE_FACK` vs. not) to see if positive. |
-| `WM_DDE_DATA` | `0x00A3` | `PDDESTRUCT` | Server → client: requested/advised data. If `DDE_FACKREQ` set, recipient must `WM_DDE_ACK`. |
-| `WM_DDE_ADVISE` | `0x00A4` | `PDDESTRUCT` | Client → server: establish a standing update link on an item. |
-| `WM_DDE_UNADVISE` | `0x00A5` | `PDDESTRUCT` | Client → server: cancel a link (zero-length item = all links). |
-| `WM_DDE_POKE` | `0x00A6` | `PDDESTRUCT` | Client → server: push an unsolicited data item. |
-| `WM_DDE_EXECUTE` | `0x00A7` | `PDDESTRUCT` | Client → server: a command string to execute. |
+| `WM_DDE_DATA` | `0x00A3` | `PDDESTRUCT` | Server -> client: requested/advised data. If `DDE_FACKREQ` set, recipient must `WM_DDE_ACK`. |
+| `WM_DDE_ADVISE` | `0x00A4` | `PDDESTRUCT` | Client -> server: establish a standing update link on an item. |
+| `WM_DDE_UNADVISE` | `0x00A5` | `PDDESTRUCT` | Client -> server: cancel a link (zero-length item = all links). |
+| `WM_DDE_POKE` | `0x00A6` | `PDDESTRUCT` | Client -> server: push an unsolicited data item. |
+| `WM_DDE_EXECUTE` | `0x00A7` | `PDDESTRUCT` | Client -> server: a command string to execute. |
 | `WM_DDE_TERMINATE` | `0x00A8` | (empty) | End the conversation; recipient must reply `WM_DDE_TERMINATE`. |
-| `WM_DDE_INITIATEACK` | `0x00A9` | `PDDEINIT` | Server → client: acknowledge a topic (from `WinDdeRespond`). Default window proc frees the segment. |
+| `WM_DDE_INITIATEACK` | `0x00A9` | `PDDEINIT` | Server -> client: acknowledge a topic (from `WinDdeRespond`). Default window proc frees the segment. |
 
 `WM_DDE_FIRST` (`0x00A0`) and `WM_DDE_LAST` (`0x00AF`) bound the DDE message range for filters
 [DOC-IBM `pmwin.h:4485,4496`]. During processing of `WM_DDE_INITIATE` / `WM_DDE_INITIATEACK` a
-modal window (e.g. a message box) must **not** be invoked [DOC-IBM — pm3.txt, WM_DDE_INITIATE /
+modal window (e.g. a message box) must **not** be invoked [DOC-IBM - pm3.txt, WM_DDE_INITIATE /
 WM_DDE_INITIATEACK Remarks].
 
 ---
 
-## 9. Passing a short string to another process — there is no `WM_COPYDATA` [OBS-RE]
+## 9. Passing a short string to another process - there is no `WM_COPYDATA` [OBS-RE]
 
 Win32's one-instance idiom is `FindWindow` plus `WM_COPYDATA`. **PM has neither.** `WinPostMsg`
 carries two `MPARAM`s and nothing else, and a pointer in one of them is meaningless in the receiving
-process — it addresses the sender's memory. DDE (§5) is the documented answer for a *conversation*,
+process - it addresses the sender's memory. DDE (section 5) is the documented answer for a *conversation*,
 but it is a lot of machinery for handing over one filename.
 
 For a short string, the **system atom table** is the small answer. It "can be accessed by any
-process in the system … created at boot time and cannot be destroyed" [DOC-IBM `pm2.txt`,
-*WinQuerySystemAtomTable — Remarks*], and an atom is exactly a string with a system-wide integer
+process in the system ... created at boot time and cannot be destroyed" [DOC-IBM `pm2.txt`,
+*WinQuerySystemAtomTable - Remarks*], and an atom is exactly a string with a system-wide integer
 name. So the string goes in the table and only the `ATOM` travels in the message:
 
 ```c
@@ -428,7 +428,7 @@ WinQueryAtomName(WinQuerySystemAtomTable(), atom, (PSZ)szBuf, sizeof(szBuf));
 WinDeleteAtom(WinQuerySystemAtomTable(), atom);   /* the delete is the release */
 ```
 
-**Deleting the atom is not optional** — it is what drops the use count. An atom added and never
+**Deleting the atom is not optional** - it is what drops the use count. An atom added and never
 deleted stays in a table that lives until the machine reboots. Delete it on the failure path too, as
 above, or the string leaks whenever the post fails.
 
@@ -450,7 +450,7 @@ path you send with `DosQueryPathInfo(..., FIL_QUERYFULLNAME, ...)` first: the tw
 share a working directory.
 
 > **Testing note.** A one-instance feature usually hangs off a *persisted* setting, and a menu
-> toggle changes the running instance's memory, not the file — so a second instance launched
+> toggle changes the running instance's memory, not the file - so a second instance launched
 > straight after the toggle still reads the old value and quietly opens its own window. The
 > screenshot then shows the expected document and the test looks like it passed. **Count the
 > processes**, which is the thing that actually distinguishes a hand-off from a second window.
@@ -458,11 +458,11 @@ share a working directory.
 ---
 
 ## See also
-- `pm-window-messaging.md` — the anchor block / message queue, the window procedure, `WinSendMsg` /
+- `pm-window-messaging.md` - the anchor block / message queue, the window procedure, `WinSendMsg` /
   `WinPostMsg`, `WinDefWindowProc`, and the `MPFROM*` / `*FROMMP` parameter-packing macros the
   clipboard and DDE messages use; and `HWND_DESKTOP`, the parent whose frame children receive
   `WM_DDE_INITIATE`.
-- `memory-api.md` — `DosAllocSharedMem` (`OBJ_GIVEABLE`), `DosGiveSharedMem`, `DosFreeMem`: the
+- `memory-api.md` - `DosAllocSharedMem` (`OBJ_GIVEABLE`), `DosGiveSharedMem`, `DosFreeMem`: the
   shareable-memory objects that carry `CFI_POINTER` clipboard data and every DDE transaction.
-- `gpi-drawing.md` — bit-map, metafile, and palette handles exchanged as `CF_BITMAP` / `CF_METAFILE`
+- `gpi-drawing.md` - bit-map, metafile, and palette handles exchanged as `CF_BITMAP` / `CF_METAFILE`
   / `CF_PALETTE`.

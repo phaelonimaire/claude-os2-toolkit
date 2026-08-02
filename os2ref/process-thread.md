@@ -19,7 +19,7 @@ transcribed from those headers.
 
 ---
 
-## Base handle types [DOC-IBM — os2def.h]
+## Base handle types [DOC-IBM - os2def.h]
 
 | Type | Definition | Note |
 |---|---|---|
@@ -34,7 +34,7 @@ TIDs are numbered per-process starting at 1 (the initial thread). PIDs are syste
 
 ## Function summary
 
-### Process lifecycle [DOC-IBM — bsedos.h]
+### Process lifecycle [DOC-IBM - bsedos.h]
 
 | Function | Purpose |
 |---|---|
@@ -44,7 +44,7 @@ TIDs are numbered per-process starting at 1 (the initial thread). PIDs are syste
 | `DosKillProcess` | Post a termination request to another process (or a process tree) |
 | `DosSetPriority` | Set the priority class/delta of a process, process tree, or thread (alias `DosSetPrty`) |
 
-### Thread lifecycle [DOC-IBM — bsedos.h]
+### Thread lifecycle [DOC-IBM - bsedos.h]
 
 | Function | Purpose |
 |---|---|
@@ -56,7 +56,7 @@ TIDs are numbered per-process starting at 1 (the initial thread). PIDs are syste
 | `DosKillThread` | Request termination of a thread in the current process |
 | `DosSleep` | Suspend the calling thread for a time interval |
 
-### Termination handlers and critical sections [DOC-IBM — bsedos.h]
+### Termination handlers and critical sections [DOC-IBM - bsedos.h]
 
 | Function | Purpose |
 |---|---|
@@ -74,12 +74,12 @@ TIDs are numbered per-process starting at 1 (the initial thread). PIDs are syste
 
 ---
 
-## The Thread Information Block (TIB) [DOC-IBM — bsetib.h]
+## The Thread Information Block (TIB) [DOC-IBM - bsetib.h]
 
 `DosGetInfoBlocks` returns a pointer to the per-thread TIB. The TIB has two parts: the base
 `TIB` (public, cross-version fields) and the `TIB2` (system-specific fields) it points to.
 
-`struct tib_s` (`TIB`) — 6 pointer/`ULONG` fields:
+`struct tib_s` (`TIB`) - 6 pointer/`ULONG` fields:
 
 | Offset | Field | Type | Meaning |
 |---|---|---|---|
@@ -90,7 +90,7 @@ TIDs are numbered per-process starting at 1 (the initial thread). PIDs are syste
 | 0x10 | `tib_version` | `ULONG` | version number of this TIB structure |
 | 0x14 | `tib_ordinal` | `ULONG` | thread ordinal number |
 
-`struct tib2_s` (`TIB2`) — the system-specific block `tib_ptib2` points to:
+`struct tib2_s` (`TIB2`) - the system-specific block `tib_ptib2` points to:
 
 | Offset | Field | Type | Meaning |
 |---|---|---|---|
@@ -101,12 +101,12 @@ TIDs are numbered per-process starting at 1 (the initial thread). PIDs are syste
 | 0x0E | `tib2_fMCForceFlag` | `USHORT` | must-complete force flag |
 
 The base of the TIB is what the FS segment register addresses in a running thread:
-`FS:[0]` is `tib_pexchain`, the head of the exception-handler chain. [OBS-RE — the FS-relative
+`FS:[0]` is `tib_pexchain`, the head of the exception-handler chain. [OBS-RE - the FS-relative
 TIB layout is observed of the running kernel; the field list itself is [DOC-IBM].]
 
-## The Process Information Block (PIB) [DOC-IBM — bsetib.h]
+## The Process Information Block (PIB) [DOC-IBM - bsetib.h]
 
-`struct pib_s` (`PIB`) — 7 `ULONG`/pointer fields:
+`struct pib_s` (`PIB`) - 7 `ULONG`/pointer fields:
 
 | Offset | Field | Type | Meaning |
 |---|---|---|---|
@@ -123,7 +123,7 @@ by the argument string (ASCIIZ), the pair terminated by a second null. **`pib_pc
 to the environment block: a sequence of `NAME=value` ASCIIZ strings terminated by an extra null
 byte.
 
-**`pib_ultype` — process type codes** [DOC-IBM — bsedos.h]:
+**`pib_ultype` - process type codes** [DOC-IBM - bsedos.h]:
 
 | Value | Constant | Meaning |
 |---|---|---|
@@ -133,7 +133,7 @@ byte.
 | 3 | `PT_PM` | Presentation Manager application |
 | 4 | `PT_DETACHED` | detached application (no session) |
 
-**`pib_flstatus` — process status flags** [DOC-IBM — bsedos.h]:
+**`pib_flstatus` - process status flags** [DOC-IBM - bsedos.h]:
 
 | Value | Constant | Meaning |
 |---|---|---|
@@ -141,7 +141,7 @@ byte.
 
 ---
 
-## Process creation — `DosExecPgm` [DOC-IBM — bsedos.h]
+## Process creation - `DosExecPgm` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosExecPgm(PCHAR pObjname,       /* failing-object-name buffer   */
@@ -159,7 +159,7 @@ double-null form as `pib_pchcmd`; `pEnv` is an environment block in the same for
 `pib_pchenv` (pass `NULL` to inherit the caller's environment). `pName` is the program file to
 execute.
 
-**`execFlag` values** [DOC-IBM — bsedos.h]:
+**`execFlag` values** [DOC-IBM - bsedos.h]:
 
 | Value | Constant | Meaning |
 |---|---|---|
@@ -171,7 +171,7 @@ execute.
 | 5 | `EXEC_LOAD` | load the program but leave it ready/frozen (do not begin execution) |
 | 6 | `EXEC_ASYNCRESULTDB` | asynchronous with retained result, under debug control |
 
-**`pRes` — `RESULTCODES`** [DOC-IBM — bsedos.h]:
+**`pRes` - `RESULTCODES`** [DOC-IBM - bsedos.h]:
 
 ```c
 typedef struct _RESULTCODES {   /* resc */
@@ -185,7 +185,7 @@ value the child passed to `DosExit`. For the asynchronous "result" modes
 (`EXEC_ASYNCRESULT`/`EXEC_ASYNCRESULTDB`), `codeTerminate` receives the new child's PID, and the
 final result is later collected with `DosWaitChild`.
 
-**`codeTerminate` — synchronous termination reasons** [DOC — EDM2 "DosExecPgm (FAPI)"]: for a
+**`codeTerminate` - synchronous termination reasons** [DOC - EDM2 "DosExecPgm (FAPI)"]: for a
 synchronous child, `codeTerminate` reports *why* it ended (these are the same values a waiting
 parent sees from `DosWaitChild`):
 
@@ -198,7 +198,7 @@ parent sees from `DosWaitChild`):
 
 ## Process termination and waiting
 
-### `DosExit` [DOC-IBM — bsedos.h]
+### `DosExit` [DOC-IBM - bsedos.h]
 
 ```c
 VOID APIENTRY DosExit(ULONG action, ULONG result);
@@ -215,7 +215,7 @@ Ends the current thread or the whole process. This function does not return.
 initial thread with `EXIT_THREAD` terminates the process. Note the low-level `EXIT_*` codes
 (0/1) are distinct from the higher-level `EXLST_EXIT` used with `DosExitList`.
 
-### `DosWaitChild` (alias `DosCwait`) [DOC-IBM — bsedos.h]
+### `DosWaitChild` (alias `DosCwait`) [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosWaitChild(ULONG action,       /* DCWA_* : which children     */
@@ -239,7 +239,7 @@ APIRET APIENTRY DosWaitChild(ULONG action,       /* DCWA_* : which children     
 specific child (0 = any child). Only children started with a result-retaining mode
 (`EXEC_ASYNCRESULT` / `EXEC_ASYNCRESULTDB`) can be waited on this way.
 
-### `DosKillProcess` [DOC-IBM — bsedos.h]
+### `DosKillProcess` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosKillProcess(ULONG action, PID pid);
@@ -254,7 +254,7 @@ APIRET APIENTRY DosKillProcess(ULONG action, PID pid);
 
 ## Thread creation and control
 
-### `DosCreateThread` [DOC-IBM — bsedos.h]
+### `DosCreateThread` [DOC-IBM - bsedos.h]
 
 ```c
 typedef VOID APIENTRY FNTHREAD(ULONG);
@@ -270,7 +270,7 @@ APIRET APIENTRY DosCreateThread(PTID  ptid,       /* new thread's TID (out)     
 The new thread begins at `pfn`, receiving `param` as its single argument. `*ptid` receives the
 new thread's ID. `cbStack` is the stack size to allocate (rounded up as the system requires).
 
-**`flag` bits** [DOC-IBM — bsedos.h]:
+**`flag` bits** [DOC-IBM - bsedos.h]:
 
 | Value | Constant | Meaning |
 |---|---|---|
@@ -282,7 +282,7 @@ new thread's ID. `cbStack` is the stack size to allocate (rounded up as the syst
 (`CREATE_*` and `STACK_*` are combined with bitwise OR; `CREATE_READY`/`STACK_SPARSE` are the
 zero defaults.)
 
-### `DosCreateThread2` [DOC-IBM — bsedos.h]
+### `DosCreateThread2` [DOC-IBM - bsedos.h]
 
 ```c
 typedef struct _THREADCREATE {   /* F150593 */
@@ -302,14 +302,14 @@ APIRET APIENTRY DosCreateThread2(PTHREADCREATE ptc);
 A parameter-block form of `DosCreateThread` that additionally allows the caller to supply the
 thread stack (`pStack`). `cbSize` must be set to `sizeof(THREADCREATE)`.
 
-[DOC — EDM2 "DosCreateThread2"] `pStack` is the address of the **top** (high end) of the
+[DOC - EDM2 "DosCreateThread2"] `pStack` is the address of the **top** (high end) of the
 caller-allocated stack, not its base, and must lie within the first 512MB of the address space
 (below `0x20000000`); a higher stack address returns `ERROR_INVALID_PARAMETER`. Unlike
 `DosCreateThread` (which reserves 64KB of address space per thread but commits only ~8KB, and
 adds guard pages for automatic stack growth), the caller owns the stack's size and location
 here.
 
-### `DosSuspendThread` / `DosResumeThread` [DOC-IBM — bsedos.h]
+### `DosSuspendThread` / `DosResumeThread` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosSuspendThread(TID tid);
@@ -319,7 +319,7 @@ APIRET APIENTRY DosResumeThread(TID tid);
 Suspend or resume a thread of the *calling* process, named by its TID. A thread created with
 `CREATE_SUSPENDED` is started with `DosResumeThread`.
 
-### `DosWaitThread` [DOC-IBM — bsedos.h]
+### `DosWaitThread` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosWaitThread(PTID ptid, ULONG option);
@@ -330,12 +330,12 @@ entry (0 waits for any thread) and receives the TID of the thread that ended on 
 `option` takes the same `DCWW_WAIT` (0, block) / `DCWW_NOWAIT` (1, poll) values as
 `DosWaitChild`.
 
-[DOC — EDM2 "DosWaitThread"] A thread cannot wait on its own termination, nor on the initial
+[DOC - EDM2 "DosWaitThread"] A thread cannot wait on its own termination, nor on the initial
 thread (input `*ptid` = 1); either returns `ERROR_INVALID_THREADID`. Under `DCWW_NOWAIT` with no
 thread yet ended, `*ptid` is left unchanged. A common use is to reclaim an ended thread's
 resources (e.g. its stack).
 
-### `DosKillThread` [DOC-IBM — bsedos.h]
+### `DosKillThread` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosKillThread(TID tid);
@@ -343,7 +343,7 @@ APIRET APIENTRY DosKillThread(TID tid);
 
 Requests termination of a thread of the calling process.
 
-### `DosSleep` [DOC-IBM — bsedos.h]
+### `DosSleep` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosSleep(ULONG msec);
@@ -352,15 +352,15 @@ APIRET APIENTRY DosSleep(ULONG msec);
 Suspends the calling thread for at least `msec` milliseconds. `DosSleep(0)` yields the remainder
 of the current time slice to another ready thread.
 
-[DOC — EDM2 "DosSleep (FAPI)"] The `DosSleep(0)` yield goes only to a ready thread of *equal or
-higher* priority — it does not yield to a lower-priority thread — and returns immediately if no
+[DOC - EDM2 "DosSleep (FAPI)"] The `DosSleep(0)` yield goes only to a ready thread of *equal or
+higher* priority - it does not yield to a lower-priority thread - and returns immediately if no
 such thread is ready. A non-zero interval is rounded up to the scheduler-clock resolution, so
 the actual sleep can be a tick or two longer than requested; it is therefore not a substitute
 for a real-time clock.
 
 ---
 
-## Priority and scheduling — `DosSetPriority` (alias `DosSetPrty`) [DOC-IBM — bsedos.h]
+## Priority and scheduling - `DosSetPriority` (alias `DosSetPrty`) [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosSetPriority(ULONG scope,      /* PRTYS_* : what to change    */
@@ -373,7 +373,7 @@ A thread's dispatch priority is a **class** plus a signed **delta** within that 
 chooses what the change applies to; `PorTid` is the target PID or TID (0 = the current process
 or thread, per scope).
 
-**`scope` — `PRTYS_*`:**
+**`scope` - `PRTYS_*`:**
 
 | Value | Constant | Applies to |
 |---|---|---|
@@ -381,7 +381,7 @@ or thread, per scope).
 | 1 | `PRTYS_PROCESSTREE` | the process and its descendant tree |
 | 2 | `PRTYS_THREAD` | a single thread |
 
-**`ulClass` — `PRTYC_*` priority classes:**
+**`ulClass` - `PRTYC_*` priority classes:**
 
 | Value | Constant | Meaning |
 |---|---|---|
@@ -391,7 +391,7 @@ or thread, per scope).
 | 3 | `PRTYC_TIMECRITICAL` | time-critical (highest; real-time-sensitive threads) |
 | 4 | `PRTYC_FOREGROUNDSERVER` | foreground-server (boosted while serving the foreground) |
 
-**`delta` — `PRTYD_*` bounds:**
+**`delta` - `PRTYD_*` bounds:**
 
 | Value | Constant |
 |---|---|
@@ -403,7 +403,7 @@ class.
 
 ---
 
-## Termination handlers — `DosExitList` [DOC-IBM — bsedos.h]
+## Termination handlers - `DosExitList` [DOC-IBM - bsedos.h]
 
 ```c
 typedef VOID APIENTRY FNEXITLIST(ULONG);
@@ -417,12 +417,12 @@ in a defined order, on the process's last surviving thread during `EXIT_PROCESS`
 an exit routine runs, `PS_EXITLIST` is set in `pib_flstatus`. Each routine must finish by
 calling `DosExitList` with `EXLST_EXIT`, which passes control to the next registered routine.
 
-**`ordercode`** packs a function code (low byte) with an ordering value (upper bits) [DOC-IBM —
+**`ordercode`** packs a function code (low byte) with an ordering value (upper bits) [DOC-IBM -
 bsedos.h function codes]:
 
 | Value | Constant | Meaning |
 |---|---|---|
-| 1 | `EXLST_ADD` | add `pfn` to the exit list (OR with an ordering byte, 0x00–0xFF) |
+| 1 | `EXLST_ADD` | add `pfn` to the exit list (OR with an ordering byte, 0x00-0xFF) |
 | 2 | `EXLST_REMOVE` | remove a previously added `pfn` |
 | 3 | `EXLST_EXIT` | this routine is done; continue to the next exit-list routine |
 
@@ -433,7 +433,7 @@ higher = later), letting cooperating routines sequence their cleanup.
 
 ## Critical sections and must-complete
 
-### `DosEnterCritSec` / `DosExitCritSec` [DOC-IBM — bsedos.h]
+### `DosEnterCritSec` / `DosExitCritSec` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosEnterCritSec(VOID);
@@ -444,11 +444,11 @@ APIRET APIENTRY DosExitCritSec(VOID);
 thread exclusive run of the process until it calls `DosExitCritSec`. It is a coarse mutual-
 exclusion mechanism for a whole process; the calls nest.
 
-[DOC — EDM2 "DosExitCritSec (OS/2 1.x)"] An outstanding-entry count is kept: `DosEnterCritSec`
+[DOC - EDM2 "DosExitCritSec (OS/2 1.x)"] An outstanding-entry count is kept: `DosEnterCritSec`
 increments it, `DosExitCritSec` decrements it, and normal thread dispatching is only restored
 when it returns to 0. An excess `DosExitCritSec` returns `ERROR_CRITSEC_UNDERFLOW`.
 
-### `DosEnterMustComplete` / `DosExitMustComplete` [DOC-IBM — bsedos.h]
+### `DosEnterMustComplete` / `DosExitMustComplete` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosEnterMustComplete(PULONG pulNesting);
@@ -462,7 +462,7 @@ visible in `TIB2.tib2_usMCCount` / `tib2_fMCForceFlag`.
 
 ---
 
-## Information — `DosGetInfoBlocks` [DOC-IBM — bsedos.h]
+## Information - `DosGetInfoBlocks` [DOC-IBM - bsedos.h]
 
 ```c
 APIRET APIENTRY DosGetInfoBlocks(PTIB *pptib, PPIB *pppib);
@@ -470,12 +470,12 @@ APIRET APIENTRY DosGetInfoBlocks(PTIB *pptib, PPIB *pppib);
 
 Returns, without copying, pointers to the calling thread's TIB and the process's PIB.
 `*pptib` receives the `PTIB`, `*pppib` the `PPIB`; either pointer argument may be `NULL` if that
-block is not wanted. The structures are live kernel-maintained data mapped into the process — an
+block is not wanted. The structures are live kernel-maintained data mapped into the process - an
 application reads them, it does not allocate them.
 
 ---
 
-## Error codes [DOC-IBM — bseerr.h]
+## Error codes [DOC-IBM - bseerr.h]
 
 Values these calls return on failure (0 = `NO_ERROR` on success):
 
@@ -503,11 +503,11 @@ Values these calls return on failure (0 = `NO_ERROR` on success):
 
 | Value | Constant | Call / meaning |
 |---|---|---|
-| 87 | `ERROR_INVALID_PARAMETER` | `DosCreateThread2`: bad parameter (e.g. stack address at/above 512MB) [DOC — EDM2 "DosCreateThread2"] |
-| 115 | `ERROR_PROTECTION_VIOLATION` | `DosCreateThread2`: memory-protection violation [DOC — EDM2 "DosCreateThread2"] |
-| 305 | `ERROR_NOT_DESCENDANT` | `DosKillProcess` (action `DKP_PROCESSTREE`): target is not the current process or one of its descendants [DOC — EDM2 "DosKillProcess (OS/2 1.x)"] |
-| 322 | `ERROR_TS_WAKEUP` | `DosSleep`: listed as a possible return (EDM2 does not further define it) [DOC — EDM2 "DosSleep (FAPI)"] |
-| 485 | `ERROR_CRITSEC_UNDERFLOW` | `DosExitCritSec`: more `DosExitCritSec` calls than matching `DosEnterCritSec` calls [DOC — EDM2 "DosExitCritSec (OS/2 1.x)"] |
+| 87 | `ERROR_INVALID_PARAMETER` | `DosCreateThread2`: bad parameter (e.g. stack address at/above 512MB) [DOC - EDM2 "DosCreateThread2"] |
+| 115 | `ERROR_PROTECTION_VIOLATION` | `DosCreateThread2`: memory-protection violation [DOC - EDM2 "DosCreateThread2"] |
+| 305 | `ERROR_NOT_DESCENDANT` | `DosKillProcess` (action `DKP_PROCESSTREE`): target is not the current process or one of its descendants [DOC - EDM2 "DosKillProcess (OS/2 1.x)"] |
+| 322 | `ERROR_TS_WAKEUP` | `DosSleep`: listed as a possible return (EDM2 does not further define it) [DOC - EDM2 "DosSleep (FAPI)"] |
+| 485 | `ERROR_CRITSEC_UNDERFLOW` | `DosExitCritSec`: more `DosExitCritSec` calls than matching `DosEnterCritSec` calls [DOC - EDM2 "DosExitCritSec (OS/2 1.x)"] |
 
 ---
 
@@ -521,4 +521,4 @@ program's type before executing it. See the memory-model and session-manager ref
 address-space and session context these operate in.
 
 ## See also
-- `exceptions.md` — the per-thread TIB `FS:[0]` exception chain; `ipc-synchronization.md` — the primitives threads synchronize with; `session-manager.md` — session-level process control.
+- `exceptions.md` - the per-thread TIB `FS:[0]` exception chain; `ipc-synchronization.md` - the primitives threads synchronize with; `session-manager.md` - session-level process control.

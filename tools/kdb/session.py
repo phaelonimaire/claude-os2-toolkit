@@ -38,7 +38,7 @@ class KDBSession:
         session.connect()
         session.wait_for_boot()
 
-        # Set breakpoint (address is build-specific — resolve it for your
+        # Set breakpoint (address is build-specific - resolve it for your
         # module first, e.g. with tools/lx_export.py or KDB symbol lookup)
         bp = session.set_breakpoint(0x00010000)
 

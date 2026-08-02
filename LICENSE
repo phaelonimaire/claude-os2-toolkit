@@ -46,12 +46,12 @@ It asserts no claim over, and grants no rights in:
     licensed by this project.
 
   * Third-party software. No IBM, Arca Noae or other third-party software,
-    headers, or toolchain is REDISTRIBUTED here — see sources.md for where to
+    headers, or toolchain is REDISTRIBUTED here - see sources.md for where to
     obtain those under their own terms. (Quoted documentation excerpts, as
     described immediately above, are the one exception and are not a
     redistribution of any of that software.)
 
-BUILD-TIME DEPENDENCY — fpGUI (docview), GPLv2
+BUILD-TIME DEPENDENCY - fpGUI (docview), GPLv2
 
 tools/inf2txt is source-only for a reason. Our driver (inf2txt.pas) is MIT, but
 tools/inf2txt/build.sh links it against fpGUI's docview units, and fpGUI

@@ -92,7 +92,7 @@ class KDBConnection:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.connect(addr)
         else:
-            # TCP: existence can only be probed by connecting — retry
+            # TCP: existence can only be probed by connecting - retry
             while True:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 # Preserve per-character pacing on the wire

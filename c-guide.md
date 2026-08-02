@@ -1,19 +1,19 @@
-# C Guide — writing correct OS/2 C
+# C Guide - writing correct OS/2 C
 
 > **About this guide (toolkit note).** A C-writing discipline for OS/2 work, where correctness is
 > everything and every ABI fact is expensive. Its **principles are universal for any OS/2 C work**
 > (apps included): cite where facts come from, never originate an ABI fact, assert every ABI
 > struct's size, fail honestly, know whose memory you're touching, and explain load-bearing
-> weirdness. Read it alongside `os2-app-dev-guide.md` (the workflow) — that guide is *what to do*;
+> weirdness. Read it alongside `os2-app-dev-guide.md` (the workflow) - that guide is *what to do*;
 > this one is *how to write the C*.
 >
-> The examples are **illustrative war stories** — each rule is one somebody paid for — not files in
+> The examples are **illustrative war stories** - each rule is one somebody paid for - not files in
 > this kit and not code you have. Where a rule says "the codebase," read it as "the codebase you are
 > writing." A few rules assume a low-level context (thunks, shared mappings, debug channels); if you
 > are writing an ordinary application, take the principle and ignore the mechanism.
 
 This guide explains why OS/2 C is written the way it is, and what to do when you add to it. It is
-written for anyone touching the code — contributors, reviewers, and AI assistants, which are often
+written for anyone touching the code - contributors, reviewers, and AI assistants, which are often
 the most prolific contributors.
 
 ## How to read this guide
@@ -29,7 +29,7 @@ Every rule carries its **why**, and that is load-bearing:
 - **Descriptive, not aspirational.** A guide that asserts things the code
   doesn't do teaches readers to "fix" working code to match a document. If a
   rule is not honoured somewhere, that is a bug in the guide, not necessarily
-  in the code — say so.
+  in the code - say so.
 - **The why is the rule.** A rule you understand, you keep when it is
   inconvenient. A rule you merely obey, you route around the first time it
   costs you an afternoon. Most of the whys below were paid for with real
@@ -40,7 +40,7 @@ follow the maintainer.
 
 ---
 
-## Section 0 — Why OS/2 C looks the way it does
+## Section 0 - Why OS/2 C looks the way it does
 
 OS/2 work is not a greenfield C project, and a lot of general C advice
 mis-fires here. A few facts drive nearly every rule that follows.
@@ -55,8 +55,8 @@ the code's job is to establish it and prove it.
 unimplemented, an honest failure stops execution at the *cause*. A dishonest
 success relocates the bug ten thousand instructions away, into a subsystem that
 did nothing wrong, where it looks like a genuine OS/2 fault. A worked example:
-a `DosPMMuxSemWait` stub that returned 0 unconditionally — someone made it
-"work" — manufactured a phantom **System Error** dialog on every PM wakeup,
+a `DosPMMuxSemWait` stub that returned 0 unconditionally - someone made it
+"work" - manufactured a phantom **System Error** dialog on every PM wakeup,
 because the hard-error thread then read a zeroed `PMHDERR.DAT`. Nothing stopped.
 It just lied, and the lie cost days in the wrong place. The goal is never "it
 runs." It is "it runs for the right reasons."
@@ -70,47 +70,47 @@ may not have.
 **Knowledge is the scarce resource, not code.** In low-level OS/2 work every
 fact costs a kernel-debugger session, a disassembly, or a DDK read. The C is
 cheap to retype; the week that produced one struct offset is not. So the work
-gets recorded — findings, artifacts, dead ends and all — because the alternative
+gets recorded - findings, artifacts, dead ends and all - because the alternative
 is not losing the code, it is buying the same fact twice without knowing it
 (Rules 1.6 and 1.7).
 
 There is one more fact worth stating plainly, because it looks like a defect
 until you know it: **a lot of correct OS/2 C is weird on purpose.** Raw
 `write(2)` in register-critical paths, `-fno-stack-protector`, `-no-pie`,
-`#pragma pack`, `APIENTRY` expanding to nothing, deliberately-fatal stubs — each
+`#pragma pack`, `APIENTRY` expanding to nothing, deliberately-fatal stubs - each
 can be load-bearing, and each looks exactly like something to clean up. See
 Section 4.
 
 ---
 
-## Section 0.5 — The OS/2 type vocabulary
+## Section 0.5 - The OS/2 type vocabulary
 
 OS/2 headers define their own scalar, pointer, and handle types. Using them is not
-optional style — the API prototypes are written in them, and getting one wrong is a
+optional style - the API prototypes are written in them, and getting one wrong is a
 compile error at best and a silent aliasing bug at worst. All line references below are
 `os2emx.h` from the kLIBC/GCC toolchain (the IBM Toolkit's `os2def.h` agrees).
 
 | Type | Definition | Note |
 |---|---|---|
-| `CHAR` / `PCHAR` | `char` / `char *` | :218 — **always signed-plain `char`**, unlike `BYTE` |
-| `BYTE` / `PBYTE` | `unsigned char` **or** `char` | :223 / :231 — see the trap below |
-| `PCH`, `PSZ` | `unsigned char *` **or** `char *` | :224-225 / :232-233 — same trap |
+| `CHAR` / `PCHAR` | `char` / `char *` | :218 - **always signed-plain `char`**, unlike `BYTE` |
+| `BYTE` / `PBYTE` | `unsigned char` **or** `char` | :223 / :231 - see the trap below |
+| `PCH`, `PSZ` | `unsigned char *` **or** `char *` | :224-225 / :232-233 - same trap |
 | `PCCH`, `PCSZ` | the `__const__` forms | :226-227 / :234-235 |
 | `SHORT` / `USHORT` | `short` / `unsigned short` | :244, :247 |
 | `LONG` / `ULONG` | `long` / `unsigned long` | :250, :253 |
-| `BOOL` | `unsigned long` | :212 — **not `int`**; differs from Win32's `BOOL` |
-| `APIRET` | `unsigned long` | :210 — the Control Program return code (`0` = success) |
-| `LHANDLE` | `unsigned long` | :298 — the base of every PM handle |
-| `HAB`,`HPS`,`HDC`,`HWND`,`HMQ`,… | `LHANDLE` | :5379-5391 — see "handles are not typed" |
-| `MPARAM` / `MRESULT` | `VOID *` | :5365, :5368 — pointer-sized, never `int` |
-| `FIXED` | `LONG` | :8863 — 16.16 fixed point; build with `MAKEFIXED` |
-| `APIENTRY` / `EXPENTRY` | `_System` (or empty) | :162-166 — the calling convention |
+| `BOOL` | `unsigned long` | :212 - **not `int`**; differs from Win32's `BOOL` |
+| `APIRET` | `unsigned long` | :210 - the Control Program return code (`0` = success) |
+| `LHANDLE` | `unsigned long` | :298 - the base of every PM handle |
+| `HAB`,`HPS`,`HDC`,`HWND`,`HMQ`,... | `LHANDLE` | :5379-5391 - see "handles are not typed" |
+| `MPARAM` / `MRESULT` | `VOID *` | :5365, :5368 - pointer-sized, never `int` |
+| `FIXED` | `LONG` | :8863 - 16.16 fixed point; build with `MAKEFIXED` |
+| `APIENTRY` / `EXPENTRY` | `_System` (or empty) | :162-166 - the calling convention |
 
 ### Rule 0.5.1: Never cast to `PSZ`/`PCH`/`BYTE*` with `const_cast` alone
 
 **Trigger:** You are passing a `const char *` (or a `char` buffer) to any OS/2 API.
 
-**Action:** Use `reinterpret_cast` — through a helper if you do it more than twice:
+**Action:** Use `reinterpret_cast` - through a helper if you do it more than twice:
 
 ```c
 /* PSZ/PCH are conditionally `unsigned char *`, so const_cast alone will not compile. */
@@ -121,26 +121,26 @@ static inline PSZ AsPSZ(const char *s) {
 ```
 
 **Why:** `BYTE`, `PCH`, `PSZ`, `PCCH` and `PCSZ` are defined **two different ways**
-depending on whether **`OS2EMX_PLAIN_CHAR`** is defined [DOC-IBM — `os2emx.h:220-237`]:
+depending on whether **`OS2EMX_PLAIN_CHAR`** is defined [DOC-IBM - `os2emx.h:220-237`]:
 without it they are `unsigned char`-based, with it `char`-based. So
 `const_cast<PCH>(s)` compiles under one configuration and fails under the other with
 *"invalid const_cast from `const char*` to `PCH` {aka `unsigned char*`}"*. A
-`reinterpret_cast` is correct under both. This bites on every string-taking API —
+`reinterpret_cast` is correct under both. This bites on every string-taking API -
 `GpiCharStringPosAt`, `GpiQueryTextBox`, `WinSetWindowText`, `DosLoadModule`'s error
-buffer — and it is the single most common first compile error when porting C or C++ to
-OS/2. [OBS-RE — hit three separate times in one afternoon porting Scintilla.]
+buffer - and it is the single most common first compile error when porting C or C++ to
+OS/2. [OBS-RE - hit three separate times in one afternoon porting Scintilla.]
 
 Corollary: **do not assume `BYTE` is unsigned.** If you need a 0..255 pel or byte value,
 say `unsigned char` explicitly rather than relying on `BYTE`.
 
-### Rule 0.5.2: Handles are not typed — the compiler will not save you
+### Rule 0.5.2: Handles are not typed - the compiler will not save you
 
 **Trigger:** You are passing a handle to any PM API.
 
 **Action:** Check the parameter name against the prototype. Do not rely on the type.
 
 **Why:** `HAB`, `HPS`, `HDC`, `HWND`, `HMQ`, `HBITMAP`, `HPOINTER` and the rest are all
-`typedef LHANDLE` — the *same* `unsigned long` [`os2emx.h:298, 5379-5391`]. Passing an
+`typedef LHANDLE` - the *same* `unsigned long` [`os2emx.h:298, 5379-5391`]. Passing an
 `HWND` where an `HPS` belongs compiles silently and fails at run time, usually as
 "nothing drew." Where a function takes several handles (`WinPopupMenu` takes three
 `HWND`s; `GpiBitBlt` takes two `HPS`es), argument order is unenforced by the type system.
@@ -150,7 +150,7 @@ say `unsigned char` explicitly rather than relying on `BYTE`.
 **Trigger:** You are building or unpacking an `MPARAM`.
 
 **Action:** Use the macros (`MPFROMSHORT`, `MPFROM2SHORT`, `MPFROMP`, `MPFROMLONG`,
-`SHORT1FROMMP`, `SHORT2FROMMP`, `LONGFROMMP`, `MPFROMHWND`, …), never a manual cast or
+`SHORT1FROMMP`, `SHORT2FROMMP`, `LONGFROMMP`, `MPFROMHWND`, ...), never a manual cast or
 shift.
 
 **Why:** `MPARAM` and `MRESULT` are `VOID *` [`os2emx.h:5365, 5368`], so they are
@@ -161,15 +161,15 @@ shifts get the sign extension wrong for negative coordinates. The macro table is
 
 ---
 
-## Section 1 — Provenance
+## Section 1 - Provenance
 
 This is the spine of the guide. OS/2 code is largely a pile of facts about
 OS/2, and a fact whose origin is unrecorded is a fact nobody can check.
 
 ### Rule 1.1: A new constant gets a name and a cited source
 
-**Trigger:** You are about to write a literal — a struct offset, a size, an
-ordinal, an error code, a magic address, a flag bit — that encodes something
+**Trigger:** You are about to write a literal - a struct offset, a size, an
+ordinal, an error code, a magic address, a flag bit - that encodes something
 about OS/2.
 
 **Action:** Give it a name, and cite where the value came from, at the site.
@@ -178,7 +178,7 @@ about OS/2.
 `0x10000` alone can appear hundreds of times: that is not a number, it is a
 *concept* (16-bit segment / tile granularity) retyped hundreds of times. But
 naming alone is not enough. The question that matters at 2am is not "what is
-this called" — it is **"did IBM require this, did someone observe it, or did
+this called" - it is **"did IBM require this, did someone observe it, or did
 someone guess?"** Those three have identical syntax and wildly different trust,
 and only a citation separates them. A real instance: a block of six consecutive
 ordinals carried plausible names (`FlatDS`, `ABIOS`, `EnumAttribute`) attached
@@ -191,7 +191,7 @@ The shape to copy:
 _Static_assert(sizeof(struct InfoSegGDT) == 0x72, "GIS must be 114 bytes");
 ```
 
-…with the source (`DDK infoseg.h`) cited in the declaring header. Value, name,
+...with the source (`DDK infoseg.h`) cited in the declaring header. Value, name,
 source, and a compiler-enforced test, in one line. That is what a fact should
 look like.
 
@@ -202,16 +202,16 @@ look like.
 **Action:** Make it clear which kind of source it is, because the kind
 determines how the next reader re-checks it:
 
-- **Documented** — a published DDK header, a Toolkit header, the osFree
+- **Documented** - a published DDK header, a Toolkit header, the osFree
   reference, a redbook. The reader's next move is *go read it*. Authoritative
   for **meaning**: error semantics, what a field's zero means, who pops the
   args, what a call returns on bad input.
-- **Observed** — KDB on a machine you own, a runtime dump, a disassembly. The
+- **Observed** - KDB on a machine you own, a runtime dump, a disassembly. The
   reader's next move is *go re-run it*. Authoritative for **shape**: offsets,
   sizes, addresses, call order. A debugger shows you state; it cannot show you
   meaning, so an "observed" citation on a semantic claim is a guess wearing a
   costume.
-- **Inferred** — derived by reasoning from the other two. Mark it. Inference is
+- **Inferred** - derived by reasoning from the other two. Mark it. Inference is
   where the guesses live, and it is the category that looks identical to
   knowledge.
 
@@ -219,37 +219,37 @@ determines how the next reader re-checks it:
 `[DOC]`. Preserve the distinction when you quote it.)
 
 **Why:** A source's kind records *which question it is competent to answer*.
-This is not pedantry — the categories cover different failure modes. Where
+This is not pedantry - the categories cover different failure modes. Where
 documentation and implementation **conflict**, the implementation wins for
 behaviour, because the binaries you have to interoperate with were compiled
 against it. Worked example: `os2def.h` declares `APIENTRY = _System`, which
-makes EAX/ECX/EDX volatile — and the real kernel preserves ECX/EDX anyway. Code
+makes EAX/ECX/EDX volatile - and the real kernel preserves ECX/EDX anyway. Code
 that saves them is right, and that fix needs its observed-source citation
 *loudly*, or a future reader "corrects" it back to the documented ABI and
 reintroduces the bug.
 
 ### Rule 1.3: Never be the origin of an ABI fact
 
-**Trigger:** You need a value — an offset, a size, a signature, an ordinal —
+**Trigger:** You need a value - an offset, a size, a signature, an ordinal -
 and you find you already "know" it.
 
 **Action:** Stop. Go look it up: `os2ref/`, the Toolkit headers, the DDK, an
 IBM `.INF` via `tools/inf2txt`. The authoritative answer is usually a grep away.
 If you cannot find a source, the honest move is to say the fact is
-unestablished — not to supply it.
+unestablished - not to supply it.
 
 **Why:** This applies to everyone, and it applies to AI assistants absolutely.
 A confident, plausible, unsourced value is the single most expensive thing that
 can enter an OS/2 codebase, because it is indistinguishable from a real one and
 leaves no seam for anyone to notice. Human contributors guess and are sometimes
 wrong; a model guesses *fluently*, at scale, in the house style. "I knew it" is
-not a source — not because it is often wrong, but because it is
+not a source - not because it is often wrong, but because it is
 **unfalsifiable**. You can re-read `infoseg.h`. You can re-run KDB. You cannot
 re-run anyone's memory.
 
 This is not hypothetical. One DDK read turned up four ordinal rows whose
-declared argument-byte count was 0 while the implementation read arguments —
-each one leaking the caller's 16-bit stack on every call — and a
+declared argument-byte count was 0 while the implementation read arguments -
+each one leaking the caller's 16-bit stack on every call - and a
 `WinCreateConsole` call with three of four parameters misidentified, built by
 inferring a signature rather than reading the header that declares it. All of
 them were plausible. All of them linked. All of them ran.
@@ -264,10 +264,10 @@ from, and any convention a reader needs:
 
 ```c
 /*
- * os2api.h — OS/2 API constants and types.
+ * os2api.h - OS/2 API constants and types.
  *
- * What this file is: a transcription of OS/2 ABI facts — constants, types and
- * layouts — read out of IBM's DDK/Toolkit headers and published API
+ * What this file is: a transcription of OS/2 ABI facts - constants, types and
+ * layouts - read out of IBM's DDK/Toolkit headers and published API
  * documentation. Each fact cites its source at the site (Rules 1.1/1.2).
  *
  * Naming: all names are prefixed OS2_ to avoid colliding with host system
@@ -275,23 +275,23 @@ from, and any convention a reader needs:
  */
 ```
 
-**Why:** It tells a reader — including a reviewer who has never met you —
+**Why:** It tells a reader - including a reviewer who has never met you -
 whether they are looking at a transcription or an invention, and where to check.
 
 A cautionary case: a header that opened by describing itself as deriving its
-values from "publicly documented specifications" — while citing a DDK header in
+values from "publicly documented specifications" - while citing a DDK header in
 a `_Static_assert` 560 lines below, and after its layouts had been fixed by
 reading IBM's headers directly. A file's self-description is a fact like any
 other: it needs a source, and it needs to match what the file actually does.
 Where it doesn't, fix it under Rule 1.7 rather than quietly. Describe your
-sources as they are — "transcribed from IBM's Toolkit headers" is accurate and
+sources as they are - "transcribed from IBM's Toolkit headers" is accurate and
 checkable; a vaguer claim that sounds better is the same unsourced assertion
 Rule 1.3 exists to stop.
 
 ### Rule 1.5: Every ABI struct asserts its size
 
 **Trigger:** You are defining or editing a struct that must match an OS/2
-layout — anything wrapped in `#pragma pack(push, 1)` or carrying
+layout - anything wrapped in `#pragma pack(push, 1)` or carrying
 `__attribute__((packed))`.
 
 **Action:** Add `_Static_assert(sizeof(T) == N, "...")` with the size and its
@@ -299,7 +299,7 @@ source. Put the byte offset in a comment on each field.
 
 **Why:** A packed struct is a wire format; being one byte wrong is a silent,
 system-wide corruption that manifests far away. The compiler will check this for
-free, forever, at zero runtime cost — and it is the only rule here that catches
+free, forever, at zero runtime cost - and it is the only rule here that catches
 a bug *before* it can happen rather than after. The model:
 
 ```c
@@ -309,31 +309,31 @@ _Static_assert(sizeof(PIB)  == 28, "PIB size must be 28 bytes");
 ```
 
 Two real bugs this would have caught: truncated `InfoSeg` structs, and a
-truncated `GDDMODEINFO` that had every video mode written at the wrong stride —
+truncated `GDDMODEINFO` that had every video mode written at the wrong stride -
 which is why PM fell back to 640x480 instead of the configured resolution. Both
 were eventually found by reading IBM's headers, not by debugging. An assertion
 would have caught either at compile time.
 
-### Rule 1.6: Findings are artifacts — record them, negative ones included
+### Rule 1.6: Findings are artifacts - record them, negative ones included
 
-**Trigger:** You just learned something — from a disassembly, a KDB session, a
-DDK read, a runtime dump, an experiment — whether or not it produced a working
+**Trigger:** You just learned something - from a disassembly, a KDB session, a
+DDK read, a runtime dump, an experiment - whether or not it produced a working
 change.
 
 **Action:** Write it down where the next person will look, and keep the
 artifact. A disassembly you ran gets saved, not just its conclusion. A search
-that found nothing gets recorded as *"searched X, absent — stop looking."* An
+that found nothing gets recorded as *"searched X, absent - stop looking."* An
 experiment that failed gets recorded as failed, with what it ruled out.
 Findings about a subsystem go in your docs next to that subsystem's other
 notes; findings about a specific line go in a comment at that line.
 
-**Why:** **The expensive thing is not the code — it is the knowledge.** Every
+**Why:** **The expensive thing is not the code - it is the knowledge.** Every
 fact costs a KDB session, a disassembly, or a DDK read to produce. Unrecorded,
 it costs that again, and nobody knows it is being bought twice. The code is
 cheap to retype; the week that produced one offset is not.
 
 The receipts are severe. A subsystem-contract document was once written on the
-premise that two DDK `.inc` files are not shipped — they are, in three places —
+premise that two DDK `.inc` files are not shipped - they are, in three places -
 and that single unrecorded check sent months of debugger work at questions IBM
 answers in a header. Elsewhere, an audit checklist was written against the exact
 call that was crashing, two days before anyone looked at the crash, and nobody
@@ -347,17 +347,17 @@ to produce and free to record. So is "we tried this and it did not work,
 because X." Both prevent the same work being done again by someone who has no
 way to know it was already done.
 
-### Rule 1.7: Supersede in place — never delete a claim, mark it
+### Rule 1.7: Supersede in place - never delete a claim, mark it
 
-**Trigger:** You have discovered that something recorded — a comment, a contract
-document, an offset table, a hypothesis — is wrong.
+**Trigger:** You have discovered that something recorded - a comment, a contract
+document, an offset table, a hypothesis - is wrong.
 
 **Action:** Leave the wrong claim visible, mark it wrong, and put the evidence
 next to it. Do not quietly delete it and write the right answer in its place.
 
 **Why:** A deleted wrong claim takes two things with it: the knowledge that
 someone once believed it, and the reason they were wrong. Both are exactly what
-stops the next reader — who will have the same plausible thought — from
+stops the next reader - who will have the same plausible thought - from
 re-deriving it. "This says X; the obvious reading is Y; here is why Y is wrong
 and how we know" is worth far more than a bare corrected value.
 
@@ -365,7 +365,7 @@ The shape that works is a retraction block at the top of the document, keeping
 every wrong claim, marking it, citing the source that overturned it, and
 explaining the correct reading. For example, a field at `+0x1a` recorded as
 *"we read this as an AVIO-PS far pointer; it is `CellByteSize`; here is why the
-misread was natural"* — because the next person to see a zero there will
+misread was natural"* - because the next person to see a zero there will
 otherwise reach the same conclusion.
 
 This applies to code comments too. If a comment records a belief that turned out
@@ -374,7 +374,7 @@ known, not just an instruction to the compiler.
 
 ---
 
-## Section 2 — Honest failure
+## Section 2 - Honest failure
 
 ### Rule 2.1: A stub fails honestly
 
@@ -396,13 +396,13 @@ Never return 0/success from something you did not do. Never invent a plausible
 return value to keep a caller happy.
 
 **Why:** See Section 0. A stub that lies does not stop the run; it corrupts it
-quietly. Fatal stub sites are not scaffolding to be embarrassed about — they are
+quietly. Fatal stub sites are not scaffolding to be embarrassed about - they are
 the mechanism that makes "the desktop paints" a claim you can defend, rather
 than a screenshot.
 
 ### Rule 2.1a: The test harness must fail as honestly as the code
 
-**Trigger:** You are writing the reporting side of a test — printing a result, a status line, or a
+**Trigger:** You are writing the reporting side of a test - printing a result, a status line, or a
 pass/fail.
 
 **Action:** Report the *actual* return value and error code. Never collapse "an error happened" into
@@ -411,12 +411,12 @@ a benign-looking outcome.
 **Why:** A harness that says `if (rc == OK) ... else "cancelled"` will report a hard failure as a
 user action, and you will debug the wrong thing. This happened here: `WinDlgBox` was returning
 `DID_ERROR` (`0xFFFF`) because a control class in the template was rejected, and the harness
-displayed "Cancelled — settings unchanged" for several rounds. Printing the raw `rc` **and**
+displayed "Cancelled - settings unchanged" for several rounds. Printing the raw `rc` **and**
 `WinGetLastError` surfaced `PMERR_INVALID_HWND` immediately, and the real bug with it. The
-honest-failure discipline in Rule 2.1 applies to the scaffolding, not just the product —
+honest-failure discipline in Rule 2.1 applies to the scaffolding, not just the product -
 scaffolding is where a lie is least likely to be noticed.
 
-### Rule 2.2: Guards are data — do not route around them
+### Rule 2.2: Guards are data - do not route around them
 
 **Trigger:** Execution stops at a fatal stub, an assertion, an `abort()`, or a
 breakpoint, and you want to get past it.
@@ -425,7 +425,7 @@ breakpoint, and you want to get past it.
 and stop**, or **use an explicit bring-up mode** (Rule 2.3). Not: make the stub
 return 0, add a bypass flag, catch the signal, or delete the guard.
 
-**Why:** The guard is not in your way — it is the most useful output the system
+**Why:** The guard is not in your way - it is the most useful output the system
 has produced. It is telling you exactly which fact is unestablished, at the
 moment it is needed, with a stack that points at the caller. That information is
 expensive to get any other way, and routing around it destroys it *and*
@@ -438,7 +438,7 @@ spent the following week chasing a System Error dialog that did not exist.
 ### Rule 2.3: A relaxation is a named, logged mode with a written reason
 
 **Trigger:** You genuinely need unimplemented calls to soft-fail rather than
-abort — a bring-up where a flag-day swap would die on first touch.
+abort - a bring-up where a flag-day swap would die on first touch.
 
 **Action:** Make it a named environment variable, off by default, that logs
 **every** call it lets through, with the rationale in the source explaining why
@@ -463,15 +463,15 @@ call site, so it never changes. In one place, it is one edit.
 
 ---
 
-## Section 3 — Ownership
+## Section 3 - Ownership
 
 ### Rule 3.1: Before you write through a pointer, know whose memory it is
 
 **Trigger:** You are about to write, zero, free, realloc, or cache a pointer to
 memory you did not just allocate.
 
-**Action:** Establish which it is — **yours**, another **process's**, or a
-**shared/server-backed** mapping — because the answer decides what you are
+**Action:** Establish which it is - **yours**, another **process's**, or a
+**shared/server-backed** mapping - because the answer decides what you are
 allowed to do. Can you zero it? Can you assume it still exists after `DosExit`?
 Is another process mapping the same page right now?
 
@@ -496,8 +496,8 @@ process's live data system-wide.
 **Trigger:** You are about to add an accessor to "protect" a struct field, or
 you feel bad about reading `something->field` across a file boundary.
 
-**Action:** If the struct is an ABI layout — packed, shared, or read by code
-you don't control — leave it alone. Read the field.
+**Action:** If the struct is an ABI layout - packed, shared, or read by code
+you don't control - leave it alone. Read the field.
 
 **Why:** You cannot encapsulate a wire format. `TIB` is 24 bytes because OS/2
 says so, and other code reads `FS:[0]` with a raw pointer and will never call
@@ -505,7 +505,7 @@ your accessor. The struct is not *behind* an interface; the struct **is** the
 interface, byte for byte, shared with code you did not write and cannot change.
 The same applies to shared memory generally: a getter in one process guards
 nothing about what another process does to the same page. And in
-register-critical paths a function call is not free — it costs stack you may not
+register-critical paths a function call is not free - it costs stack you may not
 have and touches registers under contract.
 
 ### Rule 3.3: Accessors are for state you own
@@ -522,7 +522,7 @@ void dosthunk_set_depth(int depth) { dosthunk_depth = depth; }
 
 **Why:** For state you genuinely own, the usual reasons apply and cost nothing:
 the owning file can change its representation, and `grep` shows every reader.
-This is the *complement* of Rule 3.2, not a contradiction of it — the line is
+This is the *complement* of Rule 3.2, not a contradiction of it - the line is
 "do we own the layout," not "is it a struct."
 
 ### Rule 3.4: Two definitions of one shared structure need a cross-assert
@@ -540,11 +540,11 @@ symptom appears in a different process from the change.
 
 ---
 
-## Section 4 — Load-bearing weirdness
+## Section 4 - Load-bearing weirdness
 
 ### Rule 4.1: Weirdness gets its reason at the site
 
-**Trigger:** You are writing something that looks wrong and isn't — a raw
+**Trigger:** You are writing something that looks wrong and isn't - a raw
 syscall where a helper exists, a disabled compiler feature, a magic
 re-invocation, an empty macro.
 
@@ -556,7 +556,7 @@ liability; weirdness with a why is a credential.** `-fno-stack-protector` bare
 reads as "they disabled security features." `-fno-stack-protector` with a line
 explaining that the canary probe writes below ESP, where the OS/2 stack in that
 path has no guard page, reads as "these people know exactly what they are
-doing" — same flag, opposite reception, and the drive-by critic has nothing to
+doing" - same flag, opposite reception, and the drive-by critic has nothing to
 post. The reason costs a comment; not having it costs the argument.
 
 The model is the comment in Rule 3.1: it explains the mechanism *and* names the
@@ -567,24 +567,24 @@ bug it prevents.
 **Trigger:** You are cleaning up code that looks non-idiomatic.
 
 **Action:** Find out why it is like that first. If there is no comment and no
-obvious reason, ask — do not assume it is an accident.
+obvious reason, ask - do not assume it is an accident.
 
 **Why:** This is the same reflex as routing around a guard (Rule 2.2), wearing
 better clothes: making the code *look* right instead of *be* right. Low-level
 OS/2 code is full of oddities that are load-bearing, and the failure they cause
 when "fixed" shows up somewhere unrelated, a week later. If the code is
-genuinely just untidy, cleaning it up is welcome — but the burden is on the
+genuinely just untidy, cleaning it up is welcome - but the burden is on the
 cleaner to establish that.
 
 ---
 
-## Section 5 — File organization
+## Section 5 - File organization
 
 ### Rule 5.1: A `.c` file owns one thing
 
 **Trigger:** You are creating a `.c` file, or adding a function to one.
 
-**Action:** Decide what the file owns — a type, or a well-defined surface — and
+**Action:** Decide what the file owns - a type, or a well-defined surface - and
 keep it to that. A good target: each file in a device or driver family exports
 **exactly one** symbol, `<family>_<name>_register()`, with everything else
 `static`.
@@ -597,8 +597,8 @@ A file with one export has an interface you can hold in your head.
 **Trigger:** You are writing a non-`static` function.
 
 **Action:** If it is your code, prefix it with the file (`vfs_`, `os2_sem32_`,
-`bridge16_`, `dosthunk_`, …). If it is an OS/2 ABI entry point, use IBM's exact
-spelling — `MouOpen`, `VioWrtTTY`, `DosRead` — with no prefix.
+`bridge16_`, `dosthunk_`, ...). If it is an OS/2 ABI entry point, use IBM's exact
+spelling - `MouOpen`, `VioWrtTTY`, `DosRead` - with no prefix.
 
 **Why:** The prefix is C's only namespacing, and it is what makes a symbol
 greppable. But the ABI name is not yours to change: ordinal tables, `.DEF`
@@ -611,7 +611,7 @@ code," not "prefix everything."
 **Trigger:** A function is only called from within its file.
 
 **Action:** Mark it `static`, keep it out of the header, and name it for what
-it does — not where it lives.
+it does - not where it lives.
 
 **Why:** `static` is C's `private`. The prefix identifies *exported* names, so
 a prefix on a static one is a lie that makes the file's public surface
@@ -626,12 +626,12 @@ unreadable.
 appropriate header, that is the thing to fix.
 
 **Why:** This is the highest-consequence style rule in the guide, because it is
-how wrong signatures enter a codebase — C links them happily, and the corruption
+how wrong signatures enter a codebase - C links them happily, and the corruption
 surfaces far away. A real one: an ordinal implemented 2-argument when the real
 entry point is 3-argument; the shim false-zeroed on timeout and sent
 `PrfEnterSem` into an infinite retry, which is why a wait-clock never went away.
 The same class killed four more ordinal rows whose stack-cleanup byte count was
-wrong. And the compiler already catches this — turn on
+wrong. And the compiler already catches this - turn on
 `-Werror=implicit-function-declaration` and
 `-Werror=builtin-declaration-mismatch`, so the bug class is fatal while the
 merely-untidy warnings stay advisory.
@@ -641,14 +641,14 @@ merely-untidy warnings stay advisory.
 **Trigger:** You are about to create a header, or put a function body in one.
 
 **Action:** Headers hold type definitions, `#define`s, and `extern`
-declarations — no function bodies (except genuinely tiny `static inline`), no
+declarations - no function bodies (except genuinely tiny `static inline`), no
 non-`extern` variable definitions, always an include guard (`FILENAME_H`, and
 keep it 100% consistent).
 
 Three header shapes are all correct, and only the first is the classic:
 
-1. **A `.c` file's interface** — `foo.h` declares `foo.c`'s `foo_*` functions.
-2. **A pure ABI/type header with no `.c` at all** — an `os2types.h`, an
+1. **A `.c` file's interface** - `foo.h` declares `foo.c`'s `foo_*` functions.
+2. **A pure ABI/type header with no `.c` at all** - an `os2types.h`, an
    `os2api.h`, a `gradd.h`. These are transcriptions of OS/2 layouts; there is
    nothing to implement.
 3. **A framework-internal header** serving several files of one subsystem.
@@ -659,7 +659,7 @@ tree, which is how a guide teaches people to ignore it.
 
 ---
 
-## Section 6 — Helpers and reuse
+## Section 6 - Helpers and reuse
 
 ### Rule 6.1: Build the missing primitive
 
@@ -667,14 +667,14 @@ tree, which is how a guide teaches people to ignore it.
 about to work around the gap inline.
 
 **Action:** Build the primitive once, in a shared place, and use it
-everywhere. Check first — a mature OS/2 codebase usually already has a layer of
+everywhere. Check first - a mature OS/2 codebase usually already has a layer of
 them (a VFS wrapper, semaphore helpers, a debug macro, a tiled allocator).
 
 **Why:** C's standard library is small, and every serious C project needs a
 layer of its own primitives. The choice is between building that layer once and
 reinventing it badly at every call site forever. Note the failure mode to avoid:
 a trap-handler file containing exactly the async-signal-safe primitives the rest
-of the tree needs — `safe_write()`, `format_hex32()`, `format_hex16()` — trapped
+of the tree needs - `safe_write()`, `format_hex32()`, `format_hex16()` - trapped
 as `static`, which is why other paths reinvented them. A primitive nobody can
 reach is not a primitive.
 
@@ -688,19 +688,19 @@ available**. `strcpy`/`sprintf`/`gets` never are.
 
 Note the trap: `strncpy(dst, src, sizeof(dst))` does **not** terminate when the
 source fills the buffer. If you use `strncpy`, the size argument is
-`sizeof(dst) - 1` and the buffer must start zeroed — or use something else.
+`sizeof(dst) - 1` and the buffer must start zeroed - or use something else.
 
 **Why:** Two independent reasons, which is usually how you know a rule is real.
 It is a genuine bug class: a non-terminated buffer feeding a `for (p = buf; *p;
 p++)` loop runs off the end. And it is the first thing a hostile reader greps
-for — `strcpy` in a public repo is a free headline, and arguing about context
+for - `strcpy` in a public repo is a free headline, and arguing about context
 after the fact never works.
 
 **But do not reach for `snprintf` reflexively.** In trap handlers, thunk paths,
-and anything running on a small (8–64 KB) OS/2 stack, libc is not available or
+and anything running on a small (8-64 KB) OS/2 stack, libc is not available or
 not safe: `snprintf` is not async-signal-safe, and glibc's `vfprintf` has a
 stack footprint you cannot afford. That is why such code hand-rolls its
-formatting. In those contexts, the answer is Rule 6.1 — the primitive — not the
+formatting. In those contexts, the answer is Rule 6.1 - the primitive - not the
 libc call.
 
 ### Rule 6.3: The third instance is a helper
@@ -737,22 +737,22 @@ types.
 
 > **Convention note.** Pick one return-type convention for OS/2 API surfaces and
 > hold it. One that works: bare `uint32_t` with the original IBM prototype in a
-> comment above the function —
+> comment above the function -
 > ```c
 > // APIRET APIENTRY DosRead(HFILE hFile, PVOID pBuffer, ULONG cbRead, PULONG pcbActual);
 > ```
-> — with framework functions that are *not* OS/2 APIs using `int` and 0/-1.
+> - with framework functions that are *not* OS/2 APIs using `int` and 0/-1.
 > Whatever you pick, don't have a second convention that is "defined but unused"
 > and don't start using it in one file.
 
 ---
 
-## Section 7 — Tables
+## Section 7 - Tables
 
 ### Rule 7.1: Three or more cases sharing a signature is a table
 
 **Trigger:** You are about to write a `switch` or `if/else` ladder with 3+
-cases that share a signature — handlers, ordinals, commands, devices.
+cases that share a signature - handlers, ordinals, commands, devices.
 
 **Action:** Define a `static const` table whose rows carry the discriminator,
 the function pointer, and any per-case metadata. Write one small dispatcher
@@ -767,7 +767,7 @@ from. The same knowledge spread across 45 `switch` statements is the same facts
 in a form nobody can ever check. Prefer the shape that reads out as a
 specification.
 
-Note the row carrying `name` "for debugging" — the table then answers `_name()`
+Note the row carrying `name` "for debugging" - the table then answers `_name()`
 queries for free rather than needing a parallel list (Rule 7.4).
 
 ### Rule 7.2: Function pointers are polymorphism
@@ -786,11 +786,11 @@ static const vdev_ops_t nul_ops = {
 };
 ```
 
-**Why:** This is C's vtable — zero runtime cost, and new types need no change
+**Why:** This is C's vtable - zero runtime cost, and new types need no change
 to the core dispatch. Use a tagged union and a switch only when the variants
 differ in *data shape*, not just behaviour.
 
-### Rule 7.3: A constant→string or cascading-unit chain is a lookup table
+### Rule 7.3: A constant->string or cascading-unit chain is a lookup table
 
 **Trigger:** You are writing `if (x == K1) ... else if (x == K2) ...` mapping
 constants to strings, or a cascade of `if (n > UNIT)` blocks.
@@ -811,7 +811,7 @@ grow by a nested loop.
 logged.
 
 **Action:** Write `<type>_name(value)` returning the symbolic name, from a
-table, with a fallback — including the bounds check and an `"Unknown …"`
+table, with a fallback - including the bounds check and an `"Unknown ..."`
 default. Converge on one naming shape and keep it.
 
 **Why:** `"got packet 27 in state 4"` tells you nothing without grepping
@@ -821,7 +821,7 @@ forever.
 
 ---
 
-## Section 8 — Logging and debug
+## Section 8 - Logging and debug
 
 ### Rule 8.1: Pick the channel by context, not by preference
 
@@ -837,7 +837,7 @@ there are three channels and the context forces the choice:
 | Thunk / foreign stack / register-critical | raw `write(2, ...)`, preformatted, no libc |
 
 **Why:** The rich logger is the right default and the wrong tool in the hardest
-places. It typically needs `__thread` TLS, a real stack, and a live transport —
+places. It typically needs `__thread` TLS, a real stack, and a live transport -
 and in 16-bit thunk context the segment registers belong to other code and none
 of that holds. Raw `write(2)` calls in those paths are not laziness; they are
 the only thing that works when everything else is on fire. **Do not "clean them
@@ -856,7 +856,7 @@ the logger directly:
 #include "os2debug.h"
 ```
 
-Do not define a per-file alias (`FOO_LOG`) that only renames `ldebug` —
+Do not define a per-file alias (`FOO_LOG`) that only renames `ldebug` -
 `MODULE_NAME` already tags the line. A wrapper is only worth it if it adds
 something real, such as a second runtime flag gating a noisy subsystem.
 
@@ -870,14 +870,14 @@ make the tree harder to grep.
 **Trigger:** You are about to type a function name, file, or line into a
 message.
 
-**Action:** Let the macro inject it — `__func__`, `__FILE__`, `__LINE__`.
+**Action:** Let the macro inject it - `__func__`, `__FILE__`, `__LINE__`.
 
 **Why:** Hand-typed context is stale the moment anyone renames a function or
 inserts a line above the call.
 
 ---
 
-## Section 9 — The meta-rule
+## Section 9 - The meta-rule
 
 ### Rule 9.1: One extra pass, before you move on
 
@@ -886,9 +886,9 @@ inserts a line above the call.
 **Action:** Re-read it and ask:
 
 - Did I add a constant without a name and a cited source?
-- Did I write down where a fact came from — and what *kind* of source it was?
+- Did I write down where a fact came from - and what *kind* of source it was?
 - Is there anything here I "just knew"?
-- **Did I learn anything that isn't written down yet — including something
+- **Did I learn anything that isn't written down yet - including something
   that turned out to be absent, or an idea that didn't work?**
 - **Did I delete a claim I should have marked wrong instead?**
 - If I touched an ABI struct, does it assert its size?
@@ -916,8 +916,8 @@ else's operating system held together by C. A fact with a source can be
 checked, re-derived, and trusted by a reader who has never met you. A fact
 without one is a guess that will be believed.
 
-**Write down what you learn.** The code is the cheap part; the knowledge —
-bought a KDB session and a disassembly at a time — is the expensive part. Record
+**Write down what you learn.** The code is the cheap part; the knowledge -
+bought a KDB session and a disassembly at a time - is the expensive part. Record
 it, keep the artifacts, and include the results that produced no code: the
 search that came back empty, the theory that was refuted, the claim that turned
 out wrong. Work that isn't recorded gets done twice, and the second person has
@@ -933,5 +933,5 @@ codebase that looks reckless and one that is obviously deliberate.
 
 None of this is enforced by the compiler, which is the whole reason the guide
 exists. C assumes the programmer enforces it. Most C code does not, and rots.
-The payoff for doing it compounds — and in a project whose product is hard-won
+The payoff for doing it compounds - and in a project whose product is hard-won
 knowledge about someone else's operating system, it compounds faster than usual.

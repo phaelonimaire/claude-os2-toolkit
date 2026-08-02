@@ -1,8 +1,8 @@
-# OS/2 Profiles (INI Files) — the `Prf*` API
+# OS/2 Profiles (INI Files) - the `Prf*` API
 
 The mechanism an OS/2 application uses to store and retrieve persistent settings. A **profile**
 (an *initialization file*, or *INI file*) is a structured binary key/value store organized in
-three levels — **application → key → value** — accessed through the `Prf*` family of
+three levels - **application -> key -> value** - accessed through the `Prf*` family of
 Presentation Manager functions. Two profiles always exist, opened by the system at start-up: the
 **user profile** (`OS2.INI`) and the **system profile** (`OS2SYS.INI`). An application may also
 open profiles of its own. This reference covers the handle type (`HINI`), the model, the read /
@@ -10,28 +10,28 @@ write / enumerate / delete calls, the two well-known profile handles, and profil
 (`PrfReset` / `PrfQueryProfile`).
 
 Provenance: **[DOC-IBM]** the OS/2 Toolkit 4.5 header `pmshl.h` and the base error header
-`pmerr.h` — every prototype, constant value, structure, and error value below is transcribed from
+`pmerr.h` - every prototype, constant value, structure, and error value below is transcribed from
 them with a `file:line` citation; **[DOC-IBM]** the OS/2 Toolkit 4.5 *Presentation Manager
 Programming Reference* (`BOOK/pm1.inf`), from which the behavioural semantics (search, enumeration,
 deletion, defaults, return values) are taken. **[DOC]** the EDM2 wiki, used only to cross-check
 `PrfCloseProfile`. The `Prf*` functions are declared under `#define INCL_WINSHELLDATA` (or
-`INCL_WIN` / `INCL_PM`) before `<os2.h>` [DOC-IBM — pm1.inf, per-function *Syntax* panels].
+`INCL_WIN` / `INCL_PM`) before `<os2.h>` [DOC-IBM - pm1.inf, per-function *Syntax* panels].
 
 ---
 
 ## 1. The profile model [DOC-IBM]
 
 > **Think "registry", not "config file".** `OS2.INI` / `OS2SYS.INI` are the OS/2 equivalent of the
-> Windows registry — the system-wide user and system settings store — and `Prf*` is the API for
+> Windows registry - the system-wide user and system settings store - and `Prf*` is the API for
 > reaching them. An application may also create *its own* profile-format file with
 > `PrfOpenProfile`. But plain text-style `.ini` files are also common and perfectly ordinary in
 > OS/2 applications; those are just files, unrelated to any of this.
 >
 > **An OS/2 INI is not a Windows/Unix `.ini`.** The name is the only thing they share. There is no
 > text, no `[Section]` headers, no `key=value` lines, and nothing to open with `fopen` or hand to a
-> config parser — a profile is an **opaque binary database maintained by Presentation Manager**, and
+> config parser - a profile is an **opaque binary database maintained by Presentation Manager**, and
 > the `Prf*` API is the only supported way to touch it. Writing one as text corrupts it; parsing one
-> as text finds nothing. **This applies to profiles, not to every file called `.ini`** — an
+> as text finds nothing. **This applies to profiles, not to every file called `.ini`** - an
 > application's own config file is its own business and may perfectly well be text; only
 > `OS2.INI`/`OS2SYS.INI` and files opened with `PrfOpenProfile` are profiles in this sense. Note the
 > consequences of a profile being a real database rather than a text file:
@@ -40,14 +40,14 @@ deletion, defaults, return values) are taken. **[DOC]** the EDM2 wiki, used only
 
 A profile is a binary file with a three-level structure:
 
-- **Application** — a named section (heading). An application name is any ASCIIZ string; names
+- **Application** - a named section (heading). An application name is any ASCIIZ string; names
   beginning with the characters `"PM_"` are reserved for system use.
-- **Key** — a named entry within an application. Key names are ASCIIZ strings.
-- **Value** — the data associated with an (application, key) pair. The value is arbitrary binary
+- **Key** - a named entry within an application. Key names are ASCIIZ strings.
+- **Value** - the data associated with an (application, key) pair. The value is arbitrary binary
   data (not necessarily zero-terminated); its length is carried separately. **The maximum size of
   data that can be associated with a key name is 64 KB.**
 
-Both the application name and the key name are matched **case-dependently** — searches compare the
+Both the application name and the key name are matched **case-dependently** - searches compare the
 stored name exactly, with no case-independent matching, deliberately avoiding any code-page
 dependency. Any case-insensitive matching an application wants is its own responsibility.
 
@@ -56,14 +56,14 @@ No distinction is made in storage between a value written as a text string
 be read back with either query call, and enumeration returns names irrespective of which write
 call produced the entry.
 
-Provenance: **[DOC-IBM]** `pm1.inf` — `PrfQueryProfileString` / `PrfQueryProfileData` /
+Provenance: **[DOC-IBM]** `pm1.inf` - `PrfQueryProfileString` / `PrfQueryProfileData` /
 `PrfWriteProfileData` *Parameters* and *Remarks* panels.
 
 ---
 
 ## 2. The `HINI` handle and the two system profiles [DOC-IBM]
 
-Every profile call takes an `HINI` — a *handle to an initialization file*. It is an `LHANDLE`:
+Every profile call takes an `HINI` - a *handle to an initialization file*. It is an `LHANDLE`:
 
 ```c
 typedef LHANDLE HINI;    /* hini */    /* pmshl.h:66 */
@@ -81,8 +81,8 @@ without an `PrfOpenProfile` call:
 | `HINI_USER` | = `HINI_USERPROFILE` | Alias. | `pmshl.h:73` |
 | `HINI_SYSTEM` | = `HINI_SYSTEMPROFILE` | Alias. | `pmshl.h:74` |
 
-The user profile and the system profile are opened by the system — either at start-up, or (for the
-user profile) as the result of a `PrfReset` — and are always available; an application never has to
+The user profile and the system profile are opened by the system - either at start-up, or (for the
+user profile) as the result of a `PrfReset` - and are always available; an application never has to
 open or close them. Any other `HINI` value is a handle returned by `PrfOpenProfile`, and is valid
 **only in the process that issued that `PrfOpenProfile`**.
 
@@ -90,7 +90,7 @@ The distinction between the three pseudo-handles on a query is: `HINI_PROFILE` s
 profile and then the system profile; `HINI_USERPROFILE` searches only the user profile;
 `HINI_SYSTEMPROFILE` searches only the system profile.
 
-Provenance: **[DOC-IBM]** constant values `pmshl.h:66-74`; search / write semantics `pm1.inf` —
+Provenance: **[DOC-IBM]** constant values `pmshl.h:66-74`; search / write semantics `pm1.inf` -
 `PrfQueryProfileString` *hini* parameter and `PrfWriteProfileData` *hini* parameter panels.
 
 ---
@@ -107,18 +107,18 @@ and returns an `HINI` used on subsequent calls, or `NULLHANDLE` on error. The fi
 be the same as the current user (`OS2.INI`) or system (`OS2SYS.INI`) initialization file**. The
 returned handle is only valid for the process that issued the call. This call is how an
 administrator's application creates or modifies a profile for a user, and how a back-up profile is
-built (enumerate application names, then key names, then copy each value — see §6).
+built (enumerate application names, then key names, then copy each value - see section 6).
 
 ```c
 HINI hini = PrfOpenProfile(hab, "PROFILE.INI");   /* NULLHANDLE on failure */
 ```
 
 `PrfCloseProfile` (`pmshl.h:509`) invalidates the `HINI`; after it, the handle must not be used for
-any further call. **The current user and system profiles cannot be closed** — passing
+any further call. **The current user and system profiles cannot be closed** - passing
 `HINI_PROFILE`, `HINI_USERPROFILE`, or `HINI_SYSTEMPROFILE` is rejected. Both calls return `TRUE`
 on success and `FALSE` on failure; on failure the reason is retrievable with `WinGetLastError`.
 
-`PrfOpenProfile` errors: `PMERR_OPENING_INI_FILE` (`0x1301`, unable to open — e.g. no disk space),
+`PrfOpenProfile` errors: `PMERR_OPENING_INI_FILE` (`0x1301`, unable to open - e.g. no disk space),
 `PMERR_MEMORY_ALLOC` (`0x1309`), `PMERR_INI_FILE_IS_SYS_OR_USER` (`0x1124`).
 `PrfCloseProfile` errors: `PMERR_INI_FILE_IS_SYS_OR_USER` (`0x1124`),
 `PMERR_INVALID_INI_FILE_HANDLE` (`0x1115`).
@@ -142,7 +142,7 @@ Provenance: **[DOC-IBM]** prototypes `pmshl.h:505-509`; semantics + errors `pm1.
 application `pszApp`. If found, the value string is copied into `pBuffer` (at most `cchBufferMax`
 bytes; longer data is truncated). If the key does not exist, the default string `pszDefault` is
 copied instead; if `pszDefault` is itself `NULL`, nothing is copied and the return is 0. The return
-value is `ulLength` — the actual number of bytes placed in `pBuffer`, **including** the terminating
+value is `ulLength` - the actual number of bytes placed in `pBuffer`, **including** the terminating
 null.
 
 **`PrfQueryProfileInt`** (`pmshl.h:427-430`) performs the same case-dependent search and converts
@@ -156,7 +156,7 @@ reads back a value regardless of whether it was written with `PrfWriteProfileStr
 `PrfWriteProfileData`. It returns `TRUE` on success, `FALSE` on error.
 
 **`PrfQueryProfileSize`** (`pmshl.h:467-470`) returns, through `*pulReqLen`, the size in bytes of
-the value for the given (application, key) pair — used to allocate a buffer before a
+the value for the given (application, key) pair - used to allocate a buffer before a
 `PrfQueryProfileString` / `PrfQueryProfileData` call. `pszApp` and `pszKey` are case-sensitive and
 must match exactly. Returns `TRUE` / `FALSE`.
 
@@ -170,7 +170,7 @@ Provenance: **[DOC-IBM]** prototypes `pmshl.h:427-485`; semantics `pm1.inf`
 
 ---
 
-## 5. Enumeration — a null application or a null key [DOC-IBM]
+## 5. Enumeration - a null application or a null key [DOC-IBM]
 
 The query calls double as enumerators: passing `NULL` for the application name lists all
 applications, and passing `NULL` for the key name (with a real application) lists all keys under
@@ -178,11 +178,11 @@ that application. This is how a caller discovers a profile's contents. `PrfQuery
 `PrfQueryProfileData` enumerate identically; `PrfQueryProfileSize` returns the size such a list
 would occupy.
 
-- **`pszApp == NULL`** — enumerate **application names**. The function builds, in `pBuffer`, a list
+- **`pszApp == NULL`** - enumerate **application names**. The function builds, in `pBuffer`, a list
   of all application names in the profile. Each name is terminated with a single null character,
   and the last name in the list is terminated with **two** successive null characters. In this
   case `pszKey` is ignored.
-- **`pszApp` valid, `pszKey == NULL`** — enumerate **key names** for that application. `pBuffer`
+- **`pszApp` valid, `pszKey == NULL`** - enumerate **key names** for that application. `pBuffer`
   receives the list of key names (the names only, not their values), in the same
   single-null-between / double-null-at-end layout.
 
@@ -194,7 +194,7 @@ returning `FALSE`). Enumeration does not distinguish values written with `PrfWri
 from those written with `PrfWriteProfileData`.
 
 The idiomatic enumerate-then-walk pattern (obtain size, allocate, enumerate, iterate the
-null-separated list) [DOC-IBM — Toolkit sample `SAMPLES/PM/GRAPHICS/file.c:1378-1406,1592-1615`]:
+null-separated list) [DOC-IBM - Toolkit sample `SAMPLES/PM/GRAPHICS/file.c:1378-1406,1592-1615`]:
 
 ```c
 ULONG len;
@@ -206,7 +206,7 @@ for (PSZ p = names; *p; p += strlen(p) + 1) {              /* each null-terminat
 }
 ```
 
-Provenance: **[DOC-IBM]** `pm1.inf` — `PrfQueryProfileString` *pszApp* / *pszKey* parameter panels
+Provenance: **[DOC-IBM]** `pm1.inf` - `PrfQueryProfileString` *pszApp* / *pszKey* parameter panels
 and *Remarks*, `PrfQueryProfileData` *Remarks*; the walk idiom is the Toolkit sample
 `file.c:1378-1406,1592-1615`.
 
@@ -225,13 +225,13 @@ exists its value is overwritten. For the string form the value is the ASCIIZ str
 the data form the value is `cchDataLen` bytes at `pData` and is **not** zero-terminated (the length
 is the only record of its extent). The maximum value size is 64 KB. Both return `TRUE` / `FALSE`.
 
-**Deletion is expressed through null parameters** — there is no separate delete call:
+**Deletion is expressed through null parameters** - there is no separate delete call:
 
-| To delete… | `PrfWriteProfileString` | `PrfWriteProfileData` |
+| To delete... | `PrfWriteProfileString` | `PrfWriteProfileData` |
 |---|---|---|
 | one key's value | `pszData = NULL` | `pData = NULL`, `cchDataLen = 0` |
 | all keys of an application | `pszKey = NULL`, `pszData = NULL` | `pszKey = NULL`, `pData = NULL`, `cchDataLen = 0` |
-| all data in the (user) profile | — | `pszApp = NULL`, `pszKey = NULL`, `pData = NULL`, `cchDataLen = 0` |
+| all data in the (user) profile | - | `pszApp = NULL`, `pszKey = NULL`, `pData = NULL`, `cchDataLen = 0` |
 
 For `PrfWriteProfileString`, a non-`NULL` `pszData` is stored even if it is the empty string (only
 `NULL` deletes). Write errors include `PMERR_INVALID_PARM` (`0x1303`) and
@@ -243,7 +243,7 @@ panels and *Remarks*); error values `pmerr.h:227,238`.
 
 ---
 
-## 7. Switching profiles — `PRFPROFILE`, `PrfQueryProfile`, `PrfReset` [DOC-IBM]
+## 7. Switching profiles - `PRFPROFILE`, `PrfQueryProfile`, `PrfReset` [DOC-IBM]
 
 The pair of files acting as the user and system profiles can be queried and changed at run time. A
 `PRFPROFILE` structure names them:
@@ -273,7 +273,7 @@ initialization the user and system profile names come from the `PROTSHELL` state
 `CONFIG.SYS`; `PrfReset` lets them change while the workstation is running (e.g. a logon
 application serving successive users). The file names in `pPrfProfile` may be any valid names; a
 name that is not fully qualified is taken relative to the current directory. If the named user
-profile file does not exist it is created. **The system profile name cannot be changed** — it must
+profile file does not exist it is created. **The system profile name cannot be changed** - it must
 equal the current system profile name returned by `PrfQueryProfile`. After `PrfReset` the system
 has a new set of preferences (screen colors, start-up list, spooler parameters, country
 information). `PrfReset` **broadcasts the `PL_ALTERED` message** so that applications reading their
@@ -318,9 +318,9 @@ per-function *Errors* panels (`PrfOpenProfile`, `PrfCloseProfile`, `PrfQueryProf
 ---
 
 ## See also
-- `session-manager.md` / `config-and-environment.md` — the `PROTSHELL` statement in `CONFIG.SYS`
+- `session-manager.md` / `config-and-environment.md` - the `PROTSHELL` statement in `CONFIG.SYS`
   that names the initial user and system profiles `PrfReset` can later replace.
-- `pm-window-messaging.md` — the `HAB` anchor block passed to `PrfOpenProfile` / `PrfReset` /
+- `pm-window-messaging.md` - the `HAB` anchor block passed to `PrfOpenProfile` / `PrfReset` /
   `PrfQueryProfile`, and the message queue `PrfReset` requires in order to broadcast `PL_ALTERED`.
-- `error-codes.md` — the `WinGetLastError` mechanism and the `PMERR_*` space these calls report
+- `error-codes.md` - the `WinGetLastError` mechanism and the `PMERR_*` space these calls report
   into.

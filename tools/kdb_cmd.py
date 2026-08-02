@@ -18,7 +18,7 @@ import time
 import argparse
 
 # Debug target: a Unix socket path (VBox --uartmode1 server <path>) or a
-# host:port TCP endpoint (VBox --uartmode1 tcpserver <port> — required on
+# host:port TCP endpoint (VBox --uartmode1 tcpserver <port> - required on
 # Windows hosts, where VBox host pipes are named pipes Python can't open).
 DEFAULT_TARGET = os.environ.get('KDB_DBGPORT', '/tmp/dbgport')
 CHAR_DELAY = 0.005  # 5ms between characters

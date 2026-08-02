@@ -139,7 +139,7 @@ class LXImage:
 
         Iteration records are {u16 repeat, u16 block_size, bytes[block_size]};
         a zero repeat terminates. Format per the LX spec - see
-        os2ref/executable-formats.md §2.12.
+        os2ref/executable-formats.md section 2.12.
         """
         out = bytearray()
         end = off + size

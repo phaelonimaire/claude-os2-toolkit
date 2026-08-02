@@ -15,7 +15,7 @@ Provenance: **[DOC-IBM]** the OS/2 Toolkit header `bsedos.h` (all module-manager
 `INCL_DOSMODULEMGR`), `os2def.h` (`HMODULE`, `PFN` types), the OS/2 Linear-eXecutable reference
 `lxref.htm` (the library initialization/termination register-and-stack contract and the
 module-flag bits), a Toolkit `SAMPLES` DLL entry point and `.DEF` files (the `_DLL_InitTerm`
-prototype and the `LIBRARY … INITINSTANCE TERMINSTANCE` form); **[DOC]** the IBM OS/2 2.0
+prototype and the `LIBRARY ... INITINSTANCE TERMINSTANCE` form); **[DOC]** the IBM OS/2 2.0
 Programming Guide (GG24-3774) "Dynamic Link Libraries" / "Creating a DLL" / "Using a DLL" and the
 Control Program reference stubs (the OS/2 1.x names and load-failure buffer). Every prototype and
 constant below is transcribed from a source file that was opened; nothing is supplied from memory.
@@ -27,7 +27,7 @@ constant below is transcribed from a source file that was opened; nothing is sup
 A DLL is a module containing code and/or resources that one or more programs share at run time
 rather than binding a private copy at link time. Multiple processes use the same memory-resident
 copy of the DLL code, and the code in a DLL can be changed without re-linking the programs that
-use it. [DOC — GG24-3774 "Dynamic Link Libraries".] A program resolves the external references to
+use it. [DOC - GG24-3774 "Dynamic Link Libraries".] A program resolves the external references to
 a DLL's exported entry points in one of two ways:
 
 - **Load-time (implicit) linking.** The reference is resolved by the loader when the program
@@ -35,23 +35,23 @@ a DLL's exported entry points in one of two ways:
   *M*", and the loader loads *M* and binds the reference before the program runs. The program
   declares these imports through an `IMPORTS` statement in its `.DEF` file, or by linking against an
   **import library** (built with `IMPLIB` from a `.DEF`); the system's own `OS2386.LIB` / `OS2.LIB`
-  is itself an import library describing the DLLs that implement the OS/2 API. [DOC — GG24-3774
+  is itself an import library describing the DLLs that implement the OS/2 API. [DOC - GG24-3774
   "Using a DLL".]
 - **Run-time (explicit) linking.** The program has no compile-time reference; it calls
   `DosLoadModule` to load a named DLL, `DosQueryProcAddr` to obtain the address of an entry point
   (by name or by ordinal), calls through the returned function pointer, and `DosFreeModule` when
-  finished. [DOC-IBM — `bsedos.h`.]
+  finished. [DOC-IBM - `bsedos.h`.]
 
 Both forms reach the same exported code; the calling convention (`_System` for 32-bit,
-`_Far16 _Pascal` for 16-bit — see `calling-convention.md`) is a property of the declared prototype,
+`_Far16 _Pascal` for 16-bit - see `calling-convention.md`) is a property of the declared prototype,
 independent of which linking method or which reference form (name/ordinal) resolved it.
 
 ### Import by name versus by ordinal [DOC-IBM]
 
 Each export a DLL provides is identified both by its name and by a small integer **ordinal**
 assigned in the `.DEF` `EXPORTS` statement (`name @N`). An importer may bind to an export **by
-ordinal** (`MODULE.N`) — the compact, position-stable form used for the core system DLLs
-(`DOSCALLS`, `PMWIN`, …) — or **by name** (`MODULE.EXPORTNAME`), resolved by string match. The
+ordinal** (`MODULE.N`) - the compact, position-stable form used for the core system DLLs
+(`DOSCALLS`, `PMWIN`, ...) - or **by name** (`MODULE.EXPORTNAME`), resolved by string match. The
 `.DEF` syntax for both is documented in `calling-convention.md` ("Ordinal vs by-name imports").
 
 ---
@@ -59,9 +59,9 @@ ordinal** (`MODULE.N`) — the compact, position-stable form used for the core s
 ## The run-time module-manager API
 
 All prototypes are declared under `#ifdef INCL_DOSMODULEMGR` in `bsedos.h`. `HMODULE` is a module
-handle (`typedef LHANDLE HMODULE`, i.e. `unsigned long`; `PHMODULE` is its pointer —
+handle (`typedef LHANDLE HMODULE`, i.e. `unsigned long`; `PHMODULE` is its pointer -
 `os2def.h:232,242`); `PFN` is an `APIENTRY`-linkage function pointer (`os2def.h:112`). Every
-function returns an `APIRET` (0 = success, non-zero `ERROR_*`). [DOC-IBM — `bsedos.h`, `os2def.h`.]
+function returns an `APIRET` (0 = success, non-zero `ERROR_*`). [DOC-IBM - `bsedos.h`, `os2def.h`.]
 
 | Symbol | Purpose |
 |---|---|
@@ -81,11 +81,11 @@ APIRET APIENTRY DosLoadModule(PSZ pszName, ULONG cbName, PSZ pszModname, PHMODUL
 ```
 (`bsedos.h:2142-2151`; `PCSZ` in the C++ variant.)
 
-The parameter naming is easy to misread: `pszModname` (parameter 3) is the **input** — the name of
-the module to load — and `pszName`/`cbName` (parameters 1–2) are an **output error buffer** and its
+The parameter naming is easy to misread: `pszModname` (parameter 3) is the **input** - the name of
+the module to load - and `pszName`/`cbName` (parameters 1-2) are an **output error buffer** and its
 length, into which the loader writes the name of the object (typically a dependent module) that
 caused the load to fail when the call returns an error. A Toolkit sample illustrates the argument
-order — `DosLoadModule(szLoadError, sizeof(szLoadError), szDevDLLName, &hModHandle)`
+order - `DosLoadModule(szLoadError, sizeof(szLoadError), szDevDLLName, &hModHandle)`
 (`SAMPLES/MM/ADMCT/loadsubs.c`, shown in a commented-out reference line). `phmod` receives the
 module handle on success.
 
@@ -93,17 +93,17 @@ If the named module is already loaded, its existing handle is returned and its u
 incremented rather than a second image being mapped; the module is not physically unloaded until
 every `DosLoadModule` is matched by a `DosFreeModule`.
 
-The 16-bit predecessor took the same argument order — an object-name buffer (returned), the buffer
-length, the module-name string, and the returned handle — under the OS/2 1.x name (see "Naming"
-below). [DOC — Control Program reference `DosLoadModule` stub.]
+The 16-bit predecessor took the same argument order - an object-name buffer (returned), the buffer
+length, the module-name string, and the returned handle - under the OS/2 1.x name (see "Naming"
+below). [DOC - Control Program reference `DosLoadModule` stub.]
 
 ### `DosFreeModule` [DOC-IBM]
 
 ```c
 APIRET APIENTRY DosFreeModule(HMODULE hmod);
 ```
-(`bsedos.h:2153`.) Releases one reference to `hmod`. The module image is unloaded — and its
-per-process termination routine (below) run — when the last reference in the process is freed.
+(`bsedos.h:2153`.) Releases one reference to `hmod`. The module image is unloaded - and its
+per-process termination routine (below) run - when the last reference in the process is freed.
 
 ### `DosQueryProcAddr` [DOC-IBM]
 
@@ -115,11 +115,11 @@ export of `hmod`. The export is selected **by ordinal** if `ordinal` is non-zero
 name** using the string `pszName`. The returned pointer is invoked with the convention of its
 declared prototype.
 
-The `ordinal` must be ≤ 65 533, and the name match is not case sensitive. For entries within the
-`DOSCALLS` module only **ordinal** references are supported — a by-name reference to `DOSCALLS`
-returns an error — which is why `DOSCALLS` ordinals are resolved by linking against `OS2386.LIB`.
+The `ordinal` must be <= 65 533, and the name match is not case sensitive. For entries within the
+`DOSCALLS` module only **ordinal** references are supported - a by-name reference to `DOSCALLS`
+returns an error - which is why `DOSCALLS` ordinals are resolved by linking against `OS2386.LIB`.
 If the call returns `ERROR_INVALID_HANDLE`, the module may not be loaded; reissue `DosLoadModule`
-and repeat. [DOC — EDM2 "DosQueryProcAddr".]
+and repeat. [DOC - EDM2 "DosQueryProcAddr".]
 
 | `rc` | Value | Meaning |
 |---|---|---|
@@ -129,7 +129,7 @@ and repeat. [DOC — EDM2 "DosQueryProcAddr".]
 | `ERROR_INVALID_ORDINAL` | `182` | `ordinal` does not name an export of the module |
 | `ERROR_ENTRY_IS_CALLGATE` | `65079` | The entry point is reachable only via a call gate |
 
-[DOC — EDM2 "DosQueryProcAddr".]
+[DOC - EDM2 "DosQueryProcAddr".]
 
 ### `DosQueryModuleHandle` [DOC-IBM]
 
@@ -172,13 +172,13 @@ APIRET APIENTRY DosQueryModFromEIP(HMODULE *phMod, ULONG *pObjNum, ULONG BuffLen
 APIRET APIENTRY DosReplaceModule(PSZ pszOldModule, PSZ pszNewModule, PSZ pszBackupModule);
 ```
 (`bsedos.h:2194-2199, 2213-2220`.) `DosQueryModFromEIP` maps a code address (`Address`) back to the
-module handle, object number, name, and offset that contain it — the basis of a symbolic
+module handle, object number, name, and offset that contain it - the basis of a symbolic
 backtrace. `DosReplaceModule` swaps a module's on-disk file (optionally saving a backup) so a
 loaded module can be updated. (The prototypes are transcribed from `bsedos.h`; the header carries
 no descriptive prose, so the behavioral summaries above are read from the parameter names, not a
-documented sentence.) The related function `DosQueryModFromCS` — the callable Toolkit symbol is
+documented sentence.) The related function `DosQueryModFromCS` - the callable Toolkit symbol is
 `Dos16QueryModFromCS` (`bsedos.h:2233`), `DosQueryModFromCS` being the documentation-level name in
-the header comment — returns a `QMRESULT` `{ USHORT seg; USHORT hmte; CHAR name[CCHMAXPATH]; }`
+the header comment - returns a `QMRESULT` `{ USHORT seg; USHORT hmte; CHAR name[CCHMAXPATH]; }`
 (`bsedos.h:2225-2229`); it and `QMRESULT` are guarded `#if __IBMC__ || __IBMCPP__` (IBM-compiler only).
 
 The `DosReplaceModule` behavior read from the parameter names above is confirmed by community
@@ -188,7 +188,7 @@ releases the filesystem's hold on the file, optionally copies the current image 
 cached old module until every reference is released, and the next reference reloads from the new
 file. Only protect-mode executable/DLL files may be replaced (not DOS/Windows programs or data
 files); `pszNewModule` and `pszBackupModule` may be NULL. The entry point is `DOSCALLS.417` and is
-defined in `OS2386.LIB`. [DOC — EDM2 "DosReplaceModule".]
+defined in `OS2386.LIB`. [DOC - EDM2 "DosReplaceModule".]
 
 | `rc` | Value | Meaning |
 |---|---|---|
@@ -206,7 +206,7 @@ defined in `OS2386.LIB`. [DOC — EDM2 "DosReplaceModule".]
 | `ERROR_MODULE_IN_USE` | `296` | Module-in-use condition |
 | `ERROR_MODULE_CORRUPTED` | `731` | The replacement module image is corrupt |
 
-[DOC — EDM2 "DosReplaceModule".]
+[DOC - EDM2 "DosReplaceModule".]
 
 ---
 
@@ -231,7 +231,7 @@ The return value reports success: a **non-zero** return means the routine succee
 return means it failed (the sample returns `0` when `_CRT_init()` fails and `TRUE` otherwise). On
 initialization the routine performs C-runtime setup and C++ static constructors
 (`_CRT_init`, `__ctordtorInit`); on termination it runs destructors and C-runtime teardown
-(`__ctordtorTerm`, `_CRT_term`). [DOC-IBM — `SAMPLES/OPEN32/DLLENTRY/dllmain.c:47-95`.]
+(`__ctordtorTerm`, `_CRT_term`). [DOC-IBM - `SAMPLES/OPEN32/DLLENTRY/dllmain.c:47-95`.]
 
 ### The underlying loader contract [DOC-IBM]
 
@@ -251,10 +251,10 @@ reference specifies the register/stack state at which the loader enters that add
 | `[ESP+4]` | Module handle for the library module |
 | `[ESP+8]` | `0` = Initialization, `1` = Termination |
 
-This is exactly the `(handle, flag)` pair `_DLL_InitTerm` receives — `[ESP+4]` is `handle`,
-`[ESP+8]` is `flag` — so `flag == 0` is init and `flag == 1` (non-zero) is termination, agreeing
+This is exactly the `(handle, flag)` pair `_DLL_InitTerm` receives - `[ESP+4]` is `handle`,
+`[ESP+8]` is `flag` - so `flag == 0` is init and `flag == 1` (non-zero) is termination, agreeing
 with the sample. A library whose entry-address object number is **zero** has no entry routine.
-[DOC-IBM — `lxref.htm`.]
+[DOC-IBM - `lxref.htm`.]
 
 ### Per-process versus global initialization/termination [DOC-IBM]
 
@@ -268,18 +268,18 @@ for the whole system is fixed by two module flags recorded in the DLL's header
 | Per-process Library Termination | `0x40000000` | Entry routine runs on term for each process that loses access |
 
 When the initialization bit is **not** set (but a valid entry address exists), **Global Library
-Initialization** is assumed — the routine runs only once — and likewise for termination. If the
+Initialization** is assumed - the routine runs only once - and likewise for termination. If the
 per-process **termination** bit is set, the entry-address object must be a 32-bit object. Setting
-either bit is invalid for a program (`.EXE`) module. [DOC-IBM — `lxref.htm`.]
+either bit is invalid for a program (`.EXE`) module. [DOC-IBM - `lxref.htm`.]
 
 These flags are chosen through the `.DEF` `LIBRARY` statement. The `INITINSTANCE` and
-`TERMINSTANCE` keywords request the **per-process** (instance) form — "any initialization code
-should be executed for each process which accesses the DLL" — e.g.
+`TERMINSTANCE` keywords request the **per-process** (instance) form - "any initialization code
+should be executed for each process which accesses the DLL" - e.g.
 `LIBRARY MYDLL INITINSTANCE TERMINSTANCE` (IBM redbook GG24-3774 p.122; also
 `SAMPLES/TCPIPTK/SAMPDLL/sampdllm.def`). Absent those keywords the global form (single init/term)
-applies. [DOC-IBM — GG24-3774 "Creating a DLL"; Toolkit `.DEF` samples.] A DLL accessed by
+applies. [DOC-IBM - GG24-3774 "Creating a DLL"; Toolkit `.DEF` samples.] A DLL accessed by
 separate processes generally also declares `DATA MULTIPLE` so each process gets its own copy of the
-DLL's data segment. [DOC — GG24-3774 "Creating a DLL".]
+DLL's data segment. [DOC - GG24-3774 "Creating a DLL".]
 
 ---
 
@@ -287,9 +287,9 @@ DLL's data segment. [DOC — GG24-3774 "Creating a DLL".]
 
 ### Exportable entry points [DOC]
 
-An **exportable entry point** is a function invoked from outside its own module — either called
+An **exportable entry point** is a function invoked from outside its own module - either called
 explicitly by another module or called back by the system (a window procedure invoked by
-Presentation Manager is the canonical example). [DOC — GG24-3774 glossary "exportable entry
+Presentation Manager is the canonical example). [DOC - GG24-3774 glossary "exportable entry
 point".] A DLL lists each such function in its `.DEF` `EXPORTS` statement, optionally pinning an
 ordinal (`name @N`) and optionally aliasing an external name to a different internal one
 (`externalname=internalname`); the full syntax is in `calling-convention.md`.
@@ -302,7 +302,7 @@ DLL re-export another DLL's entry points (or rename/relocate an API across modul
 without a stub. In OS/2, forwarders are used heavily by the thin system DLLs that re-export the
 kernel's `DOSCALLS` entries. The forwarder is recorded in the module's entry table as a reference
 to a target module + target export (by name or ordinal); the on-disk encoding of a forwarder entry
-belongs to `executable-formats.md`. [DOC — the LX entry-table forwarder form; OBS-RE — the system
+belongs to `executable-formats.md`. [DOC - the LX entry-table forwarder form; OBS-RE - the system
 DLLs that forward into `DOSCALLS`.]
 
 ---
@@ -312,7 +312,7 @@ DLLs that forward into `DOSCALLS`.]
 **The DLL you link against is usually not the DLL that implements the function.** The `Win*` API
 surface is spread across several modules, and the most-linked one is almost entirely forwarders.
 This matters whenever you are resolving an ordinal, diagnosing `SYS2070`, replacing a module, or
-interposing on an API — reasoning from the linked name will send you to the wrong binary.
+interposing on an API - reasoning from the linked name will send you to the wrong binary.
 
 Verify on the target system before relying on any row: the split is a property of the installed
 build, not of the API.
@@ -323,13 +323,13 @@ build, not of the API.
 | `PMGPI.DLL` | The `Gpi*` surface, likewise thin over `PMMERGE`. |
 | `PMMERGE.DLL` | The actual window manager + GPI engine + GRE dispatch. |
 | `PMCTLS.DLL` | **Real code.** Owns the standard dialogs: `WINFONTDLG` @2, `WINDEFFONTDLGPROC` @3, `WINFILEDLG` @4, `WINDEFFILEDLGPROC` @5, `WINFREEFILEDLGLIST` @6. 254 exports, **zero** forwarders. |
-| `PMSDMRI.DLL` | **Resource-only** — 0 exports, 0 imports, one read-only data object. Holds the standard dialog *templates* (the file dialog is `RT_DIALOG` id 256) and nothing else. |
+| `PMSDMRI.DLL` | **Resource-only** - 0 exports, 0 imports, one read-only data object. Holds the standard dialog *templates* (the file dialog is `RT_DIALOG` id 256) and nothing else. |
 | `PMSHAPI.DLL`, `PMDRAG.DLL`, `PMWP.DLL` | Shell API, direct manipulation, Workplace Shell class API. |
 
 Two practical consequences:
 
 - **Applications bind these by ordinal, at load time.** The OS/2 System Editor (`E.EXE`) imports
-  `PMCTLS #2, #3, #4, #5` — i.e. the font and file dialog entry points — with no names involved.
+  `PMCTLS #2, #3, #4, #5` - i.e. the font and file dialog entry points - with no names involved.
   When you replace a module you must reproduce its **ordinals**, not just its names.
 - **A resource-only module can only be changed cosmetically.** Swapping `PMSDMRI.DLL` alters how
   a standard dialog *looks*; it cannot alter what it *does*, because there is no code in it.
@@ -343,21 +343,21 @@ trusting the table; that is exactly what it is for, and it takes one command per
 ## Naming: `DosQueryProcAddr` versus `DosGetProcAddr` [DOC-IBM / DOC]
 
 Several dynamic-linking function names were changed in OS/2 2.0 "to conform to the consistent
-naming rules introduced in OS/2 Version 2.0." [DOC — GG24-3774 "Dynamic Linking".] The 32-bit
+naming rules introduced in OS/2 Version 2.0." [DOC - GG24-3774 "Dynamic Linking".] The 32-bit
 module-manager API therefore uses `DosQueryProcAddr` (`bsedos.h`), whereas the OS/2 1.x
-(16-bit) Control Program used `DosGetProcAddr` for the same operation — get the address of an
+(16-bit) Control Program used `DosGetProcAddr` for the same operation - get the address of an
 exported procedure by name (`Control Program reference DosGetProcAddr` stub). `DosLoadModule` and
 `DosFreeModule` kept their names across the transition. When reading older documentation, treat
 `DosGetProcAddr` as the historical spelling of `DosQueryProcAddr`; the 32-bit toolkit does not
-declare `DosGetProcAddr`. [DOC-IBM — `bsedos.h` (present: `DosQueryProcAddr`); absent:
+declare `DosGetProcAddr`. [DOC-IBM - `bsedos.h` (present: `DosQueryProcAddr`); absent:
 `DosGetProcAddr`.]
 
 ---
 
 ## See also
-- `calling-convention.md` — the `_System`/`APIENTRY` linkage and the full `.DEF`
+- `calling-convention.md` - the `_System`/`APIENTRY` linkage and the full `.DEF`
   `LIBRARY`/`EXPORTS`/`IMPORTS` syntax (ordinal vs by-name).
-- `executable-formats.md` — the on-disk LX/NE module container: object/segment tables and the
+- `executable-formats.md` - the on-disk LX/NE module container: object/segment tables and the
   entry-table encoding of ordinary and forwarder exports.
-- `thunking.md` — how a resolved 16-bit entry point (see `DosQueryProcType`) is called from 32-bit
+- `thunking.md` - how a resolved 16-bit entry point (see `DosQueryProcType`) is called from 32-bit
   code and vice-versa.

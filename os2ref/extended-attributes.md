@@ -2,8 +2,8 @@
 
 An **extended attribute** (EA) is a named piece of out-of-band metadata that an OS/2 file
 system attaches to a file object (a file or a directory), stored and maintained by the file
-system separately from the file's own data. Level 1 file information — name, size, and the
-creation/access/write timestamps — is the fixed set every file object carries; EAs are the
+system separately from the file's own data. Level 1 file information - name, size, and the
+creation/access/write timestamps - is the fixed set every file object carries; EAs are the
 open-ended extension. A file object may carry any number of EAs; each EA is a **name / value**
 pair whose value can be text, a bitmap, an icon, or arbitrary binary data, and whose format is a
 contract between the applications that write and read it (the file system does not interpret the
@@ -27,9 +27,9 @@ An EA is metadata the file system keeps for a file object but keeps *outside* th
 stream. EAs live on the same volume as the file object and are connected to it by the file system;
 they are not part of the file's bytes and are not seen when the file is read. Every EA has:
 
-- a **name** — a NUL-terminated string, restricted to the legal file-name character set. An EA
+- a **name** - a NUL-terminated string, restricted to the legal file-name character set. An EA
   name of length 0 is illegal and causes EA functions to fail.
-- a **value** — an opaque byte string the file system never inspects. By convention (Section 3)
+- a **value** - an opaque byte string the file system never inspects. By convention (Section 3)
   the value begins with a type word.
 
 An EA **value length of 0 is special**: *setting* an EA with a zero-length value **deletes** that
@@ -52,7 +52,7 @@ The six Control-Program functions that manipulate EAs are `DosOpen`, `DosFindFir
 
 EAs inherit the sharing/access protection of the file object they belong to. Handle-based access
 follows the open mode: a file open for read permits *querying* EAs, a file open for write permits
-*setting* EAs. Path-based access adds the object to the sharing set for the duration of the call —
+*setting* EAs. Path-based access adds the object to the sharing set for the duration of the call -
 querying (`DosQueryPathInfo`) requires read access and deny-write sharing, setting
 (`DosSetPathInfo`) requires write access and deny-read-write sharing; the call fails if another
 process holds conflicting rights. EA operations are **not atomic**: if an error occurs partway
@@ -66,7 +66,7 @@ An EA is **non-critical by default**. An EA is marked **critical** by setting **
 byte** of its `FEA2` (the symbolic constant is `FEA_NEEDEA`, Section 2). A file "has critical EAs"
 if at least one of its EAs is critical (directories' EAs cannot be marked critical). A program that
 does not recognise EAs is barred from operations it could not complete correctly on a file with
-critical EAs — notably a non-truncating open — but may still delete such files. A program declares
+critical EAs - notably a non-truncating open - but may still delete such files. A program declares
 itself EA-aware (and long-name-aware) with the `NEWFILES` declaration in its module-definition
 file. Provenance: **[DOC-IBM]** `cpgref.inf` "Protecting Extended Attributes"; the flag value is
 `bsedos.h`.
@@ -82,14 +82,14 @@ an `EAOP2` block. The `FEA2`/`GEA2`/`EAOP2` group is declared under `#pragma pac
 
 | Symbol | Role |
 |---|---|
-| `GEA2` | A *Get EA* — one EA **name** to fetch. |
-| `GEA2LIST` | A length-prefixed list of `GEA2` — the set of names to fetch. Query input. |
-| `FEA2` | A *Full EA* — one EA's flags, **name, and value**. |
-| `FEA2LIST` | A length-prefixed list of `FEA2` — the EAs returned by a query, or the EAs to set. |
+| `GEA2` | A *Get EA* - one EA **name** to fetch. |
+| `GEA2LIST` | A length-prefixed list of `GEA2` - the set of names to fetch. Query input. |
+| `FEA2` | A *Full EA* - one EA's flags, **name, and value**. |
+| `FEA2LIST` | A length-prefixed list of `FEA2` - the EAs returned by a query, or the EAs to set. |
 | `EAOP2` | The operation block binding a `GEA2LIST`, an `FEA2LIST`, and an error offset. The parameter every EA API takes. |
 | `DENA1` | The name/size record returned by `DosEnumAttribute` (level 1). |
 
-### `GEA2` / `GEA2LIST` — the names to fetch [DOC-IBM `bsedos.h:1174-1187`]
+### `GEA2` / `GEA2LIST` - the names to fetch [DOC-IBM `bsedos.h:1174-1187`]
 
 ```c
 typedef struct _GEA2 {          /* gea2 */
@@ -112,7 +112,7 @@ the start of the current entry to the start of the next); the last entry's `oNex
 `bsedos.h:1174-1187`; semantics **[DOC-IBM]** `cpgref.inf` "Get Extended Attribute (GEA2) Data
 Structure".
 
-### `FEA2` / `FEA2LIST` — the full EAs [DOC-IBM `bsedos.h:1156-1172`]
+### `FEA2` / `FEA2LIST` - the full EAs [DOC-IBM `bsedos.h:1156-1172`]
 
 ```c
 typedef struct _FEA2 {          /* fea2 */
@@ -141,9 +141,9 @@ EA. Provenance: layout **[DOC-IBM]** `bsedos.h:1156-1172`; semantics **[DOC-IBM]
 
 | Constant | Value | Meaning |
 |---|---|---|
-| `FEA_NEEDEA` | `0x80` | Bit 7 of the flags byte — the EA is **critical** (its loss would break the application/system). Clear = non-critical (the default). |
+| `FEA_NEEDEA` | `0x80` | Bit 7 of the flags byte - the EA is **critical** (its loss would break the application/system). Clear = non-critical (the default). |
 
-### `EAOP2` — the operation block [DOC-IBM `bsedos.h:1189-1195`]
+### `EAOP2` - the operation block [DOC-IBM `bsedos.h:1189-1195`]
 
 ```c
 typedef struct _EAOP2 {         /* eaop2 */
@@ -154,7 +154,7 @@ typedef struct _EAOP2 {         /* eaop2 */
 ```
 
 Every EA-bearing API takes a pointer to an `EAOP2`. Which of the two list pointers is used, and in
-which direction, depends on the operation (Sections 4–6): a *get-by-list* fills `fpGEA2List` with
+which direction, depends on the operation (Sections 4-6): a *get-by-list* fills `fpGEA2List` with
 the names wanted and receives the results through `fpFEA2List`; a *set* fills `fpFEA2List` with the
 EAs to write and ignores `fpGEA2List`. On an error during a set, `oError` is the offset of the
 `FEA2` entry that failed; on a level-3 get, `oError` points to the `GEA2` entry that failed.
@@ -167,17 +167,17 @@ The original 16-bit-era structures are still declared: `GEA` `{ BYTE cbName; CHA
 `GEALIST` `{ ULONG cbList; GEA list[1]; }`, `FEA` `{ BYTE fEA; BYTE cbName; USHORT cbValue; }`,
 `FEALIST` `{ ULONG cbList; FEA list[1]; }`, and `EAOP` `{ PGEALIST fpGEAList; PFEALIST fpFEAList;
 ULONG oError; }`. The `*2` forms add the `oNextEntryOffset` chaining field; `FEA2` also adds an
-in-line `szName` (legacy `FEA` has no name field — the name is implied by position), whereas legacy
+in-line `szName` (legacy `FEA` has no name field - the name is implied by position), whereas legacy
 `GEA` already carries `szName[1]`. Current code uses the `FEA2`/`GEA2`/`EAOP2` family. Provenance: **[DOC-IBM]**
 `bsedos.h:1112-1150`.
 
 ---
 
-## 3. EA value data types — the `EAT_*` convention [DOC-IBM]
+## 3. EA value data types - the `EAT_*` convention [DOC-IBM]
 
 So that a reader can interpret an EA value it did not write, the **first WORD of an EA value
 specifies its data type**. For the length-preceded types, that WORD is followed by a length word
-and then the data. Values `0x8000` and up are reserved; `0x0000`–`0x7FFF` are user-definable
+and then the data. Values `0x8000` and up are reserved; `0x0000`-`0x7FFF` are user-definable
 (user-defined types should also be length-preceded). Symbolic constants are in `bsedos.h`.
 
 | Constant | Value | Meaning |
@@ -188,14 +188,14 @@ and then the data. Values `0x8000` and up are reserved; `0x0000`–`0x7FFF` are 
 | `EAT_METAFILE` | `0xFFFA` | Metafile data; length-preceded. |
 | `EAT_ICON` | `0xFFF9` | Icon data; length-preceded. |
 | `EAT_EA` | `0xFFEE` | ASCIIZ **name of another EA** on the same file whose contents are to be included in place; length-preceded. |
-| `EAT_MVMT` | `0xFFDF` | **Multi-valued, multi-typed** — two or more values, each with its own type word. |
-| `EAT_MVST` | `0xFFDE` | **Multi-valued, single-typed** — two or more values, all one type. |
+| `EAT_MVMT` | `0xFFDF` | **Multi-valued, multi-typed** - two or more values, each with its own type word. |
+| `EAT_MVST` | `0xFFDE` | **Multi-valued, single-typed** - two or more values, all one type. |
 | `EAT_ASN1` | `0xFFDD` | ASN.1 field data (the ISO standard for describing multi-valued data streams). |
 
 Provenance: values **[DOC-IBM]** `bsedos.h:1207-1216`; meaning **[DOC-IBM]** `cpgref.inf`
 "Extended Attribute Data Type Conventions". (`0xFFFC` is defined as unused, `bsedos.h:1204`.)
 
-A single-valued length-preceded example — the string `"Hello"`:
+A single-valued length-preceded example - the string `"Hello"`:
 
 ```
 EAT_ASCII  0005  H e l l o
@@ -204,14 +204,14 @@ EAT_ASCII  0005  H e l l o
 
 ### Multi-valued layouts [DOC-IBM]
 
-**`EAT_MVMT`** — each value carries its own type:
+**`EAT_MVMT`** - each value carries its own type:
 
 ```
 EAT_MVMT  Codepage  NumEntries  [ DataType  <value> ] ...
  WORD      WORD       WORD          WORD
 ```
 
-**`EAT_MVST`** — one type word governs all values:
+**`EAT_MVST`** - one type word governs all values:
 
 ```
 EAT_MVST  Codepage  NumEntries  DataType  [ <value> ] ...
@@ -236,17 +236,17 @@ info level; the EA-relevant levels are:
 
 | Constant | Value | Structure in the buffer | Use |
 |---|---|---|---|
-| `FIL_STANDARD` | `1` | `FILESTATUS3` (query) / `FILESTATUS3` (set) | Level 1 file information — no EAs. |
+| `FIL_STANDARD` | `1` | `FILESTATUS3` (query) / `FILESTATUS3` (set) | Level 1 file information - no EAs. |
 | `FIL_QUERYEASIZE` | `2` | `FILESTATUS4` on query; `EAOP2` on set | Query: report the **total EA size**. Set: write a list of EAs. |
 | `FIL_QUERYEASFROMLIST` | `3` | `EAOP2` | Query only: return the **values** of a named list of EAs. |
-| `FIL_QUERYFULLNAME` | `5` | ASCIIZ path (path APIs only) | Fully-qualified name. (Level 4 is simply *absent* from the Toolkit headers — not defined; "reserved" would be an inference.) |
+| `FIL_QUERYFULLNAME` | `5` | ASCIIZ path (path APIs only) | Fully-qualified name. (Level 4 is simply *absent* from the Toolkit headers - not defined; "reserved" would be an inference.) |
 
 Large-file (`>2 GB`) analogues are `FIL_STANDARDL` (11), `FIL_QUERYEASIZEL` (12), and
 `FIL_QUERYEASFROMLISTL` (13), using `FILESTATUS3L`/`FILESTATUS4L`. Provenance: **[DOC-IBM]**
 `bsedos.h:742-751`; per-level semantics **[DOC-IBM]** `cpgref.inf` "DosQueryPathInfo",
 "DosSetPathInfo", "DosQueryFileInfo", "DosSetFileInfo".
 
-### `FILESTATUS4` — level-2 query result carries the EA size [DOC-IBM `bsedos.h:1416-1429`]
+### `FILESTATUS4` - level-2 query result carries the EA size [DOC-IBM `bsedos.h:1416-1429`]
 
 ```c
 typedef struct _FILESTATUS4 {   /* fsts4 */
@@ -270,9 +270,9 @@ Provenance: layout **[DOC-IBM]** `bsedos.h:1416-1429`; semantics **[DOC-IBM]** `
 
 | Symbol | Prototype (from `bsedos.h`) | EA behaviour |
 |---|---|---|
-| `DosQueryPathInfo` | `APIRET DosQueryPathInfo(PSZ pszPathName, ULONG ulInfoLevel, PVOID pInfoBuf, ULONG cbInfoBuf)` | By **name**. Level 2 → `FILESTATUS4.cbList` = total EA size. Level 3 → caller supplies `EAOP2.fpGEA2List` (names), receives EAs through `EAOP2.fpFEA2List`. |
+| `DosQueryPathInfo` | `APIRET DosQueryPathInfo(PSZ pszPathName, ULONG ulInfoLevel, PVOID pInfoBuf, ULONG cbInfoBuf)` | By **name**. Level 2 -> `FILESTATUS4.cbList` = total EA size. Level 3 -> caller supplies `EAOP2.fpGEA2List` (names), receives EAs through `EAOP2.fpFEA2List`. |
 | `DosQueryFileInfo` | `APIRET DosQueryFileInfo(HFILE hf, ULONG ulInfoLevel, PVOID pInfo, ULONG cbInfoBuf)` | By open **handle**; same info-level semantics. |
-| `DosProtectQueryFileInfo` | `… , FHLOCK fhFileHandleLockID)` | Handle form with a file-handle lock token. |
+| `DosProtectQueryFileInfo` | `... , FHLOCK fhFileHandleLockID)` | Handle form with a file-handle lock token. |
 
 For a level-3 query: on **input** `pInfoBuf` is an `EAOP2` whose `fpGEA2List` points to the
 (doubleword-aligned, `oNextEntryOffset`-chained, last-entry-zero) list of names to fetch and whose
@@ -289,7 +289,7 @@ prototypes **[DOC-IBM]** `bsedos.h:1739-1748,1761-1771`; semantics **[DOC-IBM]**
 |---|---|---|
 | `DosSetPathInfo` | `APIRET DosSetPathInfo(PSZ pszPathName, ULONG ulInfoLevel, PVOID pInfoBuf, ULONG cbInfoBuf, ULONG flOptions)` | By **name**, level 2. `pInfoBuf` is an `EAOP2`; `fpFEA2List` points to the EAs to set; `fpGEA2List` and `oError` are ignored on input. |
 | `DosSetFileInfo` | `APIRET DosSetFileInfo(HFILE hf, ULONG ulInfoLevel, PVOID pInfoBuf, ULONG cbInfoBuf)` | By open **handle**; same. |
-| `DosProtectSetFileInfo` | `… , FHLOCK fhFileHandleLockID)` | Handle form with a lock token. |
+| `DosProtectSetFileInfo` | `... , FHLOCK fhFileHandleLockID)` | Handle form with a lock token. |
 
 A level-2 set writes a series of EA name/value pairs from the `FEA2LIST`. The `FEA2` entries must
 be doubleword-aligned and `oNextEntryOffset`-chained with a 0 in the last. An entry with `cbValue`
@@ -302,7 +302,7 @@ disk before the call returns; all other bits are reserved and must be zero. Prov
 ### Setting EAs at create time [DOC-IBM]
 
 `DosOpen`'s final parameter is a `PEAOP2` (`bsedos.h:1264-1272`); the EAs in its `fpFEA2List` are
-applied only when the open **creates, replaces, or truncates** the file — a plain open of an
+applied only when the open **creates, replaces, or truncates** the file - a plain open of an
 existing file sets no EAs (`fpGEA2List` and `oError` are ignored). `DosCreateDir(PSZ pszDirName,
 PEAOP2 peaop2)` (`bsedos.h:1692-1697`) attaches EAs to a directory at creation; passing a null EA
 buffer creates the directory with no EAs. The `DosProtectOpen`/`DosProtectOpenL`/`DosOpenL`
@@ -311,7 +311,7 @@ semantics **[DOC-IBM]** `cpgref.inf` "DosCreateDir", "DosOpen".
 
 ---
 
-## 5. Enumerating EA names — `DosEnumAttribute` [DOC-IBM]
+## 5. Enumerating EA names - `DosEnumAttribute` [DOC-IBM]
 
 `DosEnumAttribute` identifies the **names and value-lengths** of a file object's EAs without
 returning the values. It is the standard way to discover which EAs exist and to size the buffer for
@@ -332,19 +332,19 @@ APIRET APIENTRY DosEnumAttribute(ULONG  ulRefType,   /* 0 = handle, 1 = path nam
 | `ENUMEA_REFTYPE_FHANDLE` | `0` | `pvFile` addresses an open file handle. |
 | `ENUMEA_REFTYPE_PATH` | `1` | `pvFile` is an ASCIIZ file or subdirectory name. |
 | `ENUMEA_REFTYPE_MAX` | `1` | Highest valid ref type. |
-| `ENUMEA_LEVEL_NO_VALUE` | `1` | The only valid info level — return names/lengths, no values. |
+| `ENUMEA_LEVEL_NO_VALUE` | `1` | The only valid info level - return names/lengths, no values. |
 
 `ulEntry` is a 1-based ordinal into the object's EA list (0 is reserved); enumeration continues by
 re-calling with `ulEntry` = previous start + returned count. On input `*pulCount` is the number of
-EAs wanted (−1 = as many as fit in `pvBuf`); on output it is the number actually returned. Results
+EAs wanted (-1 = as many as fit in `pvBuf`); on output it is the number actually returned. Results
 are a series of doubleword-aligned **`DENA1`** records. Provenance: prototype **[DOC-IBM]**
 `bsedos.h:1792-1798`; constants **[DOC-IBM]** `bsedos.h:1829-1833`; semantics **[DOC-IBM]**
 `cpgref.inf` "DosEnumAttribute".
 
-### `DENA1` — the enumerated name record [DOC-IBM `bsedos.h:1813-1819`]
+### `DENA1` - the enumerated name record [DOC-IBM `bsedos.h:1813-1819`]
 
 ```c
-typedef struct _DENA1 {   /* dena1 — packed */
+typedef struct _DENA1 {   /* dena1 - packed */
     UCHAR   reserved;     /* 0x00: 0                              */
     UCHAR   cbName;       /* 0x01: name length, excluding NUL     */
     USHORT  cbValue;      /* 0x02: value length                   */
@@ -354,10 +354,10 @@ typedef struct _DENA1 {   /* dena1 — packed */
 
 > **Note on the source:** the Control Program reference's field-level *description* of the
 > `DosEnumAttribute` output presents an `oNextEntryOffset`-chained record (like a `GEA2`); the
-> version-correct Toolkit header defines the packed `DENA1` above (no `oNextEntryOffset` — entries
+> version-correct Toolkit header defines the packed `DENA1` above (no `oNextEntryOffset` - entries
 > are walked by `cbName`/`cbValue`). The header layout is authoritative here.
 
-(The book calls the returned record `DENA2`; `bsedos.h:1822-1823` defines `typedef FEA2 DENA2;` —
+(The book calls the returned record `DENA2`; `bsedos.h:1822-1823` defines `typedef FEA2 DENA2;` -
 so the historical `DENA1` above is the name/size record, while `DENA2` is an alias of `FEA2`.) From
 a `DENA1` a caller computes the `FEA2` buffer size a level-3 get needs, per the formula: 4
 (`oNextEntryOffset`) + 1 (`fEA`) + 1 (`cbName`) + 2 (`cbValue`) + `cbName` + 1 (name NUL) +
@@ -372,7 +372,7 @@ name needs no such protection, since no sharing is possible). `DosProtectEnumAtt
 
 ---
 
-## 6. Getting EAs through a directory search — `DosFindFirst` [DOC-IBM]
+## 6. Getting EAs through a directory search - `DosFindFirst` [DOC-IBM]
 
 `DosFindFirst`/`DosFindNext` can return EA information alongside each matched directory entry, via
 the `ulInfoLevel` argument (`bsedos.h:1536-1551`). The three EA-relevant levels reuse the
@@ -381,8 +381,8 @@ differs by level. Every level always includes level-1 information for each entry
 
 | Level | Value | Result buffer format |
 |---|---|---|
-| `FIL_STANDARD` | `1` | `FILEFINDBUF3` — entries chained by `oNextEntryOffset`; **no EAs**. |
-| `FIL_QUERYEASIZE` | `2` | `FILEFINDBUF4` — level-1 fields plus **`cbList`** = the entry's total on-disk EA size. |
+| `FIL_STANDARD` | `1` | `FILEFINDBUF3` - entries chained by `oNextEntryOffset`; **no EAs**. |
+| `FIL_QUERYEASIZE` | `2` | `FILEFINDBUF4` - level-1 fields plus **`cbList`** = the entry's total on-disk EA size. |
 | `FIL_QUERYEASFROMLIST` | `3` | An `EAOP2` (input names) followed, per matched object, by the level-1 `FILEFINDBUF3` fields, the `cbList`, the returned `FEA2LIST`, and the object's name. |
 
 `FILEFINDBUF4` (`bsedos.h:1057-1073`) is the level-2 form: it carries `oNextEntryOffset`, the six
@@ -405,9 +405,9 @@ Provenance: **[DOC-IBM]** `cpgref.inf` "Searching for Extended Attributes".
 
 ## 7. The Standard Extended Attributes [DOC-IBM]
 
-Conventionally-named EAs (Standard Extended Attributes, **SEAs**) — the reference enumerates ten of
-them while its own prose says "nine" (a documented inconsistency in the source) — carry information many
-applications share. **An SEA name begins with a dot (`.`)** — the leading dot is reserved, so
+Conventionally-named EAs (Standard Extended Attributes, **SEAs**) - the reference enumerates ten of
+them while its own prose says "nine" (a documented inconsistency in the source) - carry information many
+applications share. **An SEA name begins with a dot (`.`)** - the leading dot is reserved, so
 applications must not define their own EAs starting with a dot, and the characters `$`, `@`, `&`,
 and `+` are reserved for system use. Where an SEA value is ASCII text, **case is significant**. To
 keep application-specific EA names unique, IBM's convention is to prefix them with a company and
@@ -416,7 +416,7 @@ Extended Attributes", "Extended Attribute Naming Conventions".
 
 | SEA name | Purpose |
 |---|---|
-| `.TYPE` | The file object's file-type — a length-preceded ASCII string, similar to a file-name extension; used to pick a default program/icon and to bind the file to an `.ASSOCTABLE` entry. Predefined types include Plain Text, OS/2 Command File, DOS Command File, Executable, Metafile, Bit map, Icon, Binary Data, Dynamic Link Library, and various language source types. Writing `.TYPE` first is recommended for FIFO-EA file systems. |
+| `.TYPE` | The file object's file-type - a length-preceded ASCII string, similar to a file-name extension; used to pick a default program/icon and to bind the file to an `.ASSOCTABLE` entry. Predefined types include Plain Text, OS/2 Command File, DOS Command File, Executable, Metafile, Bit map, Icon, Binary Data, Dynamic Link Library, and various language source types. Writing `.TYPE` first is recommended for FIFO-EA file systems. |
 | `.ASSOCTABLE` | Associates data files with the applications that create/use them: `EAT_MVMT` entries binding a `.TYPE` name, a file extension, an ownership flag, and `EAT_ICON` icon data. Built by the Resource Compiler from an `ASSOCTABLE` resource. |
 | `.LONGNAME` | Holds a file object's original long name when it is stored on a file system that cannot represent it (so it can be restored on copy back to a long-name file system). |
 | `.COMMENTS` | Miscellaneous notes/reminders about the file; may be multi-valued and of any type. (The book's body text spells the stored name `.COMMENT`.) |
@@ -424,7 +424,7 @@ Extended Attributes", "Extended Attribute Naming Conventions".
 | `.SUBJECT` | A single-valued ASCII summary of the file's content/purpose; must be **fewer than 40 characters**. |
 | `.HISTORY` | The file's modification history as an `EAT_MVMT`/ASCII multi-value list; each entry is `PERSON  ACTION(created/changed/printed)  DATE`. |
 | `.ICON` | The physical icon (`EAT_ICON`) used to represent the file object; the data is a `BITMAPARRAYFILEHEADER` (as loaded by `GpiLoadBitmap`/`WinLoadPointer`). Overrides the `.TYPE`-derived default icon. |
-| `.CODEPAGE` | The code page of the file (and, by default, of its EA data); absent → system default or application-defined. |
+| `.CODEPAGE` | The code page of the file (and, by default, of its EA data); absent -> system default or application-defined. |
 | `.VERSION` | The file-format version number (ASCII or binary); only the creating application should modify it. |
 
 Provenance: **[DOC-IBM]** `cpgref.inf` per-SEA sections ("The .TYPE Standard Extended Attribute",
@@ -447,6 +447,6 @@ Provenance: values **[DOC-IBM]** `pmwin.h:3541-3543`; meaning **[DOC-IBM]** `cpg
 ---
 
 ## See also
-- `file-io.md` — the Control-Program file API (`DosOpen`/`DosFindFirst`/`DosQueryPathInfo` …)
+- `file-io.md` - the Control-Program file API (`DosOpen`/`DosFindFirst`/`DosQueryPathInfo` ...)
   whose info levels carry EAs.
-- `dasd-volume.md` — the file systems (HPFS, FAT) that store and preserve EAs.
+- `dasd-volume.md` - the file systems (HPFS, FAT) that store and preserve EAs.

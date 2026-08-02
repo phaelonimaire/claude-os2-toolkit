@@ -1,8 +1,8 @@
 # OS/2 DASD and Volume Contract
 
-The disk and volume surface an OS/2 application observes — physical-disk and logical-disk
+The disk and volume surface an OS/2 application observes - physical-disk and logical-disk
 `DosDevIOCtl` categories, the volume/drive query APIs, and the Volume/Drive Parameter Blocks.
-Brought up during boot-sequence Stages 4–5.
+Brought up during boot-sequence Stages 4-5.
 
 Provenance: **[DOC-IBM]** IBM Toolkit `bsedev.h` (IOCtl categories and function codes),
 `bsedos.h` (the `Dos*` prototypes and ordinals); IBM DDK for the VPB/DPB structures.
@@ -20,13 +20,13 @@ discrepancy corrected: `DosQueryFSInfo` does **not** return the file-system type
 | 0x08 | `IOCTL_DISK` | logical disk (a mounted drive) |
 | 0x09 | `IOCTL_PHYSICALDISK` | physical disk (the whole spindle, partitioning) |
 
-### Category 0x08 `IOCTL_DISK` — `DSK_*` functions [DOC-IBM `bsedev.h:175-191`]
+### Category 0x08 `IOCTL_DISK` - `DSK_*` functions [DOC-IBM `bsedev.h:175-191`]
 
 | Func | Name | Purpose |
 |---|---|---|
 | 0x00 / 0x01 | `DSK_LOCKDRIVE` / `DSK_UNLOCKDRIVE` | lock / unlock the logical drive |
 | 0x02 | `DSK_REDETERMINEMEDIA` | re-read the media |
-| 0x03 / 0x21 | `DSK_SETLOGICALMAP` / `DSK_GETLOGICALMAP` | logical-drive → partition map |
+| 0x03 / 0x21 | `DSK_SETLOGICALMAP` / `DSK_GETLOGICALMAP` | logical-drive -> partition map |
 | 0x04 / 0x45 | `DSK_BEGINFORMAT` / `DSK_FORMATVERIFY` | format, format + verify |
 | 0x20 | `DSK_BLOCKREMOVABLE` | is the media removable |
 | 0x40 | `DSK_UNLOCKEJECTMEDIA` | eject |
@@ -36,24 +36,24 @@ discrepancy corrected: `DosQueryFSInfo` does **not** return the file-system type
 | 0x60 | `DSK_QUERYMEDIASENSE` | media type |
 | 0x66 | `DSK_GETLOCKSTATUS` | lock state |
 
-### Category 0x09 `IOCTL_PHYSICALDISK` — `PDSK_*` functions [DOC-IBM `bsedev.h:195-200`]
+### Category 0x09 `IOCTL_PHYSICALDISK` - `PDSK_*` functions [DOC-IBM `bsedev.h:195-200`]
 
 `PDSK_LOCKPHYSDRIVE` (0x00) / `PDSK_UNLOCKPHYSDRIVE` (0x01), `PDSK_GETPHYSDEVICEPARAMS` (0x63),
 `PDSK_READPHYSTRACK` (0x64) / `PDSK_WRITEPHYSTRACK` (0x44) / `PDSK_VERIFYPHYSTRACK` (0x65).
 
-## Volume and drive query APIs [DOC-IBM `bsedos.h` — prototypes; ordinals from IBM `os2386.lib`]
+## Volume and drive query APIs [DOC-IBM `bsedos.h` - prototypes; ordinals from IBM `os2386.lib`]
 
 Ordinals confirmed against IBM's `os2386.lib` import library (the DOSCALLS import records),
 corroborated by the EDM2 DOSCALLS ordinal table.
 
-- `DosPhysicalDisk(function, pBuf, cbBuf, pParams, cbParams)` (ordinal 287) — enumerate
+- `DosPhysicalDisk(function, pBuf, cbBuf, pParams, cbParams)` (ordinal 287) - enumerate
   partitionable disks (`INFO_COUNT_PARTITIONABLE_DISKS` = 1), obtain a disk IOCtl handle
   (`INFO_GETIOCTLHANDLE` = 2 / `INFO_FREEIOCTLHANDLE` = 3), read partition information.
   [DOC-IBM `bsedos.h:2857` prototype, `bsedos.h:2862-2864` function selectors]
-  - [DOC — EDM2 "DosPhysicalDisk (FAPI)"] the partitionable disk is named to function 2 by an
+  - [DOC - EDM2 "DosPhysicalDisk (FAPI)"] the partitionable disk is named to function 2 by an
     ASCIIZ string of the form `number:` (1-based disk number in ASCII, a colon, then the null
     terminator). The handle returned by function 2 is usable **only** with the Category 9
-    (`IOCTL_PHYSICALDISK`) `DosDevIOCtl` calls — it is **not** a file handle and must not be passed
+    (`IOCTL_PHYSICALDISK`) `DosDevIOCtl` calls - it is **not** a file handle and must not be passed
     to handle-based calls such as `DosRead` / `DosClose`. Function-1 count and function-2 handle are
     each returned as a 2-byte value; function 3 takes the 2-byte handle and no data buffer.
     Return codes:
@@ -66,27 +66,27 @@ corroborated by the EDM2 DOSCALLS ordinal table.
     | 6 | `ERROR_INVALID_HANDLE` | bad IOCtl handle |
     | 33 | `ERROR_LOCK_VIOLATION` | disk locked by another party |
     | 87 | `ERROR_INVALID_PARAMETER` | bad parameter / buffer length |
-- `DosQueryFSInfo(disknum, infolevel, pBuf, cbBuf)` (ordinal 278) — for `FSIL_VOLSER` (2) returns
+- `DosQueryFSInfo(disknum, infolevel, pBuf, cbBuf)` (ordinal 278) - for `FSIL_VOLSER` (2) returns
   the `FSINFO` record: creation date/time (which is the volume **serial number**) plus the
   `VOLUMELABEL`; for `FSIL_ALLOC` (1) returns allocation/geometry info.
   [DOC-IBM `bsedos.h:1720` prototype, `bsedos.h:865-866` info levels, `bsedos.h:921-934`
   `VOLUMELABEL`/`FSINFO`]
-  - [DOC — EDM2 "FSINFO"] confirms the `FSINFO` fields are exactly `fdateCreation` / `ftimeCreation`
-    (the drive's creation date/time) + `vol` (the `VOLUMELABEL`) — no FS-type field, corroborating
+  - [DOC - EDM2 "FSINFO"] confirms the `FSINFO` fields are exactly `fdateCreation` / `ftimeCreation`
+    (the drive's creation date/time) + `vol` (the `VOLUMELABEL`) - no FS-type field, corroborating
     the correction below. The volume label is limited to 11 bytes, and trailing blanks are stripped
     (not counted as part of, nor returned in, the label).
   - **CORRECTED (2026-07-26, Rule 1.7):** this line previously read "volume label, **serial
-    number**, file-system type." The **file-system type is wrong** — `FSINFO` (`bsedos.h:928-934`)
+    number**, file-system type." The **file-system type is wrong** - `FSINFO` (`bsedos.h:928-934`)
     carries only creation date/time + volume label; there is no FS-type field. The file-system
     (FSD) name is returned by `DosQueryFSAttach` (`szFSDName`, below), not by `DosQueryFSInfo`.
-- `DosQueryFSAttach(pszDeviceName, ulOrdinal, ulFSAInfoLevel, pfsqb, pcbBuf)` (ordinal 277) — which
+- `DosQueryFSAttach(pszDeviceName, ulOrdinal, ulFSAInfoLevel, pfsqb, pcbBuf)` (ordinal 277) - which
   FSD is attached to a drive: the `FSQBUFFER2` it fills carries `iType` (local/remote/etc.) and
-  `szFSDName` (the FSD name — `FAT` / `HPFS` / `JFS` / …). [DOC-IBM `bsedos.h:1575-1584` prototype,
+  `szFSDName` (the FSD name - `FAT` / `HPFS` / `JFS` / ...). [DOC-IBM `bsedos.h:1575-1584` prototype,
   `bsedos.h:840-850` `FSQBUFFER2` with `iType`/`szFSDName`]
-- `DosQueryCurrentDisk(pdisknum, plogical)` / `DosSetDefaultDisk(disknum)` — the current drive and
+- `DosQueryCurrentDisk(pdisknum, plogical)` / `DosSetDefaultDisk(disknum)` - the current drive and
   the logical-drive map (`plogical` = bitmap of valid logical drives).
   [DOC-IBM `bsedos.h:1705-1708`]
-- `DosQueryHType(hFile, pType, pAttr)` — whether a handle refers to a disk file
+- `DosQueryHType(hFile, pType, pAttr)` - whether a handle refers to a disk file
   (`HANDTYPE_FILE` = 0), a character device (`HANDTYPE_DEVICE` = 1), or a pipe (`HANDTYPE_PIPE` = 2).
   [DOC-IBM `bsedos.h:1531` prototype, `bsedos.h:937-939` `HANDTYPE_*`]
 
@@ -97,17 +97,17 @@ SAS (System Anchor Segment) carries `SAS_file_VPB` ("selector for Volume Paramet
 and `SAS_dd_DPB_segment` ("selector for Drive Parameter Block segment"). [DOC-IBM DDK
 `base/h/sas.h:60-61,116-117`]
 
-- **VPB (Volume Parameter Block)** — per mounted volume. Its file-system-**independent** half is the
+- **VPB (Volume Parameter Block)** - per mounted volume. Its file-system-**independent** half is the
   `vpfsi` record: `vpi_vid` (32-bit volume id = **serial number**), `vpi_hDEV` (handle to the owning
   device driver), the geometry it was mounted with (`vpi_bsize` sector size, `vpi_totsec` total
   sectors, `vpi_trksec` sectors/track, `vpi_nhead` heads), and `vpi_text[12]` (volume **label**).
   The file-system-**dependent** half is `vpfsd` (a 36-byte FSD work area). [DOC-IBM `fsd.h` `vpfsi`
   (volume id / device handle / geometry / `vpi_text` label), `vpfsd` (`vpi_work[36]`)]
   - **CORRECTED (2026-07-26, Rule 1.7):** this previously listed "file-system (FSD) name" among the
-    VPB contents. `vpfsi` carries the volume id, device-driver handle, geometry, and volume label —
+    VPB contents. `vpfsi` carries the volume id, device-driver handle, geometry, and volume label -
     **not** an FSD-name string; the FSD name is obtained via `DosQueryFSAttach` (`szFSDName`).
-- **DPB (Drive Parameter Block)** — per logical drive: the device parameters (BPB / geometry), the
-  owning device driver, and media state. [OBS-RE — name confirmed [DOC-IBM] via DDK `sas.h`
+- **DPB (Drive Parameter Block)** - per logical drive: the device parameters (BPB / geometry), the
+  owning device driver, and media state. [OBS-RE - name confirmed [DOC-IBM] via DDK `sas.h`
   (`SAS_dd_DPB_segment`); a field-level DPB layout could **not** be located in the IBM DDK or
   Toolkit 4.5 headers surveyed as of 2026-07-26, so the field list here is left unconfirmed.]
 
@@ -119,7 +119,7 @@ to applications through `DosQueryFSInfo` / `DosQueryFSAttach` above.
 Which letter (`C:`, `D:`, ...) a given partition receives is decided by one of two mechanisms,
 depending on whether the disk was ever managed by LVM (`LVM.EXE`, OS/2 Warp Server for e-business
 and later, all Convenience Package releases, and eComStation) or not. **LVM is not universal
-across OS/2 releases** — earlier versions never had it at all, so the classic mechanism below is
+across OS/2 releases** - earlier versions never had it at all, so the classic mechanism below is
 not a fallback bolted on for compatibility; for a large share of real OS/2 installs it is the
 *only* mechanism that ever ran.
 
@@ -154,7 +154,7 @@ DLA_Entry
     Partition_Size                                  /* sectors */
     Partition_Start                                 /* LBA */
     On_Boot_Manager_Menu                            /* BOOLEAN */
-    Installable                                      /* BOOLEAN — the OS install target */
+    Installable                                      /* BOOLEAN - the OS install target */
     Drive_Letter                                     /* the assigned letter, e.g. 'C' */
     Volume_Name[VOLUME_NAME_SIZE]
     Partition_Name[PARTITION_NAME_SIZE]
@@ -165,7 +165,7 @@ between machines (or a table is manually altered outside `LVM.EXE`, which itself
 letter conflicts), the "foreign" claimant for a given letter can be identified and rejected; if all
 claimants agree, letters are assigned first-come-first-served [DOC-IBM `lvm_data.h`].
 
-A **second, distinct signature** exists — the **LVM Signature Sector**, the *last sector of the LVM
+A **second, distinct signature** exists - the **LVM Signature Sector**, the *last sector of the LVM
 partition itself* (not the track containing the partition table), giving per-partition LVM metadata
 including its own `Drive_Letter` field, the partition's own serial number, size accounting (raw
 size vs. the size reported to the user, after subtracting LVM's own reserved sectors), the LVM
@@ -197,7 +197,7 @@ Record** and any **Extended Boot Records**, and assign letters by partition-tabl
 Master_Boot_Record / Extended_Boot_Record
     Reserved[446]                                    /* boot code */
     Partition_Table[4]                               /* Partition_Record entries, below */
-    Signature             = 0xAA55                   /* MBR_EBR_SIGNATURE — valid-table marker */
+    Signature             = 0xAA55                   /* MBR_EBR_SIGNATURE - valid-table marker */
 
 Partition_Record
     Boot_Indicator                                   /* 0x80 = active partition */
@@ -218,8 +218,8 @@ CHS limit, added 2001), `WINDOZE_EBR_INDICATOR` 0x0F, `LVM_PARTITION_INDICATOR` 
 `BOOT_MANAGER_HIDDEN_PARTITION_FLAG` 0x10 marks a Boot-Manager-hidden partition.
 
 Boot Manager's own menu (for partitions that predate LVM, migrated forward) uses a 2-entry
-**Alias Table** at a fixed offset (`ALIAS_TABLE_OFFSET` 0x18A) inside the EBR — only the first
-entry is actually used — and a well-known migration marker string (`"--> LVM "`/`"--> LVM*"`,
+**Alias Table** at a fixed offset (`ALIAS_TABLE_OFFSET` 0x18A) inside the EBR - only the first
+entry is actually used - and a well-known migration marker string (`"--> LVM "`/`"--> LVM*"`,
 exactly `ALIAS_NAME_SIZE`=8 characters) is written into a migrated entry's name field so that older
 tools (FDISK, or anything else that only understands the pre-LVM Boot Manager menu format) still
 display something for it [DOC-IBM `lvm_data.h`]. Boot Manager's own boot sector carries the
@@ -228,18 +228,18 @@ fixed signature string `"APJ&WN"` [DOC-IBM `lvm_data.h`].
 ### Which mechanism actually assigns the boot drive's letter
 
 Both mechanisms are **assignment-time** facts fixed on disk, not something recomputed by the
-session-manager or kernel at every boot — reading a disk's DLA table (if present) or its MBR/EBR
+session-manager or kernel at every boot - reading a disk's DLA table (if present) or its MBR/EBR
 chain (if not) is sufficient to reproduce the correct letter for every drive, including the boot
-drive itself. **`OS2DASD.DMD` itself — not only `OS2LVM.DMD` — assigns drive letters** for the
+drive itself. **`OS2DASD.DMD` itself - not only `OS2LVM.DMD` - assigns drive letters** for the
 classic/non-LVM case: *"OS/2 DASD device manager driver assigns the drive letters to the installed
-drives and partitions"* [DOC — EDM2 `OS2DASD.DMD.html`]; `OS2LVM.DMD` performs the DLA-table-based
-assignment above when the disk has been LVM-managed [DOC — EDM2 `Logical_Volume_Manager.html`]. The
-value this feeds — `QSV_BOOT_DRIVE` / `SIS_BootDrv` (`infoseg.md`) — is a **number**, 1-26; OS/2
+drives and partitions"* [DOC - EDM2 `OS2DASD.DMD.html`]; `OS2LVM.DMD` performs the DLA-table-based
+assignment above when the disk has been LVM-managed [DOC - EDM2 `Logical_Volume_Manager.html`]. The
+value this feeds - `QSV_BOOT_DRIVE` / `SIS_BootDrv` (`infoseg.md`) - is a **number**, 1-26; OS/2
 has no assumption that the boot drive is `C:`.
 
 ## See also
-- `boot-sequence.md` — where volumes are mounted during boot (the DASD/IFS stages).
-- `drivers.md` — the PDD / IFS (FSD) driver model that produces the VPB/DPB this doc queries.
+- `boot-sequence.md` - where volumes are mounted during boot (the DASD/IFS stages).
+- `drivers.md` - the PDD / IFS (FSD) driver model that produces the VPB/DPB this doc queries.
 
 ---
 
@@ -249,4 +249,4 @@ that of the Master Boot Record (MBR) and Extended Boot Records (EBR)") for the
 `DLA_Table_Sector`/`DLA_Entry`/`LVM_Signature_Sector`/`Master_Boot_Record`/`Partition_Record`
 structures and all signature/indicator constants, plus EDM2-reprinted IBM documentation
 (`OS2DASD.DMD.html`, `Logical_Volume_Manager.html`) for which driver performs which mechanism and
-LVM's version-availability boundary. All [DOC-IBM]/[DOC — EDM2].*
+LVM's version-availability boundary. All [DOC-IBM]/[DOC - EDM2].*

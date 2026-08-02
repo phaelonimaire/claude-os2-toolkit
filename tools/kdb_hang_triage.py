@@ -68,7 +68,7 @@ BLOCK_TYPES = {'sem32', 'syssem', 'dossem', 'ramsem', 'muxwait', 'childwait',
 # ChildWait use fffd:xxxx / fffe:xxxx / ffca:xxxx style encodings
 PSEUDO_BID_HI = {0xfffd, 0xfffe, 0xffca, 0xffcb}
 
-# ln output line: address followed by module!symbol (± offset text)
+# ln output line: address followed by module!symbol (+/- offset text)
 LN_RE = re.compile(r'^\s*%?([0-9a-f]{4,8}(?::[0-9a-f]{4,8})?)\s+(\S+!?\S*.*?)\s*$',
                    re.IGNORECASE)
 

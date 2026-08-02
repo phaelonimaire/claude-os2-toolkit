@@ -1,6 +1,6 @@
-# OS/2 Presentation Manager — Standard Control Classes
+# OS/2 Presentation Manager - Standard Control Classes
 
-Presentation Manager ships a set of **preregistered window classes** — the buttons, entry
+Presentation Manager ships a set of **preregistered window classes** - the buttons, entry
 fields, list boxes, scroll bars, containers, notebooks, and other controls every PM
 application builds its user interface from. Each is a public window class already registered
 by the system; an application uses one simply by naming its `WC_*` class name in
@@ -11,13 +11,13 @@ to `pm-window-messaging.md`, which covers the underlying window / message *model
 block, the message queue, the window procedure, the core `WM_*` set, painting, and dialogs);
 that model is assumed here and not repeated.
 
-Provenance: **[DOC-IBM]** the IBM OS/2 Presentation Manager Programming Reference — the
+Provenance: **[DOC-IBM]** the IBM OS/2 Presentation Manager Programming Reference - the
 per-control chapters "Control Window Message Processing" (button, entry field, container,
 frame, static, list box, menu, scroll bar, slider, spin button, value set, title bar,
 combination box, notebook) and the "Data Types" chapter, cited as `pm3.txt` / `pm4.txt`; the
-Notebook Controls guide chapter (`pm5.txt`) — for every semantic claim (purpose, style meaning,
+Notebook Controls guide chapter (`pm5.txt`) - for every semantic claim (purpose, style meaning,
 notification meaning). **[DOC-IBM]** the version-correct OS/2 Toolkit 4.5 headers `pmwin.h`,
-`pmmle.h`, and `pmstddlg.h` — for every symbol name, constant value, message id, and structure
+`pmmle.h`, and `pmstddlg.h` - for every symbol name, constant value, message id, and structure
 layout, cited as `file:line`. Where the book supplies meaning and the header supplies a value,
 both are cited. A claim not confirmable in a header or the book is omitted.
 
@@ -26,8 +26,8 @@ both are cited. A claim not confirmable in a header or the book is omitted.
 ## 1. How controls work [DOC-IBM]
 
 A control is a child window of a system-provided class. The system implements each class's
-window procedure; the application interacts with a control entirely through **messages** — it
-*sends* the control class-specific messages (`BM_*`, `EM_*`, `LM_*`, `CM_*`, …) to query or
+window procedure; the application interacts with a control entirely through **messages** - it
+*sends* the control class-specific messages (`BM_*`, `EM_*`, `LM_*`, `CM_*`, ...) to query or
 change its state, and the control *notifies* its owner when a significant event occurs.
 
 **The predefined control classes** [DOC-IBM `pmwin.h:241-262`; purposes from PM Reference,
@@ -35,7 +35,7 @@ pm3.txt "Control Window Message Processing"]:
 
 | Class name | Value | Purpose |
 |---|---|---|
-| `WC_FRAME` | `0xffff0001` | A composite window — the frame that carries a title bar, menu, borders, scroll bars, and a client window. |
+| `WC_FRAME` | `0xffff0001` | A composite window - the frame that carries a title bar, menu, borders, scroll bars, and a client window. |
 | `WC_COMBOBOX` | `0xffff0002` | An entry field and a list box merged into a single control. |
 | `WC_BUTTON` | `0xffff0003` | Buttons and boxes the operator selects by clicking or with the keyboard (push buttons, check boxes, radio buttons). |
 | `WC_MENU` | `0xffff0004` | A list of items shown horizontally as an action bar or vertically as a pull-down; the command interface. |
@@ -58,12 +58,12 @@ A control notifies its owner in one of three ways [DOC-IBM `pmwin.h:944,946,965`
 | Message | Value | Use |
 |---|---|---|
 | `WM_CONTROL` | `0x0030` | The general control notification. `mp1` packs the control **id** (`SHORT1FROMMP`) and a **notification code** (`SHORT2FROMMP`); `mp2` carries control-specific information (often the control's window handle). |
-| `WM_COMMAND` | `0x0020` | Posted by a control that issues a command (a push button, a menu item). The command source is in the `CMDMSG` `source` field — `CMDSRC_PUSHBUTTON`, `CMDSRC_MENU`, `CMDSRC_ACCELERATOR`, `CMDSRC_OTHER`. |
+| `WM_COMMAND` | `0x0020` | Posted by a control that issues a command (a push button, a menu item). The command source is in the `CMDMSG` `source` field - `CMDSRC_PUSHBUTTON`, `CMDSRC_MENU`, `CMDSRC_ACCELERATOR`, `CMDSRC_OTHER`. |
 | `WM_HELP` | `0x0022` | Posted when the operator requests help on the control (e.g. a `BS_HELP` button); source encoded as for `WM_COMMAND`. |
 
 The `WM_CONTROL` packing (id in the low half of `mp1`, notification code in the high half) is
 the shape every control's notification set below is delivered in [DOC-IBM pm3.txt "WM_CONTROL
-(in Button Controls)"; packing macros in `pm-window-messaging.md` §2]. Two owner-draw
+(in Button Controls)"; packing macros in `pm-window-messaging.md` section 2]. Two owner-draw
 notifications, `WM_DRAWITEM` (`0x0036`) and `WM_MEASUREITEM` (`0x0037`), are sent to the owner
 of an owner-drawn list box, menu, container, slider, or value set [DOC-IBM `pmwin.h:971-972`].
 
@@ -75,16 +75,16 @@ slider, `VM`/`VN` value set, `CM`/`CN` container, `BKM`/`BKN` notebook, `TBM` ti
 
 ---
 
-## 2. `WC_FRAME` — frame window [DOC-IBM]
+## 2. `WC_FRAME` - frame window [DOC-IBM]
 
 A frame is a composite window that groups a client window with its decorative and functional
 frame controls (title bar, system menu, menu bar, borders, min/max buttons, scroll bars). A
-standard frame is normally built with `WinCreateStdWindow` (see `pm-window-messaging.md` §4),
+standard frame is normally built with `WinCreateStdWindow` (see `pm-window-messaging.md` section 4),
 which selects the frame controls with `FCF_*` creation flags; the individual controls are child
 windows found by the `FID_*` ids. The `FCF_*` creation flags and `FID_*` control ids are
-documented in `pm-window-messaging.md` §4.
+documented in `pm-window-messaging.md` section 4.
 
-**Frame styles** (`FS_*`) — used when a frame is created from a dialog template [DOC-IBM
+**Frame styles** (`FS_*`) - used when a frame is created from a dialog template [DOC-IBM
 `pmwin.h:2720-2742`; meanings pm3.txt "Frame Control Styles"]:
 
 | Constant | Value | Meaning |
@@ -104,15 +104,15 @@ documented in `pm-window-messaging.md` §4.
 | `FS_AUTOICON` | `0x1000` | Auto-repaint the minimized icon. |
 | `FS_STANDARD` | `0x000F` | `FS_ICON` + `FS_ACCELTABLE` + `FS_SHELLPOSITION` + `FS_TASKLIST`. |
 
-**Frame messages** — the frame procedure processes layout, focus, and background messages sent
+**Frame messages** - the frame procedure processes layout, focus, and background messages sent
 to a frame window; the principal ones are `WM_FORMATFRAME` (`0x0041`), `WM_UPDATEFRAME`
 (`0x0042`), `WM_FOCUSCHANGE` (`0x0043`), `WM_MINMAXFRAME` (`0x0046`), `WM_TRANSLATEACCEL`
 (`0x004b`), `WM_ERASEBACKGROUND` (`0x004f`), and `WM_QUERYFRAMEINFO` [DOC-IBM `pmwin.h:2794-2818`;
-also `pm-window-messaging.md` §6 "Frame messages"].
+also `pm-window-messaging.md` section 6 "Frame messages"].
 
 ---
 
-## 3. `WC_TITLEBAR` — title bar; the system menu [DOC-IBM]
+## 3. `WC_TITLEBAR` - title bar; the system menu [DOC-IBM]
 
 The title bar (`WC_TITLEBAR`, `0xffff0009`) displays the window's title/caption and lets the
 operator move the owner window by dragging it [DOC-IBM pm3.txt "Control Window Message
@@ -128,14 +128,14 @@ Processing"]. In a standard frame it is the child with id `FID_TITLEBAR` (`0x800
 The title text is read and written with the generic `WinQueryWindowText` / `WinSetWindowText`
 and with `WM_QUERYWINDOWPARAMS` / `WM_SETWINDOWPARAMS`.
 
-**The system menu** is *not* a distinct window class — there is no `WC_SYSMENU` class constant.
+**The system menu** is *not* a distinct window class - there is no `WC_SYSMENU` class constant.
 It is a `WC_MENU` control instance carrying the frame-control id `FID_SYSMENU` (`0x8002`)
 [DOC-IBM `pmwin.h:241-262` (no `WC_SYSMENU` present); `FID_SYSMENU` in `pm-window-messaging.md`
-§4]. It is manipulated with the menu messages of §5.
+section 4]. It is manipulated with the menu messages of section 5.
 
 ---
 
-## 4. `WC_BUTTON` — buttons and boxes [DOC-IBM]
+## 4. `WC_BUTTON` - buttons and boxes [DOC-IBM]
 
 A button control is a small rectangular child window the operator can "switch" on or off by
 clicking it or by pressing the space bar when it has the focus. Buttons may be used alone or in
@@ -191,7 +191,7 @@ Styles"]:
 | `BN_DBLCLICKED` | `2` | The button has been double-clicked. |
 | `BN_PAINT` | `3` | A `BS_USERBUTTON` requires painting; `mp2` points to a `USERBUTTON` giving the draw state (`BDS_DISABLED`/`BDS_HILITED`/`BDS_DEFAULT`). |
 
-**Button control data** — passed as `pCtlData` at creation [DOC-IBM `pmwin.h:2014-2020`]:
+**Button control data** - passed as `pCtlData` at creation [DOC-IBM `pmwin.h:2014-2020`]:
 
 ```c
 typedef struct _BTNCDATA {   /* btncd */
@@ -215,7 +215,7 @@ typedef struct _USERBUTTON {   /* ubtn */
 
 ---
 
-## 5. `WC_MENU` — menus [DOC-IBM]
+## 5. `WC_MENU` - menus [DOC-IBM]
 
 A menu presents a list of items, shown horizontally as an action bar or vertically as a
 pull-down; menus are the usual command interface [DOC-IBM pm3.txt "Control Window Message
@@ -259,7 +259,7 @@ with `CMDSRC_MENU`.
 `MIA_NODISMISS` (`0x0020`), `MIA_FRAMED` (`0x1000`), `MIA_CHECKED` (`0x2000`), `MIA_DISABLED`
 (`0x4000`), `MIA_HILITED` (`0x8000`).
 
-**`MENUITEM`** — one menu entry [DOC-IBM `pmwin.h:2457-2464`]:
+**`MENUITEM`** - one menu entry [DOC-IBM `pmwin.h:2457-2464`]:
 
 ```c
 typedef struct _MENUITEM {   /* mi */
@@ -272,16 +272,16 @@ typedef struct _MENUITEM {   /* mi */
 } MENUITEM;
 ```
 
-### 5.1 A pop-up menu built at run time — the two traps [OBS-RE]
+### 5.1 A pop-up menu built at run time - the two traps [OBS-RE]
 
 A context menu whose items depend on state has to be built dynamically: create a menu window, fill it
-with `MM_INSERTITEM`, then `WinPopupMenu`. Both traps below leave every API call reporting success —
+with `MM_INSERTITEM`, then `WinPopupMenu`. Both traps below leave every API call reporting success -
 `WinPopupMenu` returns `TRUE`, `WinGetLastError` is `0`, and the menu window is real, correctly sized
-and `WS_VISIBLE` — while nothing appears on screen. There is no diagnostic to find.
+and `WS_VISIBLE` - while nothing appears on screen. There is no diagnostic to find.
 
 **1. Do not destroy the menu after `WinPopupMenu` returns.** It "returns as soon as the pop-up menu
 has been invoked, **which might be before the user has completed interacting with** it" [DOC-IBM
-`pm2.txt`, *WinPopupMenu — Return Value*]. It is not modal and does not wait for a selection, so
+`pm2.txt`, *WinPopupMenu - Return Value*]. It is not modal and does not wait for a selection, so
 tearing the menu down on the next line removes it instantly. Destroy the *previous* menu when you
 build the next one instead.
 
@@ -304,13 +304,13 @@ case WM_MYCONTEXTMENU:                     /* clean dispatch - the menu survives
     break;
 ```
 
-Reaching this from a mouse click needs no such care — `WM_BUTTON2DOWN` *is* a clean dispatch, and
+Reaching this from a mouse click needs no such care - `WM_BUTTON2DOWN` *is* a clean dispatch, and
 button 2 is the OS/2 context button (there is no `WM_CONTEXTMENU`).
 
 Two further points measured while chasing the above, both worth not re-testing:
 
 - IBM states the menu "must have been created, by use of either the `WinCreateMenu` or `WinLoadMenu`
-  functions" [DOC-IBM `pm2.txt`, *WinPopupMenu — Parameters*]. In practice a `WC_MENU` window created
+  functions" [DOC-IBM `pm2.txt`, *WinPopupMenu - Parameters*]. In practice a `WC_MENU` window created
   with `WinCreateWindow` and filled with `MM_INSERTITEM` works, which is what a dynamic menu needs;
   a resource menu loaded with `WinLoadMenu` behaved identically, including failing in the same way
   before trap 2 was fixed.
@@ -319,17 +319,17 @@ Two further points measured while chasing the above, both worth not re-testing:
   correctly; `PU_HCONSTRAIN`/`PU_VCONSTRAIN` constrain to the desktop either way.
 
 Remember PM's origin is the **lower-left** corner, so the coordinates you pass are the menu's bottom
-edge and it grows *upward* from the point — the opposite of the Win32 habit of dropping down from it.
+edge and it grows *upward* from the point - the opposite of the Win32 habit of dropping down from it.
 
 An empty label is not a PM convention but Scintilla's, meaning "separator"; PM wants
 `MIS_SEPARATOR` in `afStyle`, and `MIA_DISABLED` in `afAttribute` for a greyed item.
 
 ---
 
-## 6. `WC_STATIC` — static display items [DOC-IBM]
+## 6. `WC_STATIC` - static display items [DOC-IBM]
 
-A static control is a simple display item — text, an icon, a bitmap, a box, or a filled/framed
-rectangle — that does not respond to keyboard or pointer events [DOC-IBM pm3.txt "Static Control
+A static control is a simple display item - text, an icon, a bitmap, a box, or a filled/framed
+rectangle - that does not respond to keyboard or pointer events [DOC-IBM pm3.txt "Static Control
 Window Processing"]. It sends no notifications of its own.
 
 **Static styles** (`SS_*`) [DOC-IBM `pmwin.h:1942-1960`; meanings pm3.txt "Static Control
@@ -352,7 +352,7 @@ Styles"]:
 
 ---
 
-## 7. `WC_ENTRYFIELD` — single-line entry field [DOC-IBM]
+## 7. `WC_ENTRYFIELD` - single-line entry field [DOC-IBM]
 
 An entry field is a single line of text the operator can edit; when it has the focus, a cursor
 marks the insertion point [DOC-IBM pm3.txt "Entry Field Control Window Processing"].
@@ -376,7 +376,7 @@ Control Styles"]:
 | `ES_DBCS` | `0x2000` | Double-byte text only. |
 | `ES_MIXED` | `0x3000` | Mixed SBCS/DBCS, protected against conversion overrun. |
 
-(`ES_ANY` = `0x0000` — mixed SBCS/DBCS, the default when no DBCS style is set.)
+(`ES_ANY` = `0x0000` - mixed SBCS/DBCS, the default when no DBCS style is set.)
 
 **Entry-field messages** (`EM_*`) [DOC-IBM `pmwin.h:2172-2190`]:
 
@@ -422,7 +422,7 @@ typedef struct _ENTRYFDATA {   /* efd */
 
 ---
 
-## 8. `WC_MLE` — multi-line entry field [DOC-IBM]
+## 8. `WC_MLE` - multi-line entry field [DOC-IBM]
 
 The multi-line entry field (MLE) is a rectangular window displaying multiple editable lines;
 the cursor marks the insertion/replacement point when it has the focus [DOC-IBM pm3.txt
@@ -442,7 +442,7 @@ of text, and clipboard operations.
 | `MLS_DISABLEUNDO` | `0x0040` | Disable the undo facility. |
 | `MLS_LIMITVSCROLL` | `0x0080` | Limit vertical scrolling. |
 
-**MLE messages** (`MLM_*`) — the fuller set [DOC-IBM `pmmle.h:192-256`]:
+**MLE messages** (`MLM_*`) - the fuller set [DOC-IBM `pmmle.h:192-256`]:
 
 | Message | Value | Purpose |
 |---|---|---|
@@ -467,7 +467,7 @@ of text, and clipboard operations.
 | `MLM_SETTEXTCOLOR` / `MLM_QUERYTEXTCOLOR` | `0x01d2` / `0x01d3` | Set/query the text color. |
 | `MLM_SETBACKCOLOR` / `MLM_QUERYBACKCOLOR` | `0x01d4` / `0x01d5` | Set/query the background color. |
 | `MLM_QUERYFIRSTCHAR` / `MLM_SETFIRSTCHAR` | `0x01d6` / `0x01d7` | Query/set the first visible character. |
-| `MLM_CUT` / `MLM_COPY` / `MLM_PASTE` / `MLM_CLEAR` | `0x01d8`–`0x01db` | Clipboard operations and delete. |
+| `MLM_CUT` / `MLM_COPY` / `MLM_PASTE` / `MLM_CLEAR` | `0x01d8`-`0x01db` | Clipboard operations and delete. |
 | `MLM_ENABLEREFRESH` / `MLM_DISABLEREFRESH` | `0x01dc` / `0x01dd` | Enable/suspend screen refresh during bulk edits. |
 | `MLM_SEARCH` | `0x01de` | Search (and optionally replace) text. |
 | `MLM_QUERYIMPORTEXPORT` | `0x01df` | Query the import/export buffer. |
@@ -491,7 +491,7 @@ of text, and clipboard operations.
 
 ---
 
-## 9. `WC_LISTBOX` — list box [DOC-IBM]
+## 9. `WC_LISTBOX` - list box [DOC-IBM]
 
 A list box presents a list of text items from which the operator makes selections [DOC-IBM
 pm3.txt "List Box Control Window Processing"].
@@ -511,7 +511,7 @@ pm3.txt "List Box Control Window Processing"].
 | Message | Value | Purpose |
 |---|---|---|
 | `LM_QUERYITEMCOUNT` | `0x0160` | Number of items. |
-| `LM_INSERTITEM` | `0x0161` | Insert an item (index or `LIT_END`/`LIT_SORTASCENDING`/…). |
+| `LM_INSERTITEM` | `0x0161` | Insert an item (index or `LIT_END`/`LIT_SORTASCENDING`/...). |
 | `LM_SETTOPINDEX` | `0x0162` | Scroll so a given item is at the top. |
 | `LM_DELETEITEM` | `0x0163` | Delete an item. |
 | `LM_SELECTITEM` | `0x0164` | Select/deselect an item. |
@@ -545,15 +545,15 @@ Item-index constants used with `LM_*` [DOC-IBM `pmwin.h:2262-2272`]: `LIT_CURSOR
 ### 9.1 Owner-drawn items, and where the selection state really lives [OBS-RE]
 
 A plain list box "only draws items that are represented by text strings and emphasizes selected items
-by inverting them" [DOC-IBM `pm3.txt`, *WM_DRAWITEM (in List Boxes) — Remarks*]. Anything else — a
-per-item icon, a colour, two-column layout — needs the **`LS_OWNERDRAW`** style, after which the
+by inverting them" [DOC-IBM `pm3.txt`, *WM_DRAWITEM (in List Boxes) - Remarks*]. Anything else - a
+per-item icon, a colour, two-column layout - needs the **`LS_OWNERDRAW`** style, after which the
 control sends **`WM_DRAWITEM`** to its **owner** for each item. Returning `TRUE` means "I drew it";
 returning `FALSE` asks the control to draw it after all, which is the right answer for any control
 that is not yours.
 
 **The item's selected state is in `OWNERITEM.fsState`, not in `LM_QUERYSELECTION`.** This is the trap.
-Asking the control which item is selected *while handling `WM_DRAWITEM`* returns `LIT_NONE` — the
-selection has not been committed yet — so the obvious implementation quietly draws every item,
+Asking the control which item is selected *while handling `WM_DRAWITEM`* returns `LIT_NONE` - the
+selection has not been committed yet - so the obvious implementation quietly draws every item,
 including the highlighted one, in unselected colours:
 
 ```c
@@ -569,7 +569,7 @@ case WM_DRAWITEM: {
 ```
 
 `os2emx.h` defines no `LIA_*` constant for that bit, so it has to be written as a literal with a
-comment — the value was measured as `1` on a selected item and `0` otherwise.
+comment - the value was measured as `1` on a selected item and `0` otherwise.
 
 The rest of the item comes from where you would expect: `LM_QUERYITEMTEXT` for the text (the item
 text must not be changed while drawing it), `OWNERITEM.rclItem` for the rectangle in **window**
@@ -580,7 +580,7 @@ which is simpler when the height depends on content you register later.
 
 ---
 
-## 10. `WC_COMBOBOX` — combination box [DOC-IBM]
+## 10. `WC_COMBOBOX` - combination box [DOC-IBM]
 
 A combination box merges an entry field and a list box into one control; the list is displayed
 below the entry field [DOC-IBM pm3.txt "Combination-Box Control Window Processing"]. Because it
@@ -617,7 +617,7 @@ is composed of the two, it also accepts the `EM_*` and `LM_*` messages of its pa
 
 ---
 
-## 11. `WC_SCROLLBAR` — scroll bar [DOC-IBM]
+## 11. `WC_SCROLLBAR` - scroll bar [DOC-IBM]
 
 A scroll bar lets the operator request scrolling of an associated window's contents [DOC-IBM
 pm3.txt "Scroll Bar Control Window Processing"]. A standalone scroll bar sends `WM_HSCROLL` /
@@ -634,7 +634,7 @@ those to the frame.
 | `SBM_QUERYRANGE` | `0x01a3` | Query the scroll range (min/max). |
 | `SBM_SETTHUMBSIZE` | `0x01a6` | Set the proportional thumb size (visible vs. total). |
 
-**Scroll commands** (`SB_*`) — carried in the high half of `mp2` of `WM_HSCROLL` / `WM_VSCROLL`
+**Scroll commands** (`SB_*`) - carried in the high half of `mp2` of `WM_HSCROLL` / `WM_VSCROLL`
 [DOC-IBM `pmwin.h:2626-2636`]:
 
 | Command | Value | Meaning |
@@ -663,10 +663,10 @@ typedef struct _SBCDATA {   /* sbcd */
 
 ---
 
-## 12. `WC_SPINBUTTON` — spin button [DOC-IBM]
+## 12. `WC_SPINBUTTON` - spin button [DOC-IBM]
 
-A spin button presents a scrollable ring of choices — either a numeric range or an
-application-supplied array of strings — the operator spins through with up/down arrows [DOC-IBM
+A spin button presents a scrollable ring of choices - either a numeric range or an
+application-supplied array of strings - the operator spins through with up/down arrows [DOC-IBM
 pm3.txt "Spin Button Control Window Processing"]. A **master** spin button owns the entry-field
 and arrow visuals; one or more **servant** spin buttons share a master.
 
@@ -727,13 +727,13 @@ typedef struct _SPBCDATA {   /* spbcd */
 
 ---
 
-## 13. `WC_SLIDER` — slider [DOC-IBM]
+## 13. `WC_SLIDER` - slider [DOC-IBM]
 
 A slider lets the user set, display, or modify a value by moving an arm along a shaft [DOC-IBM
 pm3.txt "Slider Control Window Processing"]. It carries a scale of tick marks, optional detents,
 and optional spin buttons at the shaft ends.
 
-**Slider styles** (`SLS_*`) [DOC-IBM `pmstddlg.h:1709-1729`] — orientation, shaft placement, and
+**Slider styles** (`SLS_*`) [DOC-IBM `pmstddlg.h:1709-1729`] - orientation, shaft placement, and
 behavior, including: `SLS_HORIZONTAL` (`0x0000`) / `SLS_VERTICAL` (`0x0001`); `SLS_CENTER`
 (`0x0000`), `SLS_BOTTOM`/`SLS_LEFT` (`0x0002`), `SLS_TOP`/`SLS_RIGHT` (`0x0004`) shaft offset;
 `SLS_SNAPTOINCREMENT` (`0x0008`) snap to the nearest tick; `SLS_BUTTONSBOTTOM`/`SLS_BUTTONSLEFT`
@@ -779,7 +779,7 @@ typedef struct _SLDCDATA {   /* sldcd */
 
 ---
 
-## 14. `WC_VALUESET` — value set [DOC-IBM]
+## 14. `WC_VALUESET` - value set [DOC-IBM]
 
 A value set lets the user select one choice from a group of mutually exclusive choices; the
 items can be bitmaps, icons, colors, text, or numbers arranged in a grid of rows and columns
@@ -840,9 +840,9 @@ typedef struct _VSCDATA {   /* vscd */
 
 ---
 
-## 15. `WC_CONTAINER` — container [DOC-IBM]
+## 15. `WC_CONTAINER` - container [DOC-IBM]
 
-The container holds objects — programs, files, images, database records — and displays them in
+The container holds objects - programs, files, images, database records - and displays them in
 several **views** [DOC-IBM pm3.txt "Container Control Window Processing"]. It is the richest of
 the standard controls: it owns a linked list of application **records**, an optional set of
 **detail-column** field descriptors, and a control-wide `CNRINFO` block.
@@ -858,16 +858,16 @@ the standard controls: it owns a linked list of application **records**, an opti
   (`0x0001`), `CV_NAME` (`0x0002`), `CV_ICON` (`0x0004`), `CV_DETAIL` (`0x0008`), `CV_FLOW`
   (`0x0010`), `CV_MINI` (`0x0020`), `CV_TREE` (`0x0040`), `CV_GRID` (`0x0080`) [DOC-IBM
   `pmstddlg.h:1085-1093`], combined with title attributes `CA_*` (`CA_CONTAINERTITLE`
-  `0x0200`, `CA_DETAILSVIEWTITLES` `0x8000`, `CA_TREELINE` `0x00400000`, …) [DOC-IBM
+  `0x0200`, `CA_DETAILSVIEWTITLES` `0x8000`, `CA_TREELINE` `0x00400000`, ...) [DOC-IBM
   `pmstddlg.h:1098-1111`].
 - **Detail columns.** In detail view, each column is a `FIELDINFO`; columns are allocated with
   `CM_ALLOCDETAILFIELDINFO` and inserted with `CM_INSERTDETAILFIELDINFO`. A column's `flData`
   and `flTitle` carry `CFA_*` alignment/type flags (`CFA_LEFT` `0x0001`, `CFA_STRING` `0x0800`,
-  `CFA_BITMAPORICON` `0x0100`, `CFA_DATE` `0x2000`, `CFA_TIME` `0x4000`, …) [DOC-IBM
+  `CFA_BITMAPORICON` `0x0100`, `CFA_DATE` `0x2000`, `CFA_TIME` `0x4000`, ...) [DOC-IBM
   `pmstddlg.h:1286-1311`].
-- **Emphasis.** A record's `flRecordAttr` carries `CRA_*` state bits — `CRA_SELECTED`
+- **Emphasis.** A record's `flRecordAttr` carries `CRA_*` state bits - `CRA_SELECTED`
   (`0x0001`), `CRA_TARGET` (`0x0002`), `CRA_CURSORED` (`0x0004`), `CRA_INUSE` (`0x0008`),
-  `CRA_FILTERED` (`0x0010`), `CRA_EXPANDED`/`CRA_COLLAPSED` (`0x0080`/`0x0100`), … [DOC-IBM
+  `CRA_FILTERED` (`0x0010`), `CRA_EXPANDED`/`CRA_COLLAPSED` (`0x0080`/`0x0100`), ... [DOC-IBM
   `pmstddlg.h:1316-1331`].
 
 **Container styles and selection types** (`CCS_*`) [DOC-IBM `pmstddlg.h:1070-1080`; meanings
@@ -960,34 +960,34 @@ unrelated to memory.
 - **Allocate records with `CM_ALLOCRECORD`, never `malloc`.** `mp1` is the number of extra bytes
   wanted *beyond* the core, `mp2` how many records. `CM_FREERECORD` (or `CM_REMOVERECORD` with
   `CMA_FREE`) releases them.
-- **`cb` in the core is the size of the CORE**, `sizeof(MINIRECORDCORE)` or `sizeof(RECORDCORE)` —
+- **`cb` in the core is the size of the CORE**, `sizeof(MINIRECORDCORE)` or `sizeof(RECORDCORE)` -
   not the size of your subclassed record. Setting it to the subclass size is a natural mistake and
   the control believes you.
 - **The `PSZ` fields must point at storage that outlives the insert.** The container keeps the
   pointer, it does not copy the string, so pointing `pszIcon`/`pszText` at a local buffer leaves the
-  control rendering freed stack. Put the text in the extra bytes you allocated past the core — that
+  control rendering freed stack. Put the text in the extra bytes you allocated past the core - that
   is what they are for, and their lifetime is exactly the record's.
 - **The record struct must match the container's style.** `CCS_MINIRECORDCORE` means records are
   `MINIRECORDCORE`; without it they are `RECORDCORE`. The style lives in the `.RC` and the struct in
   the `.C`, so nothing checks that they agree.
 - **Set the view through `CNRINFO.flWindowAttr` + `CM_SETCNRINFO`** with `CMA_FLWINDOWATTR`, e.g.
-  `CV_NAME | CV_MINI | CV_FLOW` for a flowed mini-icon list — that combination needs no `FIELDINFO`
+  `CV_NAME | CV_MINI | CV_FLOW` for a flowed mini-icon list - that combination needs no `FIELDINFO`
   columns at all, unlike `CV_DETAIL`.
 - **Insert with a `RECORDINSERT`** whose `pRecordOrder` is `(PRECORDCORE)CMA_END` and `zOrder`
   `CMA_TOP`. Set `fInvalidateRecord = FALSE` while bulk-filling and send one
   `CM_INVALIDATERECORD` at the end.
 - **`CN_ENTER` (double-click / Enter) arrives via `WM_CONTROL` with a `NOTIFYRECORDENTER *` in
-  `mp2`** — one more payload shape behind that message, so check `SHORT2FROMMP(mp1)` before
+  `mp2`** - one more payload shape behind that message, so check `SHORT2FROMMP(mp1)` before
   dereferencing (see `pm-window-messaging.md`).
 
 For a plain directory listing the records come from `DosFindFirst`/`DosFindNext`, and per-file icons
-from `WinLoadFileIcon(path, FALSE)` — the `FALSE` asks for a *shared* pointer, which is what you want
+from `WinLoadFileIcon(path, FALSE)` - the `FALSE` asks for a *shared* pointer, which is what you want
 when only displaying it. A container record carries its own `HPOINTER`, so nothing like a Win32
 image list is required.
 
 ### Key container structures [DOC-IBM]
 
-**`RECORDCORE`** — the record base for the full record model [DOC-IBM `pmstddlg.h:1160-1176`]:
+**`RECORDCORE`** - the record base for the full record model [DOC-IBM `pmstddlg.h:1160-1176`]:
 
 ```c
 typedef struct _RECORDCORE {   /* recc */
@@ -1007,7 +1007,7 @@ typedef struct _RECORDCORE {   /* recc */
 } RECORDCORE;
 ```
 
-**`MINIRECORDCORE`** — the compact record base (`CCS_MINIRECORDCORE`) [DOC-IBM
+**`MINIRECORDCORE`** - the compact record base (`CCS_MINIRECORDCORE`) [DOC-IBM
 `pmstddlg.h:1181-1189`]:
 
 ```c
@@ -1021,7 +1021,7 @@ typedef struct _MINIRECORDCORE {   /* minirec */
 } MINIRECORDCORE;
 ```
 
-**`FIELDINFO`** — one detail-view column [DOC-IBM `pmstddlg.h:1142-1154`]:
+**`FIELDINFO`** - one detail-view column [DOC-IBM `pmstddlg.h:1142-1154`]:
 
 ```c
 typedef struct _FIELDINFO {   /* fldinfo */
@@ -1036,7 +1036,7 @@ typedef struct _FIELDINFO {   /* fldinfo */
 } FIELDINFO;
 ```
 
-**`CNRINFO`** — the container-wide control block (queried with `CM_QUERYCNRINFO`, changed with
+**`CNRINFO`** - the container-wide control block (queried with `CM_QUERYCNRINFO`, changed with
 `CM_SETCNRINFO`) [DOC-IBM `pmstddlg.h:1208-1242`]:
 
 ```c
@@ -1066,17 +1066,17 @@ typedef struct _CNRINFO {   /* ccinfo */
 
 ---
 
-## 16. `WC_NOTEBOOK` — notebook [DOC-IBM]
+## 16. `WC_NOTEBOOK` - notebook [DOC-IBM]
 
 A notebook organizes information on individual **pages** the user turns through, with **tabs**
-(major and minor sections), an optional **status line**, a binding, and — in the "new" style — a
+(major and minor sections), an optional **status line**, a binding, and - in the "new" style - a
 common **button area** and a page list [DOC-IBM pm5.txt "Notebook Controls"]. Each page is
 identified by a page id (`ULONG`) and is associated with an application window or dialog whose
 contents fill the page (`BKM_SETPAGEWINDOWHWND`). The book supports both an "old" and a "new"
 visual style, selected by the `BKS_*` style bits.
 
 **Notebook styles** (`BKS_*`) [DOC-IBM `pmstddlg.h:2038-2082`; meanings pm5.txt "Notebook Styles"]
-— back-page corner (`BKS_BACKPAGESBR` `0x0001`, `BKS_BACKPAGESBL` `0x0002`, `BKS_BACKPAGESTR`
+- back-page corner (`BKS_BACKPAGESBR` `0x0001`, `BKS_BACKPAGESBL` `0x0002`, `BKS_BACKPAGESTR`
 `0x0004`, `BKS_BACKPAGESTL` `0x0008`), major-tab edge (`BKS_MAJORTABRIGHT` `0x0010`,
 `BKS_MAJORTABLEFT` `0x0020`, `BKS_MAJORTABTOP` `0x0040`, `BKS_MAJORTABBOTTOM` `0x0080`), tab shape
 (`BKS_SQUARETABS` `0x0000`, `BKS_ROUNDEDTABS` `0x0100`, `BKS_POLYGONTABS` `0x0200`), binding
@@ -1128,9 +1128,9 @@ position, `BKA_TEXT` (`0x0400`) / `BKA_BITMAP` (`0x0800`) tab-data kind.
 ---
 
 ## See also
-- `pm-window-messaging.md` — the window / message model these controls live in: `WinCreateWindow`
+- `pm-window-messaging.md` - the window / message model these controls live in: `WinCreateWindow`
   / `WinCreateStdWindow`, `WinRegisterClass`, the core `WM_*` set, the message loop, the packing
   macros (`SHORT1FROMMP`/`SHORT2FROMMP`/`MPFROM2SHORT`), dialogs, and the `FCF_*`/`FID_*` frame
   controls.
-- `pm-graphics.md` — the Gpi drawing path an owner-drawn control (`WM_DRAWITEM`, `BN_PAINT`) uses.
-- `calling-convention.md` — the `APIENTRY`/`EXPENTRY` linkage every window/dialog procedure uses.
+- `pm-graphics.md` - the Gpi drawing path an owner-drawn control (`WM_DRAWITEM`, `BN_PAINT`) uses.
+- `calling-convention.md` - the `APIENTRY`/`EXPENTRY` linkage every window/dialog procedure uses.

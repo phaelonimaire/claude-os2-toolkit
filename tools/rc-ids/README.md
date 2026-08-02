@@ -1,4 +1,4 @@
-# check-rc-ids.py — find missing dialog templates and colliding ids in an OS/2 `.RC`
+# check-rc-ids.py - find missing dialog templates and colliding ids in an OS/2 `.RC`
 
 ```sh
 ./check-rc-ids.py myapp.h myapp.rc *.c   # both checks
@@ -15,7 +15,7 @@ those numbers is supposed to name a resource.
 
 ### A dialog the code loads but the `.RC` does not define
 
-`WinLoadDlg(..., IDD_FIND, ...)` compiles as long as `IDD_FIND` is `#define`d — to the compiler it
+`WinLoadDlg(..., IDD_FIND, ...)` compiles as long as `IDD_FIND` is `#define`d - to the compiler it
 is an integer. `wrc` compiles a `.RC` with no `DLGTEMPLATE IDD_FIND` just as happily, because
 nothing in the `.RC` refers to it either. The link succeeds. The only symptom is at run time:
 
@@ -23,7 +23,7 @@ nothing in the `.RC` refers to it either. The link succeeds. The only symptom is
 WinLoadDlg returns NULLHANDLE, WinGetLastError = 0x8100A   (PMERR_RESOURCE_NOT_FOUND)
 ```
 
-and only if you check — which is the argument for always reporting `WinGetLastError` when
+and only if you check - which is the argument for always reporting `WinGetLastError` when
 `WinLoadDlg` fails, rather than returning silently.
 
 The usual cause is **rewriting a `.RC` as a whole file**. There is no link step that notices a
@@ -36,8 +36,8 @@ Two menu items with the same id put the same value in `WM_COMMAND`, so one silen
 code. A command id colliding with a `SUBMENU` anchor is the same bug. Nothing warns, and it is easy
 to cause by picking "the next free number" by eye in a header several hundred lines long.
 
-Ids belonging to genuinely different namespaces — a `DLGTEMPLATE` id and a command id, or a dialog
-control id and a menu id — may legitimately share a value, since they are resolved by different
+Ids belonging to genuinely different namespaces - a `DLGTEMPLATE` id and a command id, or a dialog
+control id and a menu id - may legitimately share a value, since they are resolved by different
 lookups. Those are reported as **warnings**; a collision between two ids with the same prefix is an
 **error**.
 

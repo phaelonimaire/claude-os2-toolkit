@@ -1,10 +1,10 @@
-# OS/2 Presentation Manager — Direct Manipulation (Drag and Drop)
+# OS/2 Presentation Manager - Direct Manipulation (Drag and Drop)
 
 **Direct manipulation** is the Presentation Manager protocol by which a user picks up one or
 more objects with the pointing device, drags them across the screen, and drops them on another
-window to perform an operation (copy, move, link, print, …). It is a *distributed* protocol
-between two window procedures — a **source** window that starts the drag and describes the
-objects, and a **target** window under the pointer that decides whether it will accept them —
+window to perform an operation (copy, move, link, print, ...). It is a *distributed* protocol
+between two window procedures - a **source** window that starts the drag and describes the
+objects, and a **target** window under the pointer that decides whether it will accept them -
 who agree, at drop time, on a **rendering mechanism and format (RMF)** and then hold a
 message-driven **conversation** to actually transfer the data. This reference documents the
 structures the two sides exchange (`DRAGINFO`, `DRAGITEM`, `DRAGIMAGE`, `DRAGTRANSFER`), the
@@ -12,7 +12,7 @@ RMF/type string convention, the `Drg*` API, the `DM_*` message flow with its `DO
 responses, and the target-emphasis and post-drop conversation model.
 
 Provenance: **[DOC-IBM]** the OS/2 Toolkit header `pmstddlg.h` (the drag-and-drop declarations
-live in its `INCL_WINSTDDRAG` section — every prototype, structure, constant *value*, and
+live in its `INCL_WINSTDDRAG` section - every prototype, structure, constant *value*, and
 message id below is transcribed from it), the base type header `os2def.h`, and the error header
 `pmerr.h`; **[DOC-IBM]** the IBM OS/2 Presentation Manager Programming Guide and Reference (the
 extracted book text `pm1.txt`/`pm3.txt`/`pm4.txt`) for API and message *semantics*. Where a
@@ -28,20 +28,20 @@ A direct-manipulation operation always has a **source** and, once the pointer is
 acceptable window, a **target**:
 
 - The **source** starts the drag. It allocates and fills a `DRAGINFO` describing the **drag
-  set** — one `DRAGITEM` per object being dragged — plus one or more `DRAGIMAGE` structures
+  set** - one `DRAGITEM` per object being dragged - plus one or more `DRAGIMAGE` structures
   describing the visual feedback, then calls `DrgDrag`. For each object the source makes known:
   its **type**, the **rendering mechanisms and formats** it can supply, a suggested target
-  name, the source container name, and the source object name. [DOC-IBM — pm4.txt, "Responsibilities
+  name, the source container name, and the source object name. [DOC-IBM - pm4.txt, "Responsibilities
   of a Source Application"]
 - The **target** is the window directly under the pointer hot spot. It decides whether the drag
   set can be dropped (by inspecting each `DRAGITEM`'s type and RMF), provides **target emphasis**
-  (visible feedback), defines the default operation, and — after the drop — initiates the
+  (visible feedback), defines the default operation, and - after the drop - initiates the
   conversation that transfers the data. A drop can succeed only if source and target share at
-  least one rendering mechanism *and* format. [DOC-IBM — pm4.txt, "Responsibilities of a Target
+  least one rendering mechanism *and* format. [DOC-IBM - pm4.txt, "Responsibilities of a Target
   Application"]
 
 The whole facility is enabled by `#define INCL_WINSTDDRAG` before including the PM headers
-[DOC-IBM — pm1.txt, function synopses]. Two general error codes bound the facility:
+[DOC-IBM - pm1.txt, function synopses]. Two general error codes bound the facility:
 `PMERR_NOT_DRAGGING` (`0x1f00`) and `PMERR_ALREADY_DRAGGING` (`0x1f01`) [DOC-IBM
 `pmstddlg.h:634-635`]. `MSGF_DRAG` (`0x0010`) is the message-filter identifier for the drag
 message loop [DOC-IBM `pmstddlg.h:637`].
@@ -50,7 +50,7 @@ message loop [DOC-IBM `pmstddlg.h:637`].
 
 ## 2. The core structures [DOC-IBM]
 
-### `DRAGINFO` — the drag set [DOC-IBM `pmstddlg.h:763-774`]
+### `DRAGINFO` - the drag set [DOC-IBM `pmstddlg.h:763-774`]
 
 Allocated by the source (with `DrgAllocDraginfo`), passed to the target in every drag message,
 and freed at the end of the operation. It is a header followed by `cditem` `DRAGITEM` records.
@@ -72,9 +72,9 @@ typedef DRAGINFO *PDRAGINFO;
 `usOperation` carries the operation the user is currently requesting (modified by the
 augmentation keys); the source may seed a default into it before `DrgDrag`, and thereafter it is
 the value delivered to the target unless the pointer's default resolves it differently
-(Section 5). [DOC-IBM — pm1.txt, `DrgAllocDraginfo`/`DrgDrag` Remarks]
+(Section 5). [DOC-IBM - pm1.txt, `DrgAllocDraginfo`/`DrgDrag` Remarks]
 
-### `DRAGITEM` — one dragged object [DOC-IBM `pmstddlg.h:745-761`]
+### `DRAGITEM` - one dragged object [DOC-IBM `pmstddlg.h:745-761`]
 
 ```c
 typedef struct _DRAGITEM {   /* ditem */
@@ -95,10 +95,10 @@ typedef DRAGITEM *PDRAGITEM;
 
 `hwndItem` is the window the target addresses its `DM_RENDER`/conversation messages to.
 `cxOffset`/`cyOffset` are copied from the `DRAGIMAGE` by `DrgDrag` and let the target place the
-dropped object relative to the drop point, preserving the objects' relative layout. [DOC-IBM —
+dropped object relative to the drop point, preserving the objects' relative layout. [DOC-IBM -
 pm4.txt, `DRAGITEM` field descriptions]
 
-**`fsControl`** — source item control flags [DOC-IBM `pmstddlg.h:691-696`]:
+**`fsControl`** - source item control flags [DOC-IBM `pmstddlg.h:691-696`]:
 
 | Flag | Value | Meaning |
 |---|---|---|
@@ -109,7 +109,7 @@ pm4.txt, `DRAGITEM` field descriptions]
 | `DC_PREPARE` | `0x0010` | Target should send `DM_RENDERPREPARE` before `DM_RENDER`. |
 | `DC_REMOVEABLEMEDIA` | `0x0020` | The source resides on removable media. |
 
-**`fsSupportedOps`** — operations the source can perform for this item [DOC-IBM `pmstddlg.h:685-689`]:
+**`fsSupportedOps`** - operations the source can perform for this item [DOC-IBM `pmstddlg.h:685-689`]:
 
 | Flag | Value | Meaning |
 |---|---|---|
@@ -119,7 +119,7 @@ pm4.txt, `DRAGITEM` field descriptions]
 | `DO_CREATEABLE` | `0x0008` | Item can be created (from a template). |
 | `DO_CREATEPROGRAMOBJECTABLE` | `0x0010` | Item can create a program object. |
 
-### `DRAGIMAGE` — drag-time visual feedback [DOC-IBM `pmstddlg.h:776-788`]
+### `DRAGIMAGE` - drag-time visual feedback [DOC-IBM `pmstddlg.h:776-788`]
 
 An array of these (one per object, or one shared image) is passed to `DrgDrag`; it defines what
 is dragged under the pointer.
@@ -137,7 +137,7 @@ typedef struct _DRAGIMAGE {   /* dimg */
 typedef DRAGIMAGE *PDRAGIMAGE;
 ```
 
-**`fl`** — drag-image flags [DOC-IBM `pmstddlg.h:717-723`]:
+**`fl`** - drag-image flags [DOC-IBM `pmstddlg.h:717-723`]:
 
 | Flag | Value | Meaning |
 |---|---|---|
@@ -149,7 +149,7 @@ typedef DRAGIMAGE *PDRAGIMAGE;
 | `DRG_CLOSED` | `0x00000020` | Polygon is closed. |
 | `DRG_MINIBITMAP` | `0x00000040` | Use the mini (small) bitmap. |
 
-### `DRAGTRANSFER` — one rendering conversation [DOC-IBM `pmstddlg.h:790-801`]
+### `DRAGTRANSFER` - one rendering conversation [DOC-IBM `pmstddlg.h:790-801`]
 
 Allocated by the target (with `DrgAllocDragtransfer`), one per object it wants rendered; carried
 in the `DM_RENDER` conversation.
@@ -171,10 +171,10 @@ typedef DRAGTRANSFER *PDRAGTRANSFER;
 `hstrSelectedRMF` is the single mechanism/format pair (chosen from the source's `hstrRMF` set)
 that both sides will use for this transfer; the target owns and deletes this handle when the
 conversation ends. `fsReply` is cleared by `DrgSendTransferMsg` before a `DM_RENDER` is sent and
-filled by the source on a `FALSE` return (Section 4/6). [DOC-IBM — pm4.txt, `DRAGTRANSFER` field
+filled by the source on a `FALSE` return (Section 4/6). [DOC-IBM - pm4.txt, `DRAGTRANSFER` field
 descriptions; pm1.txt, `DrgSendTransferMsg` Remarks]
 
-### `RENDERFILE` — the file-drag helper conversation [DOC-IBM `pmstddlg.h:803-811`]
+### `RENDERFILE` - the file-drag helper conversation [DOC-IBM `pmstddlg.h:803-811`]
 
 Used by the `DrgDragFiles`/`DM_RENDERFILE` file-move/copy helper protocol.
 
@@ -191,12 +191,12 @@ typedef RENDERFILE *PRENDERFILE;
 
 ### String handles
 
-Every string in the structures above is an **`HSTR`** — a handle, not a pointer:
+Every string in the structures above is an **`HSTR`** - a handle, not a pointer:
 `typedef LHANDLE HSTR;` [DOC-IBM `pmstddlg.h:743`] (`LHANDLE` is `unsigned long`, `os2def.h`).
 An `HSTR` is created from a C string with `DrgAddStrHandle` and read back with `DrgQueryStrName`
 (Section 4). Handles, rather than pointers, are used because a `DRAGINFO` crosses a process
 boundary between two unrelated applications, so the strings must be referenceable by any process
-[DOC-IBM — pm1.txt, `DrgAddStrHandle` Remarks].
+[DOC-IBM - pm1.txt, `DrgAddStrHandle` Remarks].
 
 ---
 
@@ -223,12 +223,12 @@ strings [DOC-IBM `pmstddlg.h:661-678`; pm4.txt type list]:
 | `DRT_FORTRAN` | `"FORTRAN Code"` | `DRT_ICON` | `"Icon"` |
 
 (The book's type table also lists `DRT_FONT` "Font"; the header's `INCL_WINSTDDRAG` block does
-not `#define` `DRT_FONT` [DOC-IBM — pm4.txt vs `pmstddlg.h:661-678`].)
+not `#define` `DRT_FONT` [DOC-IBM - pm4.txt vs `pmstddlg.h:661-678`].)
 
 ### The RMF string (`hstrRMF`)
 
 The **rendering mechanism** is *how* the data is exchanged (e.g. via an OS/2 file, or DDE); the
-**rendering format** is *what* the data is — its true type (e.g. text) [DOC-IBM — pm4.txt,
+**rendering format** is *what* the data is - its true type (e.g. text) [DOC-IBM - pm4.txt,
 "Rendering Mechanisms and Formats"]. `hstrRMF` is a list `mechfmt[,mechfmt...]` where each
 `mechfmt` is either an explicit ordered pair or a cross product:
 
@@ -239,13 +239,13 @@ The **rendering mechanism** is *how* the data is exchanged (e.g. via an OS/2 fil
 
 The cross-product form expands to every mechanism paired with every format. **The first
 mechanism/format pair (or the first pair produced by a cross product) must be the object's
-*native* RMF** — the mechanism/format that most completely conveys the data [DOC-IBM —
+*native* RMF** - the mechanism/format that most completely conveys the data [DOC-IBM -
 pm4.txt, `hstrRMF` description; pm1.txt, `DrgQueryNativeRMF` Remarks]. An application supports
 some, all, or none of the standard mechanisms and may define its own private ones; supporting the
-standard set widens the range of applications it can exchange with [DOC-IBM — pm4.txt,
+standard set widens the range of applications it can exchange with [DOC-IBM - pm4.txt,
 "Non-Standard Rendering Mechanisms"].
 
-Standard **mechanism** names (string literals) [DOC-IBM — pm4.txt, "Valid mechanisms"]:
+Standard **mechanism** names (string literals) [DOC-IBM - pm4.txt, "Valid mechanisms"]:
 
 | Name | Meaning |
 |---|---|
@@ -254,7 +254,7 @@ Standard **mechanism** names (string literals) [DOC-IBM — pm4.txt, "Valid mech
 | `DRM_OS2FILE` | Exchange as an OS/2 file (a snapshot of the data). |
 | `DRM_PRINT` | Object can be printed by direct manipulation. |
 
-Standard **format** names (string literals) [DOC-IBM — pm4.txt, "Valid formats"]:
+Standard **format** names (string literals) [DOC-IBM - pm4.txt, "Valid formats"]:
 
 | Name | Meaning | Name | Meaning |
 |---|---|---|---|
@@ -267,10 +267,10 @@ Standard **format** names (string literals) [DOC-IBM — pm4.txt, "Valid formats
 | `DRF_OWNERDISPLAY` | Bit stream | | |
 
 A typical file drag advertises the single pair `<DRM_OS2FILE,DRF_UNKNOWN>`; a Workplace object
-advertises `<DRM_OBJECT,DRF_OBJECT>` [DOC-IBM — Toolkit samples `dragdrag.c`,
+advertises `<DRM_OBJECT,DRF_OBJECT>` [DOC-IBM - Toolkit samples `dragdrag.c`,
 `wsfolder.c`]. Unlike the `DRT_*`/`DRG_*`/`DM_*` families, the `DRM_*` and `DRF_*` names are
 **not `#define`d in `pmstddlg.h`**: they are string literals an application writes directly (or
-concatenates) into an RMF string [DOC-IBM — observed absent from `pmstddlg.h`; used as literals
+concatenates) into an RMF string [DOC-IBM - observed absent from `pmstddlg.h`; used as literals
 in the Toolkit samples].
 
 ---
@@ -292,7 +292,7 @@ All entry points are `APIENTRY`-linked. Prototypes are transcribed from
 `DrgDrag` fails if it cannot capture the mouse (e.g. another window on the thread already holds
 the capture). Before calling it the source must have obtained the `DRAGINFO` with
 `DrgAllocDraginfo` and initialized every `DRAGITEM` with `DrgSetDragitem`. It does not return
-until the drop occurs. [DOC-IBM — pm1.txt, `DrgDrag` Remarks]
+until the drop occurs. [DOC-IBM - pm1.txt, `DrgDrag` Remarks]
 
 ### Target-side access and rendering
 
@@ -300,7 +300,7 @@ until the drop occurs. [DOC-IBM — pm1.txt, `DrgDrag` Remarks]
 |---|---|---|
 | `DrgAccessDraginfo` | `BOOL APIENTRY DrgAccessDraginfo(PDRAGINFO pdinfo)` | Gain access, in the *target* process, to a `DRAGINFO` whose address arrived in a drag message. Paired with `DrgFreeDraginfo`. |
 | `DrgAllocDragtransfer` | `PDRAGTRANSFER APIENTRY DrgAllocDragtransfer(ULONG cdxfer)` | Allocate `cdxfer` `DRAGTRANSFER` control blocks for the conversation. |
-| `DrgSendTransferMsg` | `MRESULT APIENTRY DrgSendTransferMsg(HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2)` | Send a conversation message (`DM_RENDER`, `DM_RENDERCOMPLETE`, …) to the source window `hwnd`, arranging cross-process access to the `DRAGTRANSFER`. |
+| `DrgSendTransferMsg` | `MRESULT APIENTRY DrgSendTransferMsg(HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2)` | Send a conversation message (`DM_RENDER`, `DM_RENDERCOMPLETE`, ...) to the source window `hwnd`, arranging cross-process access to the `DRAGTRANSFER`. |
 | `DrgPostTransferMsg` | `BOOL APIENTRY DrgPostTransferMsg(HWND hwnd, ULONG msg, PDRAGTRANSFER pdxfer, ULONG fl, ULONG ulRsvd, BOOL fRetry)` | Post (rather than send) a transfer message. |
 | `DrgQueryDragitem` | `BOOL APIENTRY DrgQueryDragitem(PDRAGINFO pdinfo, ULONG cbBuffer, PDRAGITEM pditem, ULONG iItem)` | Copy item `iItem` out of the drag set into `*pditem`. |
 | `DrgQueryDragitemCount` | `ULONG APIENTRY DrgQueryDragitemCount(PDRAGINFO pdinfo)` | Number of items in the drag set (`cditem`). |
@@ -309,7 +309,7 @@ until the drop occurs. [DOC-IBM — pm1.txt, `DrgDrag` Remarks]
 On `DM_RENDER`, `DrgSendTransferMsg` clears `fsReply` first and, because the message conveys the
 `DRAGTRANSFER` to another process, calls `DosGiveSeg` to grant that process access and increments
 the segment use count; the receiving process must call `DrgFreeDragtransfer` before the segment
-can be released. [DOC-IBM — pm1.txt, `DrgSendTransferMsg` Remarks]
+can be released. [DOC-IBM - pm1.txt, `DrgSendTransferMsg` Remarks]
 
 ### RMF / type verification and queries
 
@@ -338,7 +338,7 @@ can be released. [DOC-IBM — pm1.txt, `DrgSendTransferMsg` Remarks]
 
 | Symbol | Prototype | Purpose |
 |---|---|---|
-| `DrgFreeDraginfo` | `BOOL APIENTRY DrgFreeDraginfo(PDRAGINFO pdinfo)` | Free a `DRAGINFO`. Fails with `PMERR_SOURCE_SAME_AS_TARGET` (`0x1502`) if the process that called `DrgDrag` calls it before `DrgDrag` returns — this stops the source freeing the block while its own target window is still using it. |
+| `DrgFreeDraginfo` | `BOOL APIENTRY DrgFreeDraginfo(PDRAGINFO pdinfo)` | Free a `DRAGINFO`. Fails with `PMERR_SOURCE_SAME_AS_TARGET` (`0x1502`) if the process that called `DrgDrag` calls it before `DrgDrag` returns - this stops the source freeing the block while its own target window is still using it. |
 | `DrgFreeDragtransfer` | `BOOL APIENTRY DrgFreeDragtransfer(PDRAGTRANSFER pdxfer)` | Free a `DRAGTRANSFER`. |
 | `DrgGetPS` / `DrgReleasePS` | `HPS APIENTRY DrgGetPS(HWND hwnd)` / `BOOL DrgReleasePS(HPS hps)` | Obtain / release a presentation space over a window *unlocked* for drawing target emphasis while a drag is in progress. |
 | `DrgSetDragPointer` | `BOOL APIENTRY DrgSetDragPointer(PDRAGINFO pdinfo, HPOINTER hptr)` | Change the drag pointer/image while the object is over a target. |
@@ -353,34 +353,34 @@ it, `DrgCancelLazyDrag` aborts it, `DrgLazyDrop` performs the drop, and `DrgQuer
 returns the current status (`DGS_DRAGINPROGRESS` `0x0001`, `DGS_LAZYDRAGINPROGRESS` `0x0002`
 [DOC-IBM `pmstddlg.h:707-708`]). Because it is non-modal, the drop is reported to the source by a
 posted `DM_DROPNOTIFY` rather than by a `DrgDrag` return value; `DM_DROPHELP` is not supported for
-lazy drag. [DOC-IBM — pm3.txt, `DM_DROP`/`DM_DROPNOTIFY`/`DM_DROPHELP` Remarks]
+lazy drag. [DOC-IBM - pm3.txt, `DM_DROP`/`DM_DROPNOTIFY`/`DM_DROPHELP` Remarks]
 
 ---
 
 ## 5. The message flow [DOC-IBM]
 
-Drag-and-drop messages occupy the range `WM_DRAGFIRST` (`0x0310`) … `WM_DRAGLAST` (`0x032f`)
+Drag-and-drop messages occupy the range `WM_DRAGFIRST` (`0x0310`) ... `WM_DRAGLAST` (`0x032f`)
 [DOC-IBM `pmstddlg.h:639-640`]. Message ids [DOC-IBM `pmstddlg.h:642-659`]:
 
 | Message | Value | Direction | Delivered when / carries |
 |---|---|---|---|
-| `DM_DRAGOVER` | `0x032e` | → target | Pointer is over the window; `mp1` = `PDRAGINFO`, `mp2` = drop point (`sxDrop`,`syDrop` as two `SHORT`s, desktop coords). Target *returns* `MRFROM2SHORT(usDrop, usDefaultOp)`. |
-| `DM_DRAGLEAVE` | `0x032d` | → target | Pointer left a window it had been dragged over; `mp1` = `PDRAGINFO`. Remove target emphasis. Not sent on a drop. |
-| `DM_DRAGOVERNOTIFY` | `0x0321` | → source | Sent to the source immediately after each `DM_DRAGOVER`; `mp2` = the target's (`usDrop`,`usDefaultOp`) reply, so the source can adapt its feedback. |
-| `DM_DROP` | `0x032f` | → target | The set was dropped (only if the target had answered `DOR_DROP`); `mp1` = `PDRAGINFO`. Target must remove emphasis and start the conversation. |
-| `DM_DROPNOTIFY` | `0x031e` | → source | Posted to the source after a drop; `mp1` = `PDRAGINFO`, `mp2` = `hwndTarget` (0 ⇒ drag cancelled). Tells the source whether it or the target must free the `DRAGINFO`. |
-| `DM_DROPHELP` | `0x032c` | → target | F1 pressed during the drag; the drag is cancelled and help is requested. `mp1` = `PDRAGINFO`. |
-| `DM_RENDER` | `0x0329` | target → source | Target requests the source render an object; `mp1` = `PDRAGTRANSFER`. Source returns `TRUE` (will render) or `FALSE` (see `fsReply`). |
-| `DM_RENDERCOMPLETE` | `0x0328` | source → target | Source posts this when rendering finished; `mp1` = `PDRAGTRANSFER` (same pointer), `mp2` = `usFS` (`DMFL_RENDEROK`/`DMFL_RENDERFAIL`/`DMFL_RENDERRETRY`). |
-| `DM_RENDERPREPARE` | `0x0327` | target → source | Sent before `DM_RENDER` when the item has `DC_PREPARE`; `mp1` = `PDRAGTRANSFER`. |
-| `DM_ENDCONVERSATION` | `0x032b` | target → source | Target ends the conversation for one item; `mp1` = `ulItemID`, `mp2` = `ulFlags` (`DMFL_TARGETSUCCESSFUL`/`DMFL_TARGETFAIL`). Lets the source release its resources. |
-| `DM_EMPHASIZETARGET` | `0x0325` | → target | Request to apply/remove target emphasis; `mp1` = (`sx`,`sy`) window coords, `mp2` low = `usEmphasis` (TRUE apply / FALSE remove). |
-| `DM_RENDERFILE` | `0x0322` | → `DrgDragFiles` caller | Render one file; `mp1` = `PRENDERFILE`. Return `TRUE` (handled) or `FALSE` (let `DrgDragFiles` do it). |
-| `DM_FILERENDERED` | `0x0323` | → `hwndDragFiles` | A file's render completed. |
-| `DM_DRAGFILECOMPLETE` | `0x0326` | → `DrgAcceptDroppedFiles` caller | One file's move/copy completed; `mp2` low = flags (`DF_MOVE 0x0001`, `DF_SOURCE 0x0002`, `DF_SUCCESSFUL 0x0004` [DOC-IBM `pmstddlg.h:730-732`]). |
-| `DM_DRAGERROR` | `0x0324` | → caller | Error during a file move/copy; the caller returns `DME_IGNOREABORT`(1)/`DME_IGNORECONTINUE`(2)/`DME_REPLACE`(3)/`DME_RETRY`(4) [DOC-IBM `pmstddlg.h:725-728`]. |
-| `DM_PRINT` / `DM_PRINTOBJECT` | `0x032a` / `0x0320` | → target | Print-mechanism drop. |
-| `DM_DISCARDOBJECT` | `0x031f` | → target | Object dropped on a shredder/discard target. |
+| `DM_DRAGOVER` | `0x032e` | -> target | Pointer is over the window; `mp1` = `PDRAGINFO`, `mp2` = drop point (`sxDrop`,`syDrop` as two `SHORT`s, desktop coords). Target *returns* `MRFROM2SHORT(usDrop, usDefaultOp)`. |
+| `DM_DRAGLEAVE` | `0x032d` | -> target | Pointer left a window it had been dragged over; `mp1` = `PDRAGINFO`. Remove target emphasis. Not sent on a drop. |
+| `DM_DRAGOVERNOTIFY` | `0x0321` | -> source | Sent to the source immediately after each `DM_DRAGOVER`; `mp2` = the target's (`usDrop`,`usDefaultOp`) reply, so the source can adapt its feedback. |
+| `DM_DROP` | `0x032f` | -> target | The set was dropped (only if the target had answered `DOR_DROP`); `mp1` = `PDRAGINFO`. Target must remove emphasis and start the conversation. |
+| `DM_DROPNOTIFY` | `0x031e` | -> source | Posted to the source after a drop; `mp1` = `PDRAGINFO`, `mp2` = `hwndTarget` (0 => drag cancelled). Tells the source whether it or the target must free the `DRAGINFO`. |
+| `DM_DROPHELP` | `0x032c` | -> target | F1 pressed during the drag; the drag is cancelled and help is requested. `mp1` = `PDRAGINFO`. |
+| `DM_RENDER` | `0x0329` | target -> source | Target requests the source render an object; `mp1` = `PDRAGTRANSFER`. Source returns `TRUE` (will render) or `FALSE` (see `fsReply`). |
+| `DM_RENDERCOMPLETE` | `0x0328` | source -> target | Source posts this when rendering finished; `mp1` = `PDRAGTRANSFER` (same pointer), `mp2` = `usFS` (`DMFL_RENDEROK`/`DMFL_RENDERFAIL`/`DMFL_RENDERRETRY`). |
+| `DM_RENDERPREPARE` | `0x0327` | target -> source | Sent before `DM_RENDER` when the item has `DC_PREPARE`; `mp1` = `PDRAGTRANSFER`. |
+| `DM_ENDCONVERSATION` | `0x032b` | target -> source | Target ends the conversation for one item; `mp1` = `ulItemID`, `mp2` = `ulFlags` (`DMFL_TARGETSUCCESSFUL`/`DMFL_TARGETFAIL`). Lets the source release its resources. |
+| `DM_EMPHASIZETARGET` | `0x0325` | -> target | Request to apply/remove target emphasis; `mp1` = (`sx`,`sy`) window coords, `mp2` low = `usEmphasis` (TRUE apply / FALSE remove). |
+| `DM_RENDERFILE` | `0x0322` | -> `DrgDragFiles` caller | Render one file; `mp1` = `PRENDERFILE`. Return `TRUE` (handled) or `FALSE` (let `DrgDragFiles` do it). |
+| `DM_FILERENDERED` | `0x0323` | -> `hwndDragFiles` | A file's render completed. |
+| `DM_DRAGFILECOMPLETE` | `0x0326` | -> `DrgAcceptDroppedFiles` caller | One file's move/copy completed; `mp2` low = flags (`DF_MOVE 0x0001`, `DF_SOURCE 0x0002`, `DF_SUCCESSFUL 0x0004` [DOC-IBM `pmstddlg.h:730-732`]). |
+| `DM_DRAGERROR` | `0x0324` | -> caller | Error during a file move/copy; the caller returns `DME_IGNOREABORT`(1)/`DME_IGNORECONTINUE`(2)/`DME_REPLACE`(3)/`DME_RETRY`(4) [DOC-IBM `pmstddlg.h:725-728`]. |
+| `DM_PRINT` / `DM_PRINTOBJECT` | `0x032a` / `0x0320` | -> target | Print-mechanism drop. |
+| `DM_DISCARDOBJECT` | `0x031f` | -> target | Object dropped on a shredder/discard target. |
 
 ### `DM_DRAGOVER` responses [DOC-IBM `pmstddlg.h:680-683`; pm3.txt]
 
@@ -389,9 +389,9 @@ operation** (`usDefaultOp`):
 
 | `usDrop` | Value | Meaning |
 |---|---|---|
-| `DOR_NODROP` | `0x0000` | Not droppable *right now*; the target could accept this type/format/op but its current state forbids it — state may change, so `DM_DRAGOVER` keeps coming. |
+| `DOR_NODROP` | `0x0000` | Not droppable *right now*; the target could accept this type/format/op but its current state forbids it - state may change, so `DM_DRAGOVER` keeps coming. |
 | `DOR_DROP` | `0x0001` | Droppable. `usDefaultOp` must be set to the operation a drop would perform here. |
-| `DOR_NODROPOP` | `0x0002` | Type/format acceptable but the *operation* is not; a different operation might be accepted — no further `DM_DRAGOVER` until the drag state changes. |
+| `DOR_NODROPOP` | `0x0002` | Type/format acceptable but the *operation* is not; a different operation might be accepted - no further `DM_DRAGOVER` until the drag state changes. |
 | `DOR_NEVERDROP` | `0x0003` | Never acceptable; no further `DM_DRAGOVER` until the pointer leaves and re-enters the window. This is what `WinDefWindowProc` returns. |
 
 The **operation** (`usDefaultOp`, and `DRAGINFO.usOperation`) values [DOC-IBM `pmstddlg.h:698-704`]:
@@ -404,16 +404,16 @@ The **operation** (`usDefaultOp`, and `DRAGINFO.usOperation`) values [DOC-IBM `p
 | `DO_CREATE` | `0x0040` | Create (from a template). |
 | `DO_CREATEPROGRAMOBJECT` | `0x0080` | Create a program object. |
 | `DO_DEFAULT` | `0xBFFE` | Use the target-defined default (target fills `usDefaultOp`). |
-| `DO_UNKNOWN` | `0xBFFF` | Operation not known. Application-defined operations use values `≥ DO_UNKNOWN`. |
+| `DO_UNKNOWN` | `0xBFFF` | Operation not known. Application-defined operations use values `>= DO_UNKNOWN`. |
 
 The book additionally documents `DO_NEW` ("create another"), to be treated as `DO_UNKNOWN+3`
 where the toolkit level does not recognize it; it is not `#define`d in this header
-[DOC-IBM — pm3.txt, `DM_DRAGOVER` `usDefaultOp`; absent from `pmstddlg.h`]. When
+[DOC-IBM - pm3.txt, `DM_DRAGOVER` `usDefaultOp`; absent from `pmstddlg.h`]. When
 `DRAGINFO.usOperation` is `DO_DEFAULT` or `DO_UNKNOWN` and the target returns `DOR_DROP`, the
 `usDefaultOp` it supplies becomes the `usOperation` delivered in the subsequent `DM_DROP`;
-otherwise `usDefaultOp` is ignored. [DOC-IBM — pm3.txt, `DM_DRAGOVER` Remarks]
+otherwise `usDefaultOp` is ignored. [DOC-IBM - pm3.txt, `DM_DRAGOVER` Remarks]
 
-### When `DM_DRAGOVER` is sent [DOC-IBM — pm3.txt, `DM_DRAGOVER` Remarks]
+### When `DM_DRAGOVER` is sent [DOC-IBM - pm3.txt, `DM_DRAGOVER` Remarks]
 
 `DM_DRAGOVER` is sent to the window under the pointer hot spot each time the mouse moves, each
 time a key is pressed or released, and on the terminating button-up (only if the mouse moved
@@ -427,8 +427,8 @@ to remove it.
 ## 6. The post-drop conversation and rendering [DOC-IBM]
 
 The drop does **not** transfer data. On `DM_DROP` the target must first remove target emphasis
-and *post a private message to itself* to start the transfer — data must not be moved while
-still inside the `DM_DROP` handler. [DOC-IBM — pm3.txt, `DM_DROP` Remarks] The conversation then
+and *post a private message to itself* to start the transfer - data must not be moved while
+still inside the `DM_DROP` handler. [DOC-IBM - pm3.txt, `DM_DROP` Remarks] The conversation then
 proceeds per object:
 
 1. The target picks an RMF pair supported by both sides (`DrgVerifyRMF`), records it in a
@@ -446,7 +446,7 @@ proceeds per object:
 
    If no flag is set, the source refuses to render the object.
 3. When the source finishes it posts **`DM_RENDERCOMPLETE`** with `usFS` = `DMFL_RENDEROK`
-   (success), `DMFL_RENDERFAIL` (failed — target may retry), and/or `DMFL_RENDERRETRY` (source
+   (success), `DMFL_RENDERFAIL` (failed - target may retry), and/or `DMFL_RENDERRETRY` (source
    will allow a retry). After success or failure the source returns to its pre-drop state so a
    retry is possible.
 4. The **target** ends each object's conversation with **`DM_ENDCONVERSATION`**
@@ -457,14 +457,14 @@ proceeds per object:
    `hwndTarget`. If source and target are **different processes**, the source frees the
    `DRAGINFO` (its target has finished with it); if source and target are the **same**, the
    target frees it after the conversation completes. `DrgFreeDraginfo` from the drag-initiating
-   process before `DrgDrag` returns fails with `PMERR_SOURCE_SAME_AS_TARGET`. [DOC-IBM — pm3.txt
+   process before `DrgDrag` returns fails with `PMERR_SOURCE_SAME_AS_TARGET`. [DOC-IBM - pm3.txt
    `DM_DROP`/`DM_DROPNOTIFY` Remarks; pm1.txt `DrgFreeDraginfo` Remarks]
 
 `WinDefWindowProc` default handling matters here: for `DM_DROP` and `DM_DROPHELP` it calls
 `DrgDeleteDraginfoStrHandles` + `DrgFreeDraginfo` and returns 0; for `DM_DRAGOVER` it returns
 `DOR_NEVERDROP`; for `DM_RENDERCOMPLETE` it sends a failing `DM_ENDCONVERSATION` back to
 `hwndItem` so the source can release resources. A window that means to participate in drag-and-
-drop must therefore handle these messages itself rather than defer to the default. [DOC-IBM —
+drop must therefore handle these messages itself rather than defer to the default. [DOC-IBM -
 pm3.txt, per-message "Default Processing"]
 
 ---
@@ -475,13 +475,13 @@ pm3.txt, per-message "Default Processing"]
 would land. Because the source holds the mouse capture and the window is otherwise locked during a
 drag, a target draws emphasis on a presentation space obtained from **`DrgGetPS`** (and released
 with **`DrgReleasePS`**), which unlocks the window for this drawing; it must not use an ordinary
-`WinGetPS` [DOC-IBM — pm1.txt, `DrgGetPS`; pm4.txt "In order to draw target emphasis, an
+`WinGetPS` [DOC-IBM - pm1.txt, `DrgGetPS`; pm4.txt "In order to draw target emphasis, an
 application must use DrgGetPS and DrgReleasePS to unlock its window"]. Emphasis is applied on
 `DM_DRAGOVER`/`DM_EMPHASIZETARGET` and removed on `DM_DRAGLEAVE` or `DM_DROP`.
 
 The container control (`WC_CONTAINER`) implements richer emphasis automatically and forwards drag
-activity to its owner as `WM_CONTROL` notifications — `CN_DRAGOVER` (103), `CN_DRAGAFTER` (101),
-`CN_DRAGLEAVE` (102), `CN_DROP`, `CN_DROPHELP` — carrying a `CNRDRAGINFO`; whether it draws
+activity to its owner as `WM_CONTROL` notifications - `CN_DRAGOVER` (103), `CN_DRAGAFTER` (101),
+`CN_DRAGLEAVE` (102), `CN_DROP`, `CN_DROPHELP` - carrying a `CNRDRAGINFO`; whether it draws
 record-surrounding, ordered (a line between items), or mixed emphasis depends on the
 `CA_ORDEREDTARGETEMPH` / `CA_MIXEDTARGETEMPH` container attributes and the current view. [DOC-IBM
 `pmstddlg.h:1379-1381, 1489-1493`; pm3.txt/pm4.txt container sections] The container drag surface
@@ -512,10 +512,10 @@ All values from `pmstddlg.h` unless noted.
 ---
 
 ## See also
-- `pm-window-messaging.md` — the window/message model these `DM_*` messages ride on; `WM_BEGINDRAG`
+- `pm-window-messaging.md` - the window/message model these `DM_*` messages ride on; `WM_BEGINDRAG`
   (`0x0420`), the mouse message that conventionally starts a drag.
-- `pm-controls.md` — the container control (`WC_CONTAINER`) and its `CN_DRAG*`/`CN_DROP`
+- `pm-controls.md` - the container control (`WC_CONTAINER`) and its `CN_DRAG*`/`CN_DROP`
   notifications and ordered/mixed target emphasis.
-- `memory-api.md` — `DosGiveSharedMem` / `OBJ_GIVEABLE`, the giveable shared-memory object (the
+- `memory-api.md` - `DosGiveSharedMem` / `OBJ_GIVEABLE`, the giveable shared-memory object (the
   32-bit equivalent of the 16-bit `DosGiveSeg`) that a source uses to hand `DRAGTRANSFER` data to
   another process.
