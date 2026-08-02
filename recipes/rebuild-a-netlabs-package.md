@@ -233,7 +233,10 @@ defaults (`gcc -print-search-dirs`) and passes it down:
 | `-dn` | silently misparsed by `cc1` as a debugging option |
 
 So through gcc, `-static` is the one that selects the static order; pass the rest to the linker
-directly (`-Wl,`) or invoke `emxomfld` yourself. `-Bstatic` is the trap — it neither errors nor works.
+directly with `-Wl,` — which is measured, not assumed: with only `zz7.dll` present, `-lzz7` fails
+(`.dll` is not in the default list) while `gcc -Zomf -Wl,-Zdll-search … -lzz7` **links**, and
+`-Wl,-non_shared` reports `zznothing.a`, the static list's last suffix. `-Bstatic` is the trap — it
+neither errors nor works.
 
 `_s.a` is merely the **last** candidate. On failure `find_lib()` leaves that last constructed name in
 the buffer, and weakld prints it when it cannot open it `[SRC]`
@@ -243,9 +246,9 @@ is not a statement about formats. (The build directory being searched first also
 `foo.lib` sitting in your tree silently outranks the packaged one.) Two consequences that follow from the table:
 
 - **OMF import libraries resolve fine.** `.lib` is tried *before* `_s.a`, so `-lfoo` finds `foo.lib`,
-  and `LDFLAGS="-Zomf" … -lmmpm2` works once the Toolkit import libraries are on the `LIB` path
-  (packaged as `os2tk45-libs` `[unverified]` — the search behaviour is what was tested, not the
-  package name). Measured four ways: with only `zztest.lib` present and no
+  and `LDFLAGS="-Zomf" … -lmmpm2` works once the Toolkit import libraries are on the `LIB` path.
+  Those come from **`os2tk45-libs`** in `netlabs-rel` — `yum -C provides '*/mmpm2.lib'` names that
+  package directly. Measured four ways: with only `zztest.lib` present and no
   `.a` of any name, `gcc -Zomf t.c -L. -lzztest` links and the `.exe` runs; a *deliberately corrupt*
   `.lib` fails inside `emxomf` ("is not an a.out file"), proving the file is opened rather than
   skipped; a valid `.lib` beside a corrupt `_s.a` links; and a corrupt `.lib` beside a valid `_s.a`
@@ -294,6 +297,11 @@ commit touching those lines in this tree, so do not assume the release note was 
 
 **d. ncurses splits the termcap entry points into `tinfo.lib`.** Linking only `ncurses.lib` leaves
 `tgetent`/`tgetstr`/`tgetflag`/`tgetnum`/`tputs`/`tgoto`/`PC`/`BC`/`UP` undefined. Link **both**.
+Confirmed against the shipped DLLs: an import library generated with `emximp` from `ncurses6.dll`
+carries `initscr` and *none* of the termcap entry points, while one from `tinfo6.dll` carries
+`tgetent`, `tgetflag`, `tputs` and `tgoto` and no `initscr`. (Probe note: `strings` on such a library
+emits names tab-prefixed, so match on substring — an anchored `grep -x` finds nothing and looks like
+proof of absence.)
 (A cryptic `sed -i -e 's/tinfo//'` in a spec file is usually a hint that this bit the packager too.)
 
 Install the devel packages first: `yum -y install ncurses-devel libcx-devel`. Note this pulls ncurses
