@@ -51,15 +51,34 @@ long as `configure` was produced — check for the file rather than trusting the
 
 ## 3. The four OS/2 configure failures, in the order you will hit them *(OS/2)*
 
+> **Everything measured in this section was measured on one machine:** OS/2 Warp Server for
+> e-business 4.50, Convenience Pack 2 (`SYSLEVEL.OS2` reports `XR04503`), with the netlabs/RPM
+> userland, GCC 9.2.0 (kLIBC) and autoconf 2.71-generated `configure` scripts.
+>
+> **ArcaOS may not match, and none of this was tested there.** A distribution that preconfigures its
+> own userland can differ in exactly the three facts this section leans on. Check your own box before
+> assuming — each is one line:
+>
+> ```sh
+> ls -d /bin && /bin/sh -c 'echo yes'      # a: is /bin/sh already there?  (absent here)
+> ls -l /@unixroot/usr/bin/gcc             # b: extensionless, or only gcc.exe?  (only .exe here)
+> rpm --eval '%{_prefix}'                  # config.site path  (/@unixroot/usr here)
+> ```
+>
+> If `/bin/sh` already runs on your box, **a** is already solved for you and autoconf's separator
+> probe in **b** will work by itself — leaving `ac_executable_extensions` as the only thing to set.
+> The mechanisms below hold regardless; which remedies you need does not. `[unverified]` on ArcaOS.
+
 **a. There is no `/bin/sh`.** Configure dies running `support/config.sub`:
 
 ```
 configure: error: cannot run /bin/sh ././support/config.sub
 ```
 
-There is no `/bin` **directory** at all on a stock box, and kLIBC does not alias it to `/usr/bin`.
-Checked on WSEB 4.50: `test -d /bin` false, `ls -d /bin` "No such file", `/bin/sh -c …` "not found",
-and no `/bin` special-casing in kLIBC's path resolution. Two ways out. Per build:
+On the box above there is no `/bin` **directory** at all, and kLIBC does not alias it to `/usr/bin`:
+`test -d /bin` false, `ls -d /bin` "No such file", `/bin/sh -c …` "not found", and no `/bin`
+special-casing in kLIBC's path resolution. **Check yours first** — a distribution that ships `/bin`
+has already fixed this, and the rest of **a** does not apply. Two ways out. Per build:
 
 ```sh
 SH=/@unixroot/usr/bin/sh.exe
@@ -132,9 +151,8 @@ it uses `$ac_default_prefix` instead (usually `/usr/local`, or whatever the pack
 export CONFIG_SITE=/@unixroot/usr/share/config.site
 ```
 
-Measured on OS/2 Warp Server for e-business 4.50 (CP2, `XR04503`) with the netlabs/RPM GCC 9.2,
-running a generated `configure` containing only `AC_PROG_CC`, `AC_PROG_GREP`, `AC_PROG_SED`,
-`AC_PROG_AWK`:
+Measured on the box named at the top of this section, running a generated `configure` containing only
+`AC_PROG_CC`, `AC_PROG_GREP`, `AC_PROG_SED`, `AC_PROG_AWK`:
 
 | `PATH_SEPARATOR=';'` | `ac_executable_extensions='.exe'` | `/bin/sh` exists | result |
 |---|---|---|---|
@@ -227,7 +245,7 @@ is not a statement about formats. (The build directory being searched first also
 - **OMF import libraries resolve fine.** `.lib` is tried *before* `_s.a`, so `-lfoo` finds `foo.lib`,
   and `LDFLAGS="-Zomf" … -lmmpm2` works once the Toolkit import libraries are on the `LIB` path
   (packaged as `os2tk45-libs` `[unverified]` — the search behaviour is what was tested, not the
-  package name). Measured on WSEB 4.50 / GCC 9.2, four ways: with only `zztest.lib` present and no
+  package name). Measured four ways: with only `zztest.lib` present and no
   `.a` of any name, `gcc -Zomf t.c -L. -lzztest` links and the `.exe` runs; a *deliberately corrupt*
   `.lib` fails inside `emxomf` ("is not an a.out file"), proving the file is opened rather than
   skipped; a valid `.lib` beside a corrupt `_s.a` links; and a corrupt `.lib` beside a valid `_s.a`
