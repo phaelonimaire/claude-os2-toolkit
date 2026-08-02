@@ -429,6 +429,39 @@ live object [DOC-IBM `pmwp.h:52`].
 | `WinQueryObject` | `HOBJECT WinQueryObject(PSZ pszObjectID)` [`:150-152`] | Resolve an object-ID string (e.g. `"<WP_DESKTOP>"`) to a handle. |
 | `WinDestroyObject` / `WinSaveObject` / `WinOpenObject` | see `pmwp.h:147/155/158` | Destroy / persist / open a view of an object. |
 
+### `WinOpenObject`'s view constants — and the header that is not there [OBS-RE]
+
+`WinOpenObject(hObject, ulView, fFlag)` opens one *view* of an object. The view constants
+(`OPEN_DEFAULT`, `OPEN_CONTENTS`, `OPEN_SETTINGS`, `OPEN_DETAILS`, `OPEN_TREE`, `OPEN_HELP`,
+`OPEN_RUNNING`, `OPEN_PROMPTDLG`, `OPEN_PALETTE`, `OPEN_USER`) are documented by **name and meaning**
+in `wps2.txt` under `wpOpen` — but their **values** live in the Toolkit header `wpobject.h`, which
+kLIBC's `os2emx.h` does not ship. Grepping the installed headers finds nothing and reads as "no such
+constant", which is the [OBS-RE] trap this corpus keeps warning about.
+
+Two values established here rather than guessed:
+
+| Constant | Value | How established |
+|---|---|---|
+| `OPEN_DEFAULT` | `0` | Toolkit `wpobject.h:200` |
+| `OPEN_SETTINGS` | `2` | **Measured** — a probe called `WinOpenObject` with successive view numbers; `2` is the one that raised the object's *Settings* notebook, titled "*name* - Properties" |
+
+If you need one of the others and have no Toolkit to hand, the same probe settles it in a minute:
+resolve a file with `WinQueryObject`, call `WinOpenObject` with a candidate number, and screenshot
+what appears. `WinOpenObject` returns `TRUE` for every number tried, so the return value tells you
+nothing — only the window that opens does.
+
+**Porting note.** The settings notebook is the OS/2 answer to a Win32 shell **property sheet**
+(`SHObjectProperties`): same information, same role, reached by asking the shell for the object and
+naming the view.
+
+```c
+HOBJECT hobj = WinQueryObject((PCSZ)pszFullPath);
+if (hobj != NULLHANDLE)
+    WinOpenObject(hobj, OPEN_SETTINGS, TRUE);
+```
+
+`WinQueryObject` takes a **path** as well as an object ID, so a plain file needs no special handling.
+
 `WinCreateObject`'s `ulFlags` selects the collision policy: `CO_FAILIFEXISTS` (`0`),
 `CO_REPLACEIFEXISTS` (`1`), `CO_UPDATEIFEXISTS` (`2`) [DOC-IBM `pmwp.h:135-137`]. The `pszLocation`
 is a folder object ID or the special `LOCATION_DESKTOP` (`(PSZ)0xFFFF0001`) [DOC-IBM
