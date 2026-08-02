@@ -262,10 +262,14 @@ So the real diagnosis is almost always a **name**, not a format. `ls /@unixroot/
 readline case there was nothing named `curses*` that the default search would take. Two separate
 reasons, and both are worth checking on your own box:
 
-- **ncurses may not be installed at all.** It is *not* part of the base tree. On the machine here
-  `rpm -q --qf '%{INSTALLTIME:date}'` dates the base packages to 2015 and `ncurses`,
-  `ncurses-base` and `ncurses-libs` to **late 2025** — pulled in later, years after `readline`
-  itself. Do not assume it, or its header/import-library half: `rpm -qa | grep -i ncurses`.
+- **ncurses may not be installed at all.** It is a real netlabs package — `ncurses-devel` is in
+  **`netlabs-rel`** (`yum -C list available ncurses-devel` finds `5.7-4`, `5.9-1` and `6.4-1.oc00`),
+  and the installed copies are bitwiseworks builds, same vendor and build host as `readline`. But
+  being *available* is not being *present*: on the machine here
+  `rpm -q --qf '%{INSTALLTIME:date}'` dates the base packages to 2015 and `ncurses`, `ncurses-base`
+  and `ncurses-libs` to **late 2025**, pulled in years after `readline` itself. How much a given box
+  already has depends entirely on what has been installed on it, so check rather than assume:
+  `rpm -qa | grep -i ncurses`.
 - **Even with it installed, `-lcurses` still fails** — `ncurses-libs` ships `libcurses.dll`, and
   `.dll` is not in the default suffix list (see the table; it needs `-Zdll-search`). What `-l`
   wants is the import library from **`ncurses-devel`**, which is a separate package.
