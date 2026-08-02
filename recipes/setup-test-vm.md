@@ -44,6 +44,12 @@ Consequences, in order of usefulness:
    built binaries coming back out. This is the reliable path and it needs no network at all.
 2. **If you must copy over SSH, verify it.** Split into chunks (~128 KB) and check each with
    `md5sum`/`cksum` on both sides. A transfer that "succeeded" is not evidence the bytes match.
+
+   A measured instance, for calibration: pulling a **3,177,090-byte** `.exe` off the guest with
+   `scp` produced a **262,144-byte** file - exactly 256 KB - and closed with `scp: Connection
+   closed`. The size is suspiciously round, so a truncation here looks like a buffer boundary
+   rather than a random drop, and 256 KB is well under most people's idea of "large". Source files
+   (tens of KB) went over the same link all session without trouble.
 3. **Keep SSH for what it is good at** - interactive commands, builds, reading output. Those are
    small and work fine.
 
@@ -352,6 +358,20 @@ particularly nasty variant of the honest-failure problem, because everything dow
 and simply reflects stale code. Kill the running copy before re-binding, and check that the `.exe`
 timestamp actually moved.
 
+**The lock is narrower than "you cannot build while it runs", though** [OBS-RE]. Measured on Warp
+Server with an app running from a shared-folder drive: the *compile and link* wrote
+`/tmp/build/app.exe` fine and reported success, and `wrc` re-bound resources into that same file
+fine  -  what failed was **copying the finished binary over the running one**:
+
+```
+cp: cannot create regular file 'F:/proj/app.exe': Permission denied
+```
+
+So the failure can surface a step later than expected, in the deploy rather than the build. Check
+the exit status of the *copy*, not only of the build, and confirm the destination's size or
+checksum changed. Two files with the same name in different directories is the situation that makes
+this confusing: one is locked, the other is not.
+
 ### Harness discipline for anything that spawns a program [OBS-RE]
 
 Each of these was paid for with a runaway that had to be killed by hand:
@@ -392,7 +412,28 @@ Gotchas (OS/2/kLIBC SSH):
 - Set `BEGINLIBPATH` so the app finds non-standard DLLs: `export BEGINLIBPATH=/path/to/dlls`.
 
 ## Scripting on the VM - CMD.EXE is limited; prefer sh/REXX
-The kLIBC `sh.exe` (ash) over SSH is the easy path. If you must use the native OS/2 `CMD.EXE` (a
+The kLIBC `sh.exe` (ash) over SSH is the easy path - but **it is ash, not bash** [OBS-RE].
+`${PIPESTATUS[0]}` fails outright with
+
+```
+sh.exe: 6: Bad substitution
+```
+
+and that aborts the rest of the remote script, so a build step you meant to check silently never
+runs. Since the whole point of a remote build is capturing the compiler's exit status, redirect and
+read `$?` directly instead of piping:
+
+```sh
+g++ ... -o out.o > /tmp/build.log 2>&1
+echo "EXIT=$?"
+tail -20 /tmp/build.log
+```
+
+The same trap applies **on the host side**: `scp ... | tail` reports `tail`'s status, not the
+transfer's, so a failed copy reads as success. Never take an exit code through a pipe when it is
+the thing you are testing.
+
+If you must use the native OS/2 `CMD.EXE` (a
 `.cmd` batch), it is **not** the NT `cmd.exe` - none of these work: `SETLOCAL`/`ENDLOCAL`,
 `CALL :label` internal subroutines, `%~dp0` (tilde arg modifiers), `2>&1` redirection, single-line
 `IF ... ELSE`. `del *` prompts for confirmation, and a `>nul` guard doesn't suppress errors the NT way

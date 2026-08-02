@@ -242,6 +242,68 @@ typedef struct _DLGTEMPLATE {  /* dlgt */
 > silent - the dialog renders with wrong glyphs rather than failing. A PM process has three
 > independent code-page scopes (process / queue / GPI); see `unicode-conversion.md` section 9.1.
 
+### Resizable dialogs [OBS-RE]
+
+A PM dialog does **not** reflow. Add `FCF_SIZEBORDER` and the user can drag the border, but every
+control stays exactly where the template put it, so the dialog must lay itself out. Four things make
+the obvious implementation wrong, and the first is the one that wastes a day.
+
+**1. A dialog is never sent `WM_SIZE`.** Hanging the layout off `WM_SIZE` means it never runs at
+all. A message trace of a dialog through a full resize drag shows `WM_ADJUSTWINDOWPOS`,
+`WM_WINDOWPOSCHANGED`, `WM_FORMATFRAME` and `WM_PAINT`, repeating per mouse-move - and no `WM_SIZE`.
+
+The books do say the default window procedure turns `SWP_SIZE` into a `WM_SIZE` [DOC-IBM -
+`pm3.txt`, *WM_WINDOWPOSCHANGED - Default Processing*], and that is true of **`WinDefWindowProc`**.
+A dialog runs **`WinDefDlgProc`**, which does not. Handle `WM_WINDOWPOSCHANGED`; handling `WM_SIZE`
+as well costs nothing.
+
+**2. Do not swallow the message.** A dialog *is* a frame window, and "the frame control window
+procedure responds to this message by sending a `WM_FORMATFRAME` message to itself" [DOC-IBM -
+`pm3.txt`, *WM_SIZE (in Frame Controls) - Default Processing*]. `WM_FORMATFRAME` is what positions
+the frame's own controls - **the title bar and the sizing border among them**. A handler that
+returns `0` instead of calling `WinDefDlgProc` suppresses the frame's entire layout, and the symptom
+is not subtle: the window loses its border, stops being resizable, and its buttons vanish. Call the
+default procedure **first**, then position your own controls on the geometry it settled on.
+
+**3. Anchor by MARGIN, not by delta.** Record each control's distance to each dialog edge once, in
+`WM_INITDLG`, then recompute absolute positions from those margins on every resize:
+
+```c
+/* captured once: l = swp.x, b = swp.y,
+                  r = dlgCx - (swp.x + swp.cx), t = dlgCy - (swp.y + swp.cy) */
+if (anchoredLeft && anchoredRight) { x = l; cx = dlgCx - l - r; }   /* stretches */
+else if (anchoredRight)            { cx = keptWidth; x = dlgCx - r - cx; }  /* rides */
+/* vertical is the same, but bottom-left origin means the TOP anchor is the high edge */
+```
+
+This is idempotent - it lands in the same place however many messages were missed or in what order -
+and it sidesteps the dialog-units problem entirely, because the margins are measured from live
+`WinQueryWindowPos` values in pels and the template's own numbers are never read. (The template is
+in **dialog units**; `WinSetWindowPos` takes **pels**. `WinMapDlgPoints` converts if you need them.)
+
+A delta-based version - track the last size, apply the difference - looks simpler and is not: it
+accumulates state across messages, and one missed or re-baselined event corrupts every position
+after it.
+
+**4. Move everything in one `WinSetMultWindowPos`.** Positioned one at a time, controls lay out and
+repaint in sequence, so a drag shows each one briefly against the others' old positions - labels and
+borders visibly jumping before they settle. The batch call applies the layout as a unit; that is what
+it is for [DOC-IBM - `pm2.txt`, *WinSetMultWindowPos*]. Skip the layout when only the position
+changed: `WM_WINDOWPOSCHANGED` fires per mouse-move while the title bar is dragged, and the margins
+would produce the same answer.
+
+Finally, put **`WS_CLIPCHILDREN` in the `DIALOG` statement's window-style field** - the field left
+blank on fixed-size dialogs, between the size and the `FCF_*` flags:
+
+```
+DIALOG "Browse", IDD_BROWSE, 20, 20, 360, 220, WS_CLIPCHILDREN, FCF_TITLEBAR | FCF_SYSMENU | FCF_SIZEBORDER
+```
+
+Without it the dialog paints its background over the controls during the resize repaint. Moving a
+control also repaints neither what it uncovered nor what it landed on, so finish with
+`WinInvalidateRect` plus whatever the control needs to re-flow its own contents - a `WC_CONTAINER`
+wants `CM_INVALIDATERECORD` with `CMA_ERASE | CMA_REPOSITION` or its records keep the old columns.
+
 ### `DLGTITEM` - one control [DOC-IBM `pmwin.h:1882-1898`]
 
 ```c
@@ -829,6 +891,20 @@ Same shape: `FONTDLG` (`pmstddlg.h:285`), `FNTS_*` style flags (`pmstddlg.h:326-
 `FNTS_VECTORONLY` `0x200`, `FNTS_FIXEDWIDTHONLY` `0x400`, `FNTS_PROPORTIONALONLY` `0x800`), and
 `FNTS_ERR_*` results (`pmstddlg.h:372-376`). Font selection itself - `FATTRS`, `FONTMETRICS`,
 point sizes - is in `gpi-fonts-and-metafiles.md`.
+
+> **Two ways to get nothing back from it** [OBS-RE]:
+>
+> - **`FNTS_INITFROMFATTRS` (`0x80`) means "seed the dialog from `fd.fAttrs`".** Set the flag
+>   without filling `fAttrs` - easy to do, since the struct is usually `memset` to zero first - and
+>   the dialog opens from an empty `FATTRS` with `usRecordLength` 0 rather than from the current
+>   font. Either fill `fAttrs` properly or drop the flag and let it seed from `pszFamilyname` +
+>   `fxPointSize`, which are ordinary in/out fields.
+> - **`pszFamilyname` and `fAttrs.szFacename` are not the same string.** The dialog writes the
+>   selected **family** back into the `pszFamilyname` buffer (sized by `usFamilyBufLen`), while
+>   `fAttrs.szFacename` is the **face** - "Courier Bold" where the family is "Courier". Handing a
+>   face name onward as a family does not match, and the silent substitution described in
+>   `gpi-fonts-and-metafiles.md` section 2.1 then renders a different font entirely. Read the family from
+>   `pszFamilyname`.
 
 ---
 

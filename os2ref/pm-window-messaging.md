@@ -415,6 +415,58 @@ Provenance: **[DOC-IBM]** `pmwin.h:335-341, 454-455, 469-485, 540-570`.
 > land mirrored rather than erroring. In a `RECTL`, `yBottom < yTop`, the opposite of Win32's `RECT`.
 > Full rule, including the `RECTL` +/-32767 field-range limit: `gpi-drawing.md` section "Coordinate origin".
 
+### Saving and restoring a window's geometry [OBS-RE]
+
+Persisting "where the window was" needs three things a naive `WinQueryWindowPos` → INI → 
+`WinSetWindowPos` round trip gets wrong.
+
+**1. A maximized frame reports its MAXIMIZED rectangle.** Save that as the geometry and the window
+"restores" to full screen for ever after  -  the real size is gone. `swp.fl` carries `SWP_MAXIMIZE`
+(`0x0800`) / `SWP_MINIMIZE` (`0x0400`) [`pmwin.h:477-479`], so save the *state* separately and keep
+the normal geometry yourself: track it on each `WM_SIZE` where neither bit is set. On restore,
+apply the normal geometry **first**, then `SWP_MAXIMIZE`  -  that leaves the frame a sane rectangle
+to un-maximize into.
+
+**2. A saved position is not necessarily on the current desktop.** Video-mode changes are the usual
+cause: a geometry saved at a larger resolution can put the frame entirely past the right or bottom
+edge. Clamp against `WinQuerySysValue(HWND_DESKTOP, SV_CXSCREEN / SV_CYSCREEN)` on restore.
+
+**3. The bottom-left origin makes the dangerous case the TOP one.** `y` is the **bottom** edge, so
+the title bar sits at `y + cy`. A saved rectangle taller than the current desktop pushes the title
+bar *above* the top of the screen  -  where there is nothing left to grab, and the window cannot be
+dragged back. PM will place it there without complaint. Clamp `y + cy <= SV_CYSCREEN` explicitly;
+it does not fall out of the horizontal check.
+
+### There is no "always on top" [OBS-RE]
+
+PM has no `WS_EX_TOPMOST` equivalent. `HWND_TOP` is a **placement passed to `WinSetWindowPos`**, not
+an attribute the window keeps  -  one call raises the frame once, and the next window to be activated
+goes straight over it. An "always on top" menu item implemented as a single `WinSetWindowPos` looks
+completely dead.
+
+The workable approximation is to re-assert the placement on a timer:
+
+```c
+WinSetWindowPos(hwndFrame, HWND_TOP, 0, 0, 0, 0, SWP_ZORDER);   /* every ~500 ms */
+```
+
+`SWP_ZORDER` alone reorders **without** activating, so it does not steal focus from whatever the
+user is typing into. Turning the option off must simply stop re-asserting  -  do **not** place the
+frame at `HWND_BOTTOM`, which sends it behind everything and is a different behaviour from "no
+longer on top".
+
+### Resize flicker: `CS_SIZEREDRAW` and clipping [OBS-RE]
+
+`CS_SIZEREDRAW` (§4) means "the whole window is redrawn on any size change". A client window whose
+children cover it has nothing of its own to redraw  -  its `WM_SIZE` just repositions them  -  so the
+flag buys only a full-area background repaint underneath the children on **every mouse-move of the
+sizing border**. That is the classic "flickering behind the child control" report.
+
+Two changes remove it: drop `CS_SIZEREDRAW`, and add clipping so the parent cannot paint over its
+children at all  -  `CS_CLIPCHILDREN` (`0x20000000`) as a class style, `WS_CLIPCHILDREN` (same value)
+as a window style. For a dialog, the window-style field of the `DIALOG` statement is where that
+goes; see `resources-and-dialogs.md` §"Resizable dialogs".
+
 ---
 
 ## 5. The message loop [DOC-IBM]

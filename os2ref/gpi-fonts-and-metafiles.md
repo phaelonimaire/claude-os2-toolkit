@@ -88,6 +88,59 @@ setting **every** field of `FATTRS`, and setting the character box / angle / she
 (`GpiSetCharBox` / `GpiSetCharAngle` / `GpiSetCharShear`) before drawing so a substituted vector
 font renders as intended [DOC-IBM].
 
+> **A face name in `FATTRS` is a HINT, and the return code cannot tell you it was ignored.**
+> `GpiCreateLogFont` returns `FONT_MATCH` (2) or `FONT_DEFAULT` (1) - but `FONT_MATCH_NEAREST`
+> is **also 2** [`pmgpi.h:346,350`], so "2" means *"matched or approximated"*, not *"you got the
+> font you asked for"*. There is **no return value that distinguishes an exact match from a
+> substitution.**
+>
+> This bites hardest with the built-in **image** faces (`System VIO`, `System Monospaced`).
+> Requesting one by name while also setting `FATTR_FONTUSE_OUTLINE` cannot be satisfied - they
+> have no scalable form - so the system silently substitutes a *scalable* font, returns 2, and
+> every face the user picks renders as the same default. Nothing anywhere reports an error.
+>
+> **Pin the font instead of describing it.** Enumerate with `GpiQueryFonts` for the face name,
+> then copy the `FONTMETRICS.lMatch` of the entry you want into `FATTRS.lMatch`: that asks for
+> one specific physical font rather than "something like this". The same metrics record tells you
+> which kind it is, which decides everything else:
+>
+> | | `fsDefn & FM_DEFN_OUTLINE` set | not set (image font) |
+> |---|---|---|
+> | `fsFontUse` | `FATTR_FONTUSE_OUTLINE \| FATTR_FONTUSE_TRANSFORMABLE` | **0** - never ask an image font for outline |
+> | Size comes from | `GpiSetCharBox` (§2.5) | `FATTRS.lMaxBaselineExt` / `lAveCharWidth`, copied from the metrics |
+> | Available sizes | any | only those it was drawn at - pick the nearest `sNominalPointSize`, **not** `lMaxBaselineExt`; see below |
+>
+> Applying a character box to an image font distorts the glyphs instead of scaling them, so the
+> two columns are not interchangeable. Resolve once per face and cache it: the answer depends on
+> the installed fonts, not on which presentation space is asking.
+>
+> [OBS-RE - diagnosed porting Scintilla to PM, where "System VIO" rendered as Courier through
+> three successive fixes. Checking the return code was one of the fixes that did not work, because
+> `FONT_MATCH == FONT_MATCH_NEAREST`.]
+
+> **An image font exists only at the sizes it was drawn at, and `lMaxBaselineExt` is NOT monotonic
+> in the point size** [OBS-RE]. Selecting one by converting points to pels and matching that field
+> picks arbitrary instances. System VIO is the worked example - it ships the DOS text cells, normal
+> and narrow, and enumerating it gives (nominal pt -> baseline x width):
+>
+> ```
+>  2->12x5   3->16x5   4->10x6   5->14x6   6->15x7   7->25x7
+>  8-> 8x8   9->10x8  10->12x8  11->14x8  12->16x8  13->18x8
+> 14->18x10 15->16x12 16->20x12 17->22x12 18->30x12
+> ```
+>
+> At 120 dpi a 5pt request converts to 8 pels and matches the **8pt** cell; 6pt converts to 10 and
+> matches the **4pt** cell. One step in the size box changes the height and swaps a normal cell for
+> a narrow one. Match on `FONTMETRICS.sNominalPointSize` instead - it is in **decipoints**, and "for
+> a bit-map font, this field contains the height of the font" [DOC-IBM - `pm4.txt`].
+
+> **Scintilla ports: `FontParameters.size` is whatever `Surface::DeviceHeightFont` returned**
+> [OBS-RE]. Scintilla runs the point size through that method before building the `FontParameters`,
+> so if your implementation converts points to pels - as the Win32 one does, and as any PM one
+> wanting `GpiSetCharBox` will - then `fp.size` is a **device height in pels**, not points. Storing
+> it in a field called `pointSize` and converting again is a silent 1.7x at 120 dpi. Name the field
+> for what it holds.
+
 ### 2.2 `FATTRS` - the logical-font request [DOC-IBM - os2def.h:422]
 
 ```c
@@ -156,7 +209,7 @@ carries `FM_TYPE_FIXED` (0x0001, monospaced), `FM_TYPE_KERNING` (0x0004), `FM_TY
 
 | Symbol | Purpose |
 |---|---|
-| `GpiCreateLogFont(HPS, PSTR8 pName, LONG lLcid, PFATTRS)` | Create a logical font from `FATTRS`, bind to `lLcid`. Returns `FONT_MATCH` (2) if the request was met, `FONT_DEFAULT` (1) if a default was substituted, `GPI_ERROR` on failure [pmgpi.h:1648, 1759] |
+| `GpiCreateLogFont(HPS, PSTR8 pName, LONG lLcid, PFATTRS)` | Create a logical font from `FATTRS`, bind to `lLcid`. Returns `FONT_DEFAULT` (1), `FONT_MATCH` (2), or `GPI_ERROR` on failure [pmgpi.h:1648, 1759]. **`FONT_MATCH_NEAREST` is also 2** [pmgpi.h:346], so a 2 does NOT mean the requested face was honoured - see the warning in section 2.1 and pin the font with `FATTRS.lMatch` |
 | `GpiSetCharSet` / `GpiDeleteSetId` | Select / delete the font (section 1) |
 | `GpiLoadFonts(HAB, PSZ file)` / `GpiUnloadFonts` | Load a private `.FON` font file for this process; `GpiLoadPublicFonts` / `GpiUnloadPublicFonts` make it system-wide [pmgpi.h:1771, 1844] |
 | `GpiQueryFonts(HPS, ULONG flOptions, PSZ face, PLONG pReq, LONG cbMetrics, PFONTMETRICS)` | Enumerate physical fonts matching `face` (NULL = all); fill an array of `FONTMETRICS`. `flOptions`: `QF_PUBLIC` 0x0001, `QF_PRIVATE` 0x0002, `QF_NO_GENERIC` 0x0004, `QF_NO_DEVICE` 0x0008. Returns count; call with `*pReq` to size then to fill [pmgpi.h:1730-1734, 1791] |

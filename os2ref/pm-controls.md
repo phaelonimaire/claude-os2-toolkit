@@ -350,6 +350,20 @@ Styles"]:
 | `SS_SYSICON` | `0x000b` | A system icon named by an `SPTR_*` id. |
 | `SS_AUTOSIZE` | `0x0040` | The control sizes itself to fit its contents. |
 
+> **Colouring a static: there is no style for it** [OBS-RE]. An `SS_TEXT` static draws in the
+> system foreground colour whatever its text says, so a "preview" that *names* a colour still
+> renders in the default one. Set a presentation parameter on the control instead:
+>
+> ```c
+> LONG rgb = 0x00FF0000;   /* an RGB value, not a colour INDEX */
+> WinSetPresParam(hwndStatic, PP_FOREGROUNDCOLOR, sizeof(rgb), &rgb);
+> ```
+>
+> `PP_FOREGROUNDCOLOR` is `1`, `PP_BACKGROUNDCOLOR` is `3` [`pmwin.h:2512-2514`]; the
+> `*COLORINDEX` variants (`2`, `4`) take a palette index instead. Presentation parameters are the
+> general mechanism for per-control colour and font  -  see §"Presentation parameters" in
+> `resources-and-dialogs.md`.
+
 ---
 
 ## 7. `WC_ENTRYFIELD` - single-line entry field [DOC-IBM]
