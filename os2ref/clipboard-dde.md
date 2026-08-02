@@ -404,6 +404,59 @@ WM_DDE_INITIATEACK Remarks].
 
 ---
 
+## 9. Passing a short string to another process — there is no `WM_COPYDATA` [OBS-RE]
+
+Win32's one-instance idiom is `FindWindow` plus `WM_COPYDATA`. **PM has neither.** `WinPostMsg`
+carries two `MPARAM`s and nothing else, and a pointer in one of them is meaningless in the receiving
+process — it addresses the sender's memory. DDE (§5) is the documented answer for a *conversation*,
+but it is a lot of machinery for handing over one filename.
+
+For a short string, the **system atom table** is the small answer. It "can be accessed by any
+process in the system … created at boot time and cannot be destroyed" [DOC-IBM `pm2.txt`,
+*WinQuerySystemAtomTable — Remarks*], and an atom is exactly a string with a system-wide integer
+name. So the string goes in the table and only the `ATOM` travels in the message:
+
+```c
+/* sender */
+HATOMTBL tbl  = WinQuerySystemAtomTable();
+ATOM     atom = WinAddAtom(tbl, (PCSZ)pszFullPath);
+if (!WinPostMsg(hwndOther, MY_MSG, MPFROMLONG((LONG)atom), 0))
+    WinDeleteAtom(tbl, atom);          /* nobody will collect it */
+
+/* receiver */
+WinQueryAtomName(WinQuerySystemAtomTable(), atom, (PSZ)szBuf, sizeof(szBuf));
+WinDeleteAtom(WinQuerySystemAtomTable(), atom);   /* the delete is the release */
+```
+
+**Deleting the atom is not optional** — it is what drops the use count. An atom added and never
+deleted stays in a table that lives until the machine reboots. Delete it on the failure path too, as
+above, or the string leaks whenever the post fails.
+
+**Finding the other instance** has no `FindWindow` either. Enumerate the desktop's frame children,
+take each one's client, and compare class names:
+
+```c
+HENUM henum = WinBeginEnumWindows(HWND_DESKTOP);
+while ((hwndFrame = WinGetNextWindow(henum)) != NULLHANDLE) {
+    HWND hwndClient = WinWindowFromID(hwndFrame, FID_CLIENT);
+    if (hwndClient && WinQueryClassName(hwndClient, sizeof(szClass), (PCH)szClass) > 0 &&
+        strcmp(szClass, MY_CLIENT_CLASS) == 0) { /* found */ }
+}
+WinEndEnumWindows(henum);
+```
+
+Run that **before** creating your own window and there is no need to exclude yourself. Qualify any
+path you send with `DosQueryPathInfo(..., FIL_QUERYFULLNAME, ...)` first: the two processes need not
+share a working directory.
+
+> **Testing note.** A one-instance feature usually hangs off a *persisted* setting, and a menu
+> toggle changes the running instance's memory, not the file — so a second instance launched
+> straight after the toggle still reads the old value and quietly opens its own window. The
+> screenshot then shows the expected document and the test looks like it passed. **Count the
+> processes**, which is the thing that actually distinguishes a hand-off from a second window.
+
+---
+
 ## See also
 - `pm-window-messaging.md` — the anchor block / message queue, the window procedure, `WinSendMsg` /
   `WinPostMsg`, `WinDefWindowProc`, and the `MPFROM*` / `*FROMMP` parameter-packing macros the
