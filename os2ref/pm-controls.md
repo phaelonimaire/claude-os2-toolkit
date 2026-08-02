@@ -542,6 +542,42 @@ Item-index constants used with `LM_*` [DOC-IBM `pmwin.h:2262-2272`]: `LIT_CURSOR
 `LIT_ERROR` (`-3`), `LIT_MEMERROR` (`-2`), `LIT_NONE`/`LIT_FIRST`/`LIT_END` (`-1`),
 `LIT_SORTASCENDING` (`-2`), `LIT_SORTDESCENDING` (`-3`).
 
+### 9.1 Owner-drawn items, and where the selection state really lives [OBS-RE]
+
+A plain list box "only draws items that are represented by text strings and emphasizes selected items
+by inverting them" [DOC-IBM `pm3.txt`, *WM_DRAWITEM (in List Boxes) — Remarks*]. Anything else — a
+per-item icon, a colour, two-column layout — needs the **`LS_OWNERDRAW`** style, after which the
+control sends **`WM_DRAWITEM`** to its **owner** for each item. Returning `TRUE` means "I drew it";
+returning `FALSE` asks the control to draw it after all, which is the right answer for any control
+that is not yours.
+
+**The item's selected state is in `OWNERITEM.fsState`, not in `LM_QUERYSELECTION`.** This is the trap.
+Asking the control which item is selected *while handling `WM_DRAWITEM`* returns `LIT_NONE` — the
+selection has not been committed yet — so the obvious implementation quietly draws every item,
+including the highlighted one, in unselected colours:
+
+```c
+case WM_DRAWITEM: {
+    POWNERITEM poi = (POWNERITEM)PVOIDFROMMP(mp2);
+    /* WRONG: answers LIT_NONE for every item at this point.
+       BOOL sel = (SHORT1FROMMR(WinSendMsg(poi->hwnd, LM_QUERYSELECTION,
+                                MPFROMSHORT(LIT_FIRST), 0)) == poi->idItem); */
+    BOOL sel = (poi->fsState & 1) != 0;      /* observed value; no LIA_* constant exists */
+    ...
+    return MRFROMLONG(TRUE);
+}
+```
+
+`os2emx.h` defines no `LIA_*` constant for that bit, so it has to be written as a literal with a
+comment — the value was measured as `1` on a selected item and `0` otherwise.
+
+The rest of the item comes from where you would expect: `LM_QUERYITEMTEXT` for the text (the item
+text must not be changed while drawing it), `OWNERITEM.rclItem` for the rectangle in **window**
+coordinates, and `OWNERITEM.hps` for the presentation space. Two practical notes: `rclItem` is PM
+y-up, so anything drawing in a top-down coordinate system must flip it against the list box's own
+height; and item height is set with `LM_SETITEMHEIGHT` rather than by answering `WM_MEASUREITEM`,
+which is simpler when the height depends on content you register later.
+
 ---
 
 ## 10. `WC_COMBOBOX` — combination box [DOC-IBM]
