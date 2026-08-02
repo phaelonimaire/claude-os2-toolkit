@@ -129,6 +129,37 @@ MRESULT APIENTRY WinDefWindowProc(HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2);
 A window procedure must be exported (named in the module definition file) so PM can call it
 across the module boundary. Provenance: **[DOC-IBM]** `pmwin.h:208-224, 330-333`.
 
+### Subclassing an existing window [DOC-IBM]
+
+To change the behaviour of a window whose class you do not own — a push button, an entry field, a
+frame — replace its window procedure:
+
+```c
+PFNWP APIENTRY WinSubclassWindow(HWND hwnd, PFNWP pfnwp);   /* pmwin.h:746-747 */
+```
+
+It installs `pfnwp` and **returns the procedure it displaced**. Save that pointer: it is the only
+way to reach the original behaviour. Thereafter every message sent or posted to the window arrives
+at the new procedure first. [DOC-IBM `pmv2base.txt` — "An application subclasses a window by using
+the `WinSubclassWindow` function to replace the window's original window procedure".]
+
+> **A subclass procedure must chain to the saved procedure, NOT to `WinDefWindowProc`.** This is the
+> one rule that inverts the normal habit of §3. Everything that makes a button a button — its
+> painting, its keyboard handling, its `WM_COMMAND` notifications — lives in the class procedure you
+> just displaced, and `WinDefWindowProc` knows none of it. Send unhandled messages to the system
+> default instead of the saved procedure and the control keeps its appearance for a moment but stops
+> behaving like a control. [DOC-IBM `pmv2base.txt` — "If the new window procedure does not process a
+> particular message, it must pass the message to the original window procedure, not to
+> `WinDefWindowProc`, for default processing".]
+
+Store the saved `PFNWP` in a **window word** (§9) rather than a global when more than one instance
+may be subclassed — one global holds one procedure, and the second subclassed control overwrites
+the first, so the two instances chain into each other.
+
+Note that OS/2 uses "subclass" for two unrelated things: this, and the SOM/WPS sense of deriving a
+class (`som.md`, `wps-classes.md`). Container records are subclassed in a third sense again
+(`pm-controls.md`). They share no mechanism.
+
 ---
 
 ## 4. Registering a class and creating windows [DOC-IBM]
@@ -232,6 +263,41 @@ parameters.
 | `WS_GROUP` | `0x00010000` | Dialog: first control of a group. |
 | `WS_TABSTOP` | `0x00020000` | Dialog: a tab stop. |
 | `WS_MULTISELECT` | `0x00040000` | Dialog: multiple-selection control. |
+
+#### Building a transient overlay — tooltip, call tip, dropdown [OBS-RE]
+
+An overlay that must be able to **overhang** its owner (a tooltip, a call tip, an autocomplete list)
+cannot be a child of the window it belongs to, because a child is clipped to its parent. The PM
+pattern separates the two relationships that Win32 tends to conflate:
+
+```c
+hwndTip = WinCreateWindow(
+    HWND_DESKTOP,        /* PARENT: the desktop, so the overlay is not clipped   */
+    "MyTipClass", "",
+    WS_CLIPSIBLINGS,     /* NOT WS_VISIBLE - created hidden, shown on demand     */
+    0, 0, 0, 0,
+    hwndOwner,           /* OWNER: the window it belongs to; gets notifications  */
+    HWND_TOP, 0, NULL, NULL);
+```
+
+Points worth knowing before you debug them:
+
+- **Register the class `CS_SAVEBITS`.** PM then saves the pixels the overlay covers and restores them
+  when it goes away, instead of forcing the window underneath through a repaint on every dismissal.
+  That is what the style is for; a transient overlay is the case it was designed around.
+- **It will not steal the focus.** PM gives a window the focus only when something calls
+  `WinSetFocus` for it, so typing keeps going to the owner while the overlay is up. Nothing extra is
+  needed — unlike Win32, where a plain popup can take activation unless you prevent it.
+- **Attach your instance pointer *after* `WinCreateWindow` returns**, with `WinSetWindowPtr`, and have
+  the window procedure ignore messages that arrive before it is set. That is simpler than decoding
+  the pointer out of `WM_CREATE`, and the early messages have nothing to do anyway.
+- **If the overlay paints, set its drawing surface up against its OWN window handle**, not the
+  owner's. Anything that flips y (and on PM that is anything drawing in a top-down coordinate system)
+  computes the flip from the window it was given, so passing the owner silently offsets every
+  primitive by the difference in their heights.
+
+Position it with `WinMapWindowPoints` to convert the owner's coordinates to the desktop's, then
+`WinSetWindowPos`.
 
 ### `WinCreateStdWindow` [DOC-IBM `pmwin.h:2772-2781`]
 
@@ -492,6 +558,56 @@ window coordinates) and hit-test/flags in `mp2`.
 `WM_MOUSEFIRST`/`WM_MOUSELAST` (`0x0070`/`0x0079`) bound the mouse-message range for message
 filters.
 
+### Mouse capture, pointer shape, and rubber-band tracking [DOC-IBM]
+
+The messages above tell you *what happened*; these functions are how a window takes control of the
+mouse while a drag is in progress.
+
+| Symbol | Prototype (`pmwin.h`) | Purpose |
+|---|---|---|
+| `WinSetCapture` | `BOOL WinSetCapture(HWND hwndDesktop, HWND hwnd)` [`pmwin.h:1305-1306`] | Route **all** mouse messages to `hwnd`. `hwnd` = `NULLHANDLE` releases the capture. |
+| `WinQueryCapture` | `HWND WinQueryCapture(HWND hwndDesktop)` [`pmwin.h:1309`] | The window currently holding the capture. |
+| `WinSetPointer` | `BOOL WinSetPointer(HWND hwndDesktop, HPOINTER hptrNew)` [`pmwin.h:3773-3774`] | Set the pointer shape. |
+| `WinQueryPointer` | `HPOINTER WinQueryPointer(HWND hwndDesktop)` [`pmwin.h:3842`] | The current pointer. |
+| `WinQueryPointerPos` | `BOOL WinQueryPointerPos(HWND hwndDesktop, PPOINTL pptl)` [`pmwin.h:3843-3844`] | Pointer position, in **desktop** coordinates. |
+| `WinLoadPointer` | `HPOINTER WinLoadPointer(HWND hwndDesktop, HMODULE hmod, ULONG idres)` [`pmwin.h:3829-3831`] | Load a pointer from a resource. |
+| `WinShowPointer` | `BOOL WinShowPointer(HWND hwndDesktop, BOOL fShow)` [`pmwin.h:3778-3779`] | Show/hide the pointer. |
+| `WinTrackRect` | `BOOL WinTrackRect(HWND hwnd, HPS hps, PTRACKINFO pti)` [`pmwin.h:3568-3570`] | Run a modal rubber-band move/resize loop; returns `TRUE` if the user accepted. |
+
+The first argument is a desktop handle: pass `HWND_DESKTOP`. These take one because pointer and
+capture state is per-desktop, not per-window.
+
+> **Without `WinSetCapture`, a button-up that happens outside your window never arrives.** Mouse
+> messages go to the window under the pointer, so a drag that starts inside your window and ends
+> outside it delivers the `WM_BUTTON1DOWN` and then simply stops — no `WM_BUTTON1UP`, no error. Any
+> state you armed on button-down (a selection, a rubber band, a captured origin) stays armed
+> forever, and the window behaves as though the button were still held. The fix is the standard
+> pairing: capture on button-down, release with `WinSetCapture(HWND_DESKTOP, NULLHANDLE)` on
+> button-up. [DOC-IBM `pm4.txt` — "Capturing mouse input is useful if a window needs to receive all
+> mouse input, even when the pointer moves outside the window".]
+
+> **Capturing to the *queue* rather than a window makes messages undispatchable.** `WinSetCapture`
+> can route mouse input to the calling thread's queue instead, and then each `QMSG` arrives with
+> `hwnd` set to `NULL`. `WinDispatchMsg` has no window to hand them to, so they never reach any
+> window procedure — the message loop itself must handle them. If you take this route and keep an
+> ordinary loop, mouse input vanishes silently. [DOC-IBM `pm4.txt`.]
+
+> **If you handle `WM_MOUSEMOVE` and do not pass it on, the pointer shape stops being maintained.**
+> Setting the pointer is *default* processing: `WinDefWindowProc` calls `WinSetPointer` on every
+> `WM_MOUSEMOVE`. A window procedure that swallows the message inherits that job. So either call
+> `WinSetPointer` yourself for the whole window, or return the message to `WinDefWindowProc` — a
+> handler that does neither leaves whatever shape the last window set, which reads as "the pointer
+> is stuck as an I-beam / hourglass over my window". This is also why the hourglass idiom must
+> re-assert the shape from `WM_MOUSEMOVE` for the duration of a long operation, not just once
+> before it. [DOC-IBM `pm3.txt` "WM_MOUSEMOVE — Default Processing"; `pmv2base.txt`.]
+
+`WinTrackRect` drives the whole rubber-band interaction itself — it does not return until the user
+commits or cancels. `TRACKINFO` [`pmwin.h:3551-3565`] supplies the border and grid sizes, the
+starting `rclTrack`, an `rclBoundary` to confine it to, min/max track sizes, and an `fs` field of
+`TF_*` flags [`pmwin.h:3576-3588`]: which edges move (`TF_LEFT`/`TF_TOP`/`TF_RIGHT`/`TF_BOTTOM`, or
+`TF_MOVE` = all four, moving rather than sizing), plus `TF_GRID`, `TF_STANDARD`,
+`TF_ALLINBOUNDARY` / `TF_PARTINBOUNDARY` and `TF_SETPOINTERPOS`.
+
 ### Keyboard message [DOC-IBM `pmwin.h:1385-1408`]
 
 `WM_CHAR` (`0x007a`) delivers every keystroke. `mp1` low word is the **key-flags** word (`KC_*`),
@@ -593,7 +709,21 @@ invalid region; the actual drawing is done with the Gpi functions on that `HPS` 
 | `WinReleasePS` | `BOOL APIENTRY WinReleasePS(HPS hps)` | Release a `WinGetPS` presentation space. |
 | `WinOpenWindowDC` | `HDC APIENTRY WinOpenWindowDC(HWND hwnd)` | Open the window's device context. |
 | `WinInvalidateRect` / `WinInvalidateRegion` | — | Mark a region invalid, causing a later `WM_PAINT`. Its third argument decides whether *descendants* are invalidated too — see the note below. |
+| `WinValidateRect` | `BOOL APIENTRY WinValidateRect(HWND hwnd, PRECTL prcl, BOOL fIncludeChildren)` [`pmwin.h:854-856`] | The inverse: remove a rectangle from the update region, cancelling the pending paint for it. |
+| `WinQueryUpdateRect` | `BOOL APIENTRY WinQueryUpdateRect(HWND hwnd, PRECTL prcl)` [`pmwin.h:876-877`] | The pending invalid rectangle, **without** beginning a paint. `WinQueryUpdateRegion` [`pmwin.h:879`] gives the region form. |
+| `WinScrollWindow` | `LONG APIENTRY WinScrollWindow(HWND hwnd, LONG dx, LONG dy, PRECTL prclScroll, PRECTL prclClip, HRGN hrgnUpdate, PRECTL prclUpdate, ULONG fs)` [`pmwin.h:364-371`] | Blit a rectangle of the window by (`dx`,`dy`) instead of repainting it. |
 | `WinFillRect` | `BOOL APIENTRY WinFillRect(HPS hps, PRECTL prcl, LONG lColor)` | Fill a rectangle with a color. Fills the **left and bottom** edges but **not** the right and top (see boundary rule below). |
+
+`WinScrollWindow` is how a scrolling view avoids redrawing everything: it moves the pixels that are
+still valid and leaves only the newly exposed strip to paint. Pass `SW_INVALIDATERGN` in `fs` to
+have that exposed area added to the update region automatically, which produces the `WM_PAINT` for
+it; without that flag you are responsible for invalidating it yourself, and the strip keeps stale
+pixels. The two flags are `SW_SCROLLCHILDREN` (`0x0001`) and `SW_INVALIDATERGN` (`0x0002`)
+[`pmwin.h:386-387`] — child windows are **not** scrolled unless you ask. `prclScroll` = `NULL`
+scrolls the whole window. Note the sign convention follows PM's
+Y-up coordinates, so scrolling the *content* up one line is a **negative** `dy`. [DOC-IBM
+`pmv2base.txt` — "If you set the `SW_INVALIDATERGN` flag for this function, the areas you uncover by
+scrolling are added to the window's update region automatically".]
 
 > **Invalidating a window that is fully covered by a child repaints nothing visible.** The common
 > layout — a client window whose entire area is one child control — means every pixel the user sees
