@@ -20,6 +20,8 @@ export OS2DOCS=~/os2docs                 # where the corpus lives (default)
 ./fetch-books.sh                         # optional: IBM redbooks + docs mirror
 ./fetch-edm2.sh                          # optional: EDM2 wiki (community)
 ./pdf-to-text.sh --scan ~/os2docs        # optional: make the PDF books greppable
+./fetch-archive-book.sh os2presentationm0000petz petzold-pm-programming
+                                         # optional: a scanned book, page-citable
 
 ./search.sh DevOpenDC                    # search everything, in provenance order
 ```
@@ -38,6 +40,8 @@ sources are absent. Each source you add makes it stronger.
 | `fetch-books.sh` | Mirrors `komh.github.io/os2books`: Warp redbooks (GG24-37xx), *Undocumented OS/2*, Toolkit docs, programming FAQ, REXX, DBCS. `[DOC-IBM]`. |
 | `fetch-edm2.sh` | Mirrors the EDM2 wiki as raw wikitext via its MediaWiki API (~12,300 pages). Resumable, rate-limited. `[DOC]` — community, secondary. |
 | `pdf-to-text.sh` | Extracts PDF books to text with `[[page N]]` markers so hits stay citable, reports which pages had no text layer, optionally OCRs those (`--ocr`) and writes page-range chunks (`--chunk N`). |
+| `fetch-archive-book.sh` | Fetches a scanned archive.org book as **archive.org's own OCR** (`_djvu.xml`, not the PDF) and converts it to `$OS2DOCS/pdf_text/<name>.txt`. Uses `_page_numbers.json` so markers carry the book's *printed* page numbers. |
+| `djvu2txt.py` | The converter behind it: `_djvu.xml` → page-marked text + `.coverage` map. Usable on its own if you already have the XML. |
 | `search.sh` | Searches every present source **in provenance order** and labels each group. |
 | `online-sources.md` | Curated, live-verified pointers: the DevCon/DDK sets on archive.org, all four Debugging Handbook volumes, the community sites, and what is *not* freely available. |
 
@@ -110,5 +114,19 @@ See `../sources.md` for where each source comes from and the rights note that go
   (grep `-C`, default 0).
 - PDFs in `os2books` are not greppable until converted; `fetch-books.sh` prints the `pdftotext`
   one-liner.
+- For an archive.org scan, prefer `fetch-archive-book.sh` over downloading the PDF and running
+  `pdf-to-text.sh` on it: archive.org has already OCRed the book and publishes the result, so the
+  fetch is ~19 MB of XML instead of a ~44 MB PDF you would then have to OCR yourself. It also
+  yields the *printed* page numbers, which a PDF's page count does not give you.
+- Scanned-book text carries three markers: `[[page N]]` is a printed page number **read off the
+  page**; `[[page N ~]]` is one archive.org **interpolated** because it found no folio there (cite
+  as approximate — 82 of this book's 931 are inferred); `[[leaf N]]` is a scan image with no printed
+  number at all (covers, front matter, plates). Do not cite a leaf as a page.
+  `<name>.coverage` lists which leaves yielded no text — check it before reading a search miss as
+  the book being silent.
+- **The two producers of `pdf_text/` do not agree on what `[[page N]]` means.**
+  `fetch-archive-book.sh` emits the book's *printed* page number; `pdf-to-text.sh` emits the *Nth
+  page of the PDF*. For a book with front matter these differ by a constant offset (32 in the
+  Petzold scan). Check which tool produced a file before citing a page number out of it.
 - Already have a corpus from earlier work? Point `OS2DOCS` at it. `search.sh` expects
   `inf_text/`, `os2books/`, `edm2/` under that root and skips whatever is missing.

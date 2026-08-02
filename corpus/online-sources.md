@@ -88,6 +88,48 @@ These are single files, fetchable directly from `https://komh.github.io/os2books
 
 Run any of them through `pdf-to-text.sh` to make them greppable.
 
+## 5b. Scanned books on archive.org — fetch the OCR, not the PDF
+
+Archive.org OCRs its scans and publishes the result as derivative files. Fetching those beats
+downloading the PDF and OCRing it yourself: it is smaller, it is already done, and
+`_page_numbers.json` gives you the book's **printed** page numbers, so a hit is citable as
+"p.144" and checkable against the physical book.
+
+`fetch-archive-book.sh <id> <name>` does all of it. Verified live:
+
+| Identifier | Book | Notes |
+|---|---|---|
+| `os2presentationm0000petz` | Petzold, *OS/2 Presentation Manager Programming* (1994) | 934 pp, 18 ch. The PM tutorial. OCR text on 97% of leaves, 931 printed page numbers. `[DOC]` — third-party. |
+
+```sh
+./fetch-archive-book.sh os2presentationm0000petz petzold-pm-programming
+./search.sh WinCreateStdWindow          # now includes it, graded third-party
+```
+
+Four things to know before trusting a result from a scan:
+
+- **Not every `[[page N]]` was read off a page.** Archive.org *interpolates* a page number when it
+  cannot find a folio on the leaf — 82 of this book's 931 are inferred from their neighbours.
+  `djvu2txt.py` marks those `[[page N ~]]`. Cite a `~` page as approximate, or check it against the
+  physical book. (They are usually right; they go wrong in runs, wherever a book restarts its
+  numbering or inserts unnumbered plates.)
+- **`[[page N]]` here is not `[[page N]]` from `pdf-to-text.sh`.** This script emits the book's
+  *printed* page number; `pdf-to-text.sh` emits the *Nth page of the PDF*. Both land in
+  `pdf_text/`. For a book with front matter the two differ by a constant offset — 32 in this one.
+  Know which tool produced a file before citing a page from it.
+- **Search case-insensitively and in fragments.** Hyphenation is broken across line ends, and the
+  book's own typography survives into the text (headings are set in caps, so `WinCreateStdWindow`
+  appears 145 times as written and twice as `WINCREATESTDWINDOW` — that is the book shouting, not
+  OCR damage, but it defeats a case-sensitive grep either way). `search.sh` handles both already.
+- **Some leaves have no text** (full-page figures, plates, scan failures). `<name>.coverage` lists
+  them. A miss that lands there is not the book being silent.
+
+Not every item can be fetched this way — a lending-only scan may withhold the OCR derivatives. The
+script does **not** detect this in advance; it asks for the file and reports the failure. Do not
+read a failed fetch as "restricted": a wrong identifier and a never-OCRed scan fail identically, and
+the presence of an `_encrypted.pdf` does *not* imply the OCR is withheld (this very item publishes
+both). Check the item's file list to tell them apart.
+
 ## 6. Not freely available
 
 Worth knowing so you do not waste time looking:

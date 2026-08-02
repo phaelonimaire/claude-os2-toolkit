@@ -93,6 +93,33 @@ Only if `os2ref/` doesn't cover something. Once downloaded, read the compiled `.
   (both verified live); also Hobbes. `corpus/online-sources.md` lists these and the DevCon volumes.
 - **OS/2 Warp redbooks** (GG24-37xx etc.) — `komh.github.io/os2books` mirrors many as HTML/PDF.
 
+## 3b. Third-party programming books — optional (scanned, on archive.org)
+
+Commercial books, not IBM manuals. They earn their place by being *tutorial*: the IBM reference
+tells you what `WinCreateStdWindow` takes, these tell you why the frame and client are separate
+windows and what happens when you get it wrong. **Grade them `[DOC]`** — an author's reading of
+OS/2, not IBM's word — and corroborate anything load-bearing against the IBM books.
+
+`corpus/fetch-archive-book.sh <archive-id> <name>` fetches archive.org's own OCR (not the PDF) and
+converts it to `$OS2DOCS/pdf_text/<name>.txt` with `[[page N]]` markers carrying the book's
+**printed** page numbers, so a hit is citable as "Petzold p.144".
+
+- **Charles Petzold, *OS/2 Presentation Manager Programming*** (Ziff-Davis, 1994; ISBN 1562761234).
+  934 pages, 18 chapters, PM-only and 32-bit — the closest thing to a PM tutorial that exists.
+  Chapters: the PM architecture and message loop (1–3), text output to a client window (4), GPI
+  primitives, bitmaps/blits and advanced graphics (5–7), keyboard, mouse and timer (8–10), control
+  windows, resources, menus and dialogs (11–14), clipboard (15), DLLs (16), multithreading (17),
+  printing (18). Chapter 4 is the one to read first for a PM port — client-window text output,
+  presentation spaces, the coordinate system and scroll bars.
+  *Where:* `archive.org` identifier **`os2presentationm0000petz`** (verified live).
+  ```sh
+  corpus/fetch-archive-book.sh os2presentationm0000petz petzold-pm-programming
+  ```
+  *Caveat:* it targets OS/2 2.x with IBM C Set++, so the toolchain material (makefiles, `IBMDLL.CMD`,
+  `-Ge-`) is period-specific — the PM and GPI content is not. Scanned-book text is OCR, so it is
+  case-damaged and hyphenation-damaged: search fragments, case-insensitively, exactly as
+  `corpus/search.sh` does by default.
+
 ## 4. Test + debug target — for running what you build (commercial or free)
 
 - **A running OS/2** to test on. **ArcaOS** (`arcanoae.com`, modern, commercial — the recommended
