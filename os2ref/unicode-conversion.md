@@ -399,6 +399,29 @@ API will guess whether a byte buffer is UTF-8, UCS-2, or a single-byte code page
 converts *from a code set you name*. So an editor or importer must supply its own heuristic — BOM
 sniff first, then a UTF-8 well-formedness check, then fall back to the process code page.
 
+**Skip a byte-order mark only if one is actually there** [OBS-RE]. Once you have written that
+heuristic it is tempting to pair it with "and the decoder strips the BOM" — but the decoder gets
+called in two quite different situations, and only one of them has a mark to strip:
+
+- *detected* encoding — the BOM is what identified it, so it is present by construction;
+- *chosen* encoding — the user picked it from a menu **because detection had nothing to go on**,
+  which usually means there is no mark at all.
+
+An unconditional `pIn += 2` for UTF-16 therefore works perfectly on every file that announces
+itself, and silently eats the first character of every file that does not. Nothing errors, the byte
+count is off by one or two, and the text looks almost right. Check the bytes before skipping them,
+and check that the mark matches the encoding being applied:
+
+```c
+if (enc == UCS2LE && cb >= 2 && b[0] == 0xFF && b[1] == 0xFE) { p += 2; cb -= 2; }
+else if (enc == UCS2BE && cb >= 2 && b[0] == 0xFE && b[1] == 0xFF) { p += 2; cb -= 2; }
+else if (enc == UTF8SIG && cb >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) { p += 3; cb -= 3; }
+```
+
+A "reload as this encoding" command is the fastest way to find this bug, and a good reason to build
+one early: it is the only path that routinely feeds the decoder a buffer whose encoding was asserted
+rather than detected.
+
 The practical split for a Win32 port:
 
 | Win32 | OS/2 |
