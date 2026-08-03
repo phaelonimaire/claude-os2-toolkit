@@ -215,6 +215,50 @@ typedef struct _USERBUTTON {   /* ubtn */
 
 ---
 
+> **Putting a bitmap on a button created in code** [OBS-RE]. `BS_BITMAP` (`0x0040`) works only with
+> `BS_PUSHBUTTON`, and the documented way to name the image is the button's *window text* - "to load
+> an icon (`#define ICON_ID 300`) and display it within a button, the button string is set to
+> `"#300"`" [DOC-IBM - `pm3.txt`, WC_BUTTON styles]. **That form is for a control in a DIALOG
+> TEMPLATE**, where PM knows which module to load the resource from.
+>
+> `WinCreateWindow` has no module parameter, and `"#300"` there does not merely fail to draw - it
+> fails the **whole call** with `PMERR_PARAMETER_OUT_OF_RANGE` (`0x1003`), so you get no window at
+> all. Pass a loaded handle through the control data instead:
+>
+> ```c
+> HBITMAP  hbm = GpiLoadBitmap(hps, NULLHANDLE, idBitmap, 0, 0);  /* NULLHANDLE = the .EXE */
+> BTNCDATA bcd;
+> memset(&bcd, 0, sizeof(bcd));
+> bcd.cb = sizeof(BTNCDATA);
+> bcd.hImage = (LHANDLE)hbm;
+> hwnd = WinCreateWindow(hwndParent, WC_BUTTON, "", 
+>                        WS_VISIBLE | BS_PUSHBUTTON | BS_BITMAP,
+>                        0,0,0,0, hwndParent, HWND_TOP, id, &bcd, NULL);
+> ```
+>
+> `BTNCDATA` is `{ USHORT cb; USHORT fsCheckState; USHORT fsHiliteState; LHANDLE hImage; }`.
+> `BS_TEXT` alongside `BS_BITMAP` gives image *and* label.
+>
+> **The bitmap must be a format PM will load, and it is not the one you would guess.** Measured on
+> Warp Server by binding five variants of one 16x16 icon and calling `GpiLoadBitmap` on each:
+>
+> | Format | Result |
+> |---|---|
+> | Windows 3.x, 24bpp | loads |
+> | Windows 3.x, 8bpp | loads |
+> | OS/2 1.x, 8bpp | loads |
+> | OS/2 1.x, 4bpp | loads |
+> | **OS/2 1.x, 24bpp** | **fails - `PMERR_INV_BITMAP_DIMENSION` (`0x2048`)** |
+>
+> So a plain Windows `.bmp` is fine; the OS/2-format 24bpp case is the one that breaks, and it
+> reports a *dimension* error for a bitmap that is unambiguously 16x16. Do not "fix" a working
+> Windows bitmap into OS/2 format on the assumption that PM prefers its own.
+>
+> Two further practicalities: PM buttons **do not blend alpha**, so composite an anti-aliased icon
+> onto the button face colour first (sample it from a screenshot rather than assuming a grey), and
+> OS/2 `.rc` names the **type first** - `BITMAP 1000 "file.bmp"`, the reverse of the Windows order,
+> which `wrc` rejects with a syntax error pointing at the id.
+
 ## 5. `WC_MENU` - menus [DOC-IBM]
 
 A menu presents a list of items, shown horizontally as an action bar or vertically as a
