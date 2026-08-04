@@ -260,6 +260,25 @@ Dispatch on `SHORT2FROMMP(mp1)` *before* dereferencing. Getting this wrong fault
 returning nonsense, because a handle is a small integer and therefore a wild pointer, and it hides
 until the notification you did not test for actually fires.
 
+### 2.13 A dialog is never sent `WM_SIZE` [OBS-RE]
+
+A `WM_SIZE`-based resize handler for a dialog with `FCF_SIZEBORDER` compiles, looks right, and never
+runs: a dialog is driven by `WinDefDlgProc`, not `WinDefWindowProc`, and only the latter turns
+`SWP_SIZE` into a `WM_SIZE`. Handle `WM_WINDOWPOSCHANGED` instead, and call the default procedure
+first - it is what sends `WM_FORMATFRAME`, which positions the title bar and sizing border. Full
+correction, including why anchoring by margin beats anchoring by delta: `os2ref/resources-and-dialogs.md`
+section "Resizable dialogs".
+
+### 2.14 A button bitmap named by resource ID needs a dialog template [OBS-RE]
+
+The documented `"#300"` window-text form for `BS_BITMAP` only works for a button created *from a
+dialog template*, where PM knows which module to resolve the ID against. Passed to `WinCreateWindow`
+directly, `"#300"` fails the whole call with `PMERR_PARAMETER_OUT_OF_RANGE` - no window, not merely
+no image. A button built in code needs a loaded `HBITMAP` in `BTNCDATA.hImage` instead, and the
+bitmap format matters: OS/2 1.x 24bpp fails to load where a plain Windows `.bmp` succeeds. Full
+detail and the measured format table: `os2ref/pm-controls.md` section 4, "Putting a bitmap on a
+button created in code".
+
 ---
 
 ## 3. Type traps
@@ -361,6 +380,19 @@ The general shape: **a missing `-D` produces a subsystem that is present, linked
 inert.** That is invisible to every check short of asking the library what it thinks its state is
 (`SCI_GETLEXER` returned `0`). When a whole feature does nothing and the plumbing all looks right,
 read the library's build documentation before reading your own code again. [OBS-RE]
+
+### 5.2 A widget library's own unit conversions compound yours [OBS-RE]
+
+`Font.size` in Scintilla is not a point size - it is whatever `Surface::DeviceHeightFont` returned,
+which on a platform whose text APIs already want device units (PM's `GpiSetCharBox` among them) is a
+**device height in pels**. A platform layer that stores that value in a field called `pointSize` and
+converts it *again* introduces a silent 1.7x error at 120 dpi. Read what the library's own surface
+methods do to a size before assuming the number reaching your platform code is still in the unit its
+field name suggests.
+
+The image-font side of the same problem - matching a PM bit-map font by the wrong `FONTMETRICS`
+field picks an arbitrary size, non-monotonically, as the request changes by one point - is in
+`os2ref/gpi-fonts-and-metafiles.md` section 2.1.
 
 ---
 
