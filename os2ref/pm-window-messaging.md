@@ -417,7 +417,7 @@ Provenance: **[DOC-IBM]** `pmwin.h:335-341, 454-455, 469-485, 540-570`.
 
 ### Saving and restoring a window's geometry [OBS-RE]
 
-Persisting "where the window was" needs three things a naive `WinQueryWindowPos` → INI → 
+Persisting "where the window was" needs three things a naive `WinQueryWindowPos` -> INI ->
 `WinSetWindowPos` round trip gets wrong.
 
 **1. A maximized frame reports its MAXIMIZED rectangle.** Save that as the geometry and the window
