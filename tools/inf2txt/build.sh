@@ -38,21 +38,34 @@ if [ ! -d "$fpgui" ]; then
     git clone --depth 1 https://github.com/graemeg/fpGUI.git "$fpgui"
 fi
 
-# Locate the FPC unit tree instead of hardcoding one version/arch: fpc -iV gives
-# the version, -iTP/-iTO the target CPU/OS.
+# Determine the installed compiler version and target before constructing
+# candidate unit-tree paths.
 fpcver=$(fpc -iV)
 fpctgt=$(fpc -iTP)-$(fpc -iTO)
-UNITS=""
-for cand in \
-    "/usr/lib/$(uname -m)-linux-gnu/fpc/$fpcver/units/$fpctgt" \
-    "/usr/lib/fpc/$fpcver/units/$fpctgt" \
-    "/usr/local/lib/fpc/$fpcver/units/$fpctgt"
-do
-    [ -d "$cand" ] && { UNITS=$cand; break; }
-done
+
+# Honor an explicit UNITS setting. Otherwise search common Debian, openSUSE,
+# Fedora, and locally installed FPC layouts.
+if [ -n "${UNITS:-}" ]; then
+    if [ ! -d "$UNITS" ]; then
+        echo "build.sh: specified FPC unit tree does not exist: $UNITS" >&2
+        exit 1
+    fi
+else
+    for cand in \
+        "/usr/lib/$(uname -m)-linux-gnu/fpc/$fpcver/units/$fpctgt" \
+        "/usr/lib64/fpc/$fpcver/units/$fpctgt" \
+        "/usr/lib/fpc/$fpcver/units/$fpctgt" \
+        "/usr/local/lib64/fpc/$fpcver/units/$fpctgt" \
+        "/usr/local/lib/fpc/$fpcver/units/$fpctgt"
+    do
+        [ -d "$cand" ] && { UNITS=$cand; break; }
+    done
+fi
+
 [ -n "$UNITS" ] || {
     echo "build.sh: cannot find the FPC $fpcver unit tree for $fpctgt." >&2
-    echo "  Looked under /usr/lib and /usr/local/lib; set UNITS= by hand if your" >&2
+    echo "  Looked under /usr/lib, /usr/lib64, and /usr/local/lib*." >&2
+    echo "  Set UNITS to the target unit directory if your" >&2
     echo "  distro puts them elsewhere." >&2
     exit 1
 }
